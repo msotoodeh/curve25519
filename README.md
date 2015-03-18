@@ -7,7 +7,7 @@ Copyright Mehdi Sotoodeh.  All rights reserved.
 
 This code and accompanying files are put in public domain by the author.
 You are free to use, copy, modify and distribute this software as long
-as you comply with the license terms.
+as you comply with the license terms. See license.txt file for details.
 
 
 Performance:
@@ -33,12 +33,8 @@ Timing for point multiplication:
     -- Linux debian6-64 2.6.32-5-amd64 #1 SMP Mon Sep 23 22:14:43 UTC 2013 x86_64 GNU/Linux
 
     debian-64: gcc (Debian 4.4.5-8) 4.4.5
-        Donna: 878752.956 cycles = 258.457 usec @3.4GHz
-        Mehdi: 557709.212 cycles = 164.032 usec @3.4GHz -- 36.53%
-    
-    debian-32: gcc (Debian 4.4.5-8) 4.4.5
-        Donna: 900336.794 cycles = 264.805 usec @3.4GHz
-        Mehdi: 552462.788 cycles = 162.489 usec @3.4GHz -- 38.64%
+        Donna: 860872 cycles = 253.198 usec @3.4GHz -- ratio: 1.610
+        Mehdi: 534584 cycles = 157.231 usec @3.4GHz -- delta: 37.90%
 ```
 
 Building:
