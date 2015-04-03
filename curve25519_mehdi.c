@@ -36,6 +36,11 @@
     l = 2**252 + 27742317777372353535851937790883648493
 */
 
+// Pick a modular inverse method. One of:
+//#define ECP_INVERSE_METHOD_EXPMOD
+#define ECP_INVERSE_METHOD_DJB
+//#define ECP_INVERSE_METHOD_EUCLID
+
 typedef struct
 {
     U32 X[8];   // x = X/Z
@@ -47,9 +52,10 @@ static const U32 _w_P[8] = {
     0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0x7FFFFFFF
 };
 
-static const U32 _w_O[8] = {
-    0x5CF5D3ED,0x5812631A,0xA2F79CD6,0x14DEF9DE,
-    0x00000000,0x00000000,0x00000000,0x10000000
+// Maximum number of prime p that fits into 256-bits
+static const U32 _w_maxP[8] = {   // 2*P < 2**256
+    0xFFFFFFDA,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,
+    0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF
 };
 
 static const U32 _w_I[8] = {
@@ -61,16 +67,13 @@ static const U8 _b_Pp3d8[32] = {    // (P+3)/8
     0xFE,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
     0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x0F };
 
-static const U8 _b_Pm2[32] = {      // p-2
-    0xEB,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
-    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x7F };
-
 // x coordinate of base point
-const U8 ecp_BasePoint[32] = { 9,0,0,0,0,0,0,0 };
+const U8 ecp_BasePoint[32] = { 
+    9,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0 };
 
 static const U32 _w_V38[8] = { 38,0,0,0,0,0,0,0 };
 
-void ecp_InvMod(U32 *out, const U32 *z);
+void ecp_Inverse(U32 *out, const U32 *z);
 
 #define ECP_MOD(X)  while (ecp_Cmp(X, _w_P) >= 0) ecp_Sub(X, X, _w_P)
 
@@ -134,7 +137,7 @@ static void ecp_AddReduce(U32* Z, const U32* X, const U32* Y)
 static void ecp_SubReduce(U32* Z, const U32* X, const U32* Y) 
 {
     S32 b = ecp_Sub(Z, X, Y);
-    while (b != 0) { b += ecp_Add(Z, Z, _w_P); }
+    while (b != 0) { b += ecp_Add(Z, Z, _w_maxP); }
 }
 
 // Compares X-Y
@@ -413,7 +416,7 @@ void ecp_PointMultiply(
                     ECP_MONT(0);
                 }
 
-                ecp_InvMod(Q.Z, P.Z);
+                ecp_Inverse(Q.Z, P.Z);
                 ecp_MulMod(X, P.X, Q.Z);
                 ecp_WordsToBytes(PublicKey, X);
                 return;
@@ -441,15 +444,23 @@ void ecp_CalculateY(OUT U8 *Y, IN const U8 *X)
     ecp_WordsToBytes(Y, T);
 }
 
+#ifdef ECP_INVERSE_METHOD_EXPMOD
+static const U8 _b_Pm2[32] = {      // p-2
+    0xEB,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
+    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x7F };
+
 // Y = 1/X mod P
 void ecp_Inverse(U32* Y, const U32* X)
 {
     // TBD: use Ext. Euclid instead
     ecp_ExpMod(Y, X, _b_Pm2, 32);
 }
+#endif
 
+#ifdef ECP_INVERSE_METHOD_DJB
 // Donna's implementation for reference
-void ecp_InvMod(U32 *out, const U32 *z) 
+// Return out = 1/z mod P
+void ecp_Inverse(U32 *out, const U32 *z) 
 {
   int i;
   U32 t0[8],t1[8],z2[8],z9[8],z11[8];
@@ -517,8 +528,73 @@ void ecp_InvMod(U32 *out, const U32 *z)
   /* 2^253 - 2^3 */     ecp_SqrReduce(t1,t0);
   /* 2^254 - 2^4 */     ecp_SqrReduce(t0,t1);
   /* 2^255 - 2^5 */     ecp_SqrReduce(t1,t0);
-  /* 2^255 - 21 */      ecp_MulMod(out,t1,z11);
+  /* 2^255 - 21 */      ecp_MulReduce(out,t1,z11);
 }
+#endif
+
+#ifdef ECP_INVERSE_METHOD_EUCLID
+static const U32 _w_ONE[8] = { 1,0,0,0,0,0,0,0 };
+
+#define ECP_SHR_W0(X) c.u32.hi = c0; c.u32.lo = X; X = (U32)(c.u64 >> 1)
+#define ECP_SHR_W1(X) c.u32.hi = c.u32.lo; c.u32.lo = X; X = (U32)(c.u64 >> 1)
+
+// Calculate X >>= 1
+static U32 ecp_ShiftRightOne(
+    IN OUT U32* X,
+    IN U32 c0)
+{
+    M64 c;
+    ECP_SHR_W0(X[7]);
+    ECP_SHR_W1(X[6]);
+    ECP_SHR_W1(X[5]);
+    ECP_SHR_W1(X[4]);
+    ECP_SHR_W1(X[3]);
+    ECP_SHR_W1(X[2]);
+    ECP_SHR_W1(X[1]);
+    ECP_SHR_W1(X[0]);
+    return c.u32.lo & 1;
+}
+
+// Return Y = 1/X mod p using Euclid's binary algorithm
+void ecp_Inverse(OUT U32 *Y, IN const U32 *X)
+{ 
+    // ecp_EuclidAlgo() kills the input arrays, make temps
+    U32 A[8] = {1}, B[8] = {0}, U[8], V[8], c;
+
+    ecp_Copy(U, X);
+    ecp_Copy(V, _w_P);
+    ECP_MOD(U);
+
+    while (ecp_Cmp(U, _w_ONE) > 0 && ecp_Cmp(V, _w_ONE) > 0)
+    {
+        while ((U[0] & 1) == 0)
+        {
+            c = ecp_ShiftRightOne(U, 0);
+            if (A[0] & 1) c = ecp_Add(A, A, _w_P);
+            ecp_ShiftRightOne(A, c);
+        }   
+        while ((V[0] & 1) == 0)
+        {
+            c = ecp_ShiftRightOne(V, 0);
+            if (B[0] & 1) c = ecp_Add(B, B, _w_P);
+            ecp_ShiftRightOne(B, c);
+        }   
+        if (ecp_Cmp(U, V) > 0)
+        {
+            ecp_Sub(U, U, V);
+            //ecp_Sub(T, _w_P, B);
+            //c = ecp_Add(A, A, T);
+            if (ecp_Sub(A, A, B)) ecp_Add(A, A, _w_P);
+        }
+        else
+        {
+            ecp_Sub(V, V, U);
+            if (ecp_Sub(B, B, A)) ecp_Add(B, B, _w_P);
+        }
+    }
+    ecp_Copy(Y, (ecp_Cmp(U, _w_ONE) == 0) ? A : B);
+}
+#endif
 
 #ifdef ECP_SELF_TEST
 #include "curve25519.selftest"

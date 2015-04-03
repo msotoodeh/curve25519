@@ -35,6 +35,8 @@
         k2 = 1/k1 mod BPO   --> k1*k2 = 1 mod BPO
         P1 = k1*P0 --> P2 = k2*P1 = k2*k1*P0 = P0
     See selftest code for some examples of BPO usage
+
+    This library is used for implementation of ECDSA sign/verify.
 */
 
 extern void ecp_Copy(U32* Y, const U32* X);
@@ -48,6 +50,10 @@ const U8 curve25519_BasePointOrder[32] = {  // order of the base point
 static const U32 _w_BPO[8] = { // BPO as words
     0x5CF5D3ED,0x5812631A,0xA2F79CD6,0x14DEF9DE,
     0x00000000,0x00000000,0x00000000,0x10000000 };
+
+static const U32 _w_maxBPO[8] = { // 15*BPO fits into 8 words
+    0x72676AE3,0x2913CE8B,0x8C82308F,0x3910A40B,
+    0x00000001,0x00000000,0x00000000,0xF0000000 };
 
 static const U8 _b_BPOm2[32] = {      // BasePointOrder - 2
     0xEB,0xD3,0xF5,0x5C,0x1A,0x63,0x12,0x58,0xD6,0x9C,0xF7,0xA2,0xDE,0xF9,0xDE,0x14,
@@ -101,7 +107,7 @@ void eco_MontMul(OUT U32 *Z, IN const U32 *X, IN const U32 *Y)
         // T + (-1/BPO)*T*BPO mod 2**32 = 0 --> T[0] = 0
     }
     // T[9] could be 2 at most
-    while (T[9] != 0) T[9] += ecp_Sub(T+1, T+1, _w_BPO);
+    while (T[9] != 0) T[9] += ecp_Sub(T+1, T+1, _w_maxBPO);
     ecp_Copy(Z, T+1);
 }
 
