@@ -597,5 +597,5 @@ void ecp_Inverse(OUT U32 *Y, IN const U32 *X)
 #endif
 
 #ifdef ECP_SELF_TEST
-#include "curve25519.selftest"
+#include "../test/curve25519.selftest"
 #endif

@@ -81,6 +81,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;ECP_SELF_TEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../source;../test</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -94,6 +95,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;ECP_SELF_TEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../source;../test</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -109,6 +111,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../source;../test</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -126,6 +129,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../source;../test</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -135,21 +139,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="curve25519_order.c" />
-    <ClCompile Include="curve25519_utils.c" />
-    <ClCompile Include="curve25519_donna.c" />
-    <ClCompile Include="curve25519_mehdi.c" />
-    <ClCompile Include="curve25519_test.c" />
+    <ClCompile Include="..\source\curve25519_mehdi.c" />
+    <ClCompile Include="..\source\curve25519_order.c" />
+    <ClCompile Include="..\source\curve25519_utils.c" />
+    <ClCompile Include="..\test\curve25519_donna.c" />
+    <ClCompile Include="..\test\curve25519_test.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BaseTypes.h" />
-    <ClInclude Include="curve25519_donna.h" />
-    <ClInclude Include="curve25519_mehdi.h" />
-    <ClInclude Include="curve25519_SelfTest.h" />
+    <ClInclude Include="..\source\BaseTypes.h" />
+    <ClInclude Include="..\source\curve25519_mehdi.h" />
+    <ClInclude Include="..\test\curve25519_donna.h" />
+    <ClInclude Include="..\test\curve25519_SelfTest.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="curve25519.selftest" />
-    <None Include="readme.md" />
+    <None Include="..\test\curve25519.selftest" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

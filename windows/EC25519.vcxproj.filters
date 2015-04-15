@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="LibFiles">
+      <UniqueIdentifier>{686a5337-3998-4ce9-bf8f-401c49100eeb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TestFiles">
+      <UniqueIdentifier>{8d709ec6-33c2-440e-80e2-9c020eb24b35}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\source\curve25519_mehdi.c">
+      <Filter>LibFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\curve25519_order.c">
+      <Filter>LibFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\curve25519_utils.c">
+      <Filter>LibFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\curve25519_donna.c">
+      <Filter>TestFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\test\curve25519_test.c">
+      <Filter>TestFiles</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\source\BaseTypes.h">
+      <Filter>LibFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\curve25519_mehdi.h">
+      <Filter>LibFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\curve25519_donna.h">
+      <Filter>TestFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\curve25519_SelfTest.h">
+      <Filter>TestFiles</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\test\curve25519.selftest">
+      <Filter>TestFiles</Filter>
+    </None>
+  </ItemGroup>
+</Project>

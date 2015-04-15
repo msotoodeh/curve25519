@@ -51,9 +51,11 @@ endif
 # programs we use
 CC    = gcc
 GPP   = g++
+CPP   = cpp
 LD    = ld
 AR    = ar
 LN    = ln -s
+AS    = as
 MKDIR = mkdir -p
 PATCH = patch
 SHELL = /bin/sh
