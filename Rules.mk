@@ -23,6 +23,8 @@ ifneq ($(findstring cygwin,$(TARGET_SYS)),)
 TARGET_OS = Cygwin
 else ifneq ($(findstring linux,$(TARGET_SYS)),)
 TARGET_OS = Linux
+else ifneq ($(findstring mingw32,$(TARGET_SYS)),)
+TARGET_OS = Mingw32
 else
 echo "Target OS not supported ($(TARGET_SYS))"
 exit 1

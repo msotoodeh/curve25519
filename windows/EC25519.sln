@@ -3,6 +3,10 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EC25519", "EC25519.vcxproj", "{F20AF5CF-430A-4FA6-9E95-6D4CD94DFB9F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Asm64Lib", "Asm64Lib\Asm64Lib.vcxproj", "{68D97103-2D9B-435D-B7C4-99CE37748906}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Asm64Test", "Asm64Test\Asm64Test.vcxproj", "{B6EB1883-D25D-4CF8-AA24-6103BFC208AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -19,6 +23,18 @@ Global
 		{F20AF5CF-430A-4FA6-9E95-6D4CD94DFB9F}.Release|Win32.Build.0 = Release|Win32
 		{F20AF5CF-430A-4FA6-9E95-6D4CD94DFB9F}.Release|x64.ActiveCfg = Release|x64
 		{F20AF5CF-430A-4FA6-9E95-6D4CD94DFB9F}.Release|x64.Build.0 = Release|x64
+		{68D97103-2D9B-435D-B7C4-99CE37748906}.Debug|Win32.ActiveCfg = Debug|x64
+		{68D97103-2D9B-435D-B7C4-99CE37748906}.Debug|x64.ActiveCfg = Debug|x64
+		{68D97103-2D9B-435D-B7C4-99CE37748906}.Debug|x64.Build.0 = Debug|x64
+		{68D97103-2D9B-435D-B7C4-99CE37748906}.Release|Win32.ActiveCfg = Release|x64
+		{68D97103-2D9B-435D-B7C4-99CE37748906}.Release|x64.ActiveCfg = Release|x64
+		{68D97103-2D9B-435D-B7C4-99CE37748906}.Release|x64.Build.0 = Release|x64
+		{B6EB1883-D25D-4CF8-AA24-6103BFC208AE}.Debug|Win32.ActiveCfg = Debug|x64
+		{B6EB1883-D25D-4CF8-AA24-6103BFC208AE}.Debug|x64.ActiveCfg = Debug|x64
+		{B6EB1883-D25D-4CF8-AA24-6103BFC208AE}.Debug|x64.Build.0 = Debug|x64
+		{B6EB1883-D25D-4CF8-AA24-6103BFC208AE}.Release|Win32.ActiveCfg = Release|x64
+		{B6EB1883-D25D-4CF8-AA24-6103BFC208AE}.Release|x64.ActiveCfg = Release|x64
+		{B6EB1883-D25D-4CF8-AA24-6103BFC208AE}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

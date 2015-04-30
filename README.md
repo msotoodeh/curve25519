@@ -12,12 +12,25 @@ as you comply with the license terms. See license.txt file for details.
 
 Performance:
 ------------
-The library is not fully optimized yet. Squaring uses regular multiplication
-and modular inverse uses exponentiation. Still, it outperforms google's 
-implementation by a big margin (http://code.google.com/p/curve25519-donna/).
+This version of the library includes assembly language implementation using
+Microsoft assembler for windows 64-bit platforms. It improves the C performance
+by a factor of almost 3. Point multiplication now takes 159K cycles!!
+
+
+Assembly version of the library for Linux-based platforms will be added soon. 
+Keep watching this repository. 
+
+
+The C library outperforms google's implementation by a big margin. 
+See (http://code.google.com/p/curve25519-donna/).
+
 
 Timing for point multiplication:
 ```
+    windows7-64: VS2010 + MS Assembler
+        Donna: 779116 cycles = 229.152 usec @3.4GHz -- ratio: 4.887
+        Mehdi: 159438 cycles = 46.894 usec @3.4GHz -- delta: 79.54%     ** MSASM **
+
     windows7-64:  VS2010
         Donna: 780131 cycles = 229.450 usec @3.4GHz -- ratio: 1.682
         Mehdi: 463769 cycles = 136.403 usec @3.4GHz -- delta: 40.55%
@@ -34,7 +47,7 @@ Timing for point multiplication:
 
     debian-64: gcc (Debian 4.4.5-8) 4.4.5
         Donna: 860872 cycles = 253.198 usec @3.4GHz -- ratio: 1.610
-        Mehdi: 534584 cycles = 157.231 usec @3.4GHz -- delta: 37.90%
+        Mehdi: 534584 cycles = 157.231 usec @3.4GHz -- delta: 37.90%      
 ```
 
 Building:
