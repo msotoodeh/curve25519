@@ -24,8 +24,7 @@ include defines.inc
 PUBPROC readTSC
     rdtscp
     shl     rdx,32
-    xchg    eax,edx
-    xchg    rdx,rax
+    add     rax,rdx
     ret
 ENDPROC readTSC
 END
