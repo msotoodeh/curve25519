@@ -60,20 +60,20 @@ static const U64 _w_R2[4] = {   // R**2 mod BPO
 
 static const U64 _w_One[4] = { 1,0,0,0 };
 
-#define BPO_MINV32  0xD2B51DA312547E1B // -1/BPO mod 2**64
+#define BPO_MINV64  0xD2B51DA312547E1B // -1/BPO mod 2**64
 
 // Z = (X*Y)/R mod BPO
 void eco_MontMul(OUT U64 *Z, IN const U64 *X, IN const U64 *Y)
 {
     U64 T[6];
     ecp_WordMulSet(T, X[0], Y);                 // T = X[0]*Y
-    T[5]  = ecp_WordMulAdd(T, T, BPO_MINV32 * T[0], _w_BPO);
+    T[5]  = ecp_WordMulAdd(T, T, BPO_MINV64 * T[0], _w_BPO);
     T[5]  = ecp_WordMulAdd(T, T+1, X[1], Y);    // T = (T>>64) + X[1]*Y
-    T[5] += ecp_WordMulAdd(T, T, BPO_MINV32 * T[0], _w_BPO);
+    T[5] += ecp_WordMulAdd(T, T, BPO_MINV64 * T[0], _w_BPO);
     T[5]  = ecp_WordMulAdd(T, T+1, X[2], Y);    // T = (T>>64) + X[2]*Y
-    T[5] += ecp_WordMulAdd(T, T, BPO_MINV32 * T[0], _w_BPO);
+    T[5] += ecp_WordMulAdd(T, T, BPO_MINV64 * T[0], _w_BPO);
     T[5]  = ecp_WordMulAdd(T, T+1, X[3], Y);    // T = (T>>64) + X[3]*Y
-    T[5] += ecp_WordMulAdd(T, T, BPO_MINV32 * T[0], _w_BPO);
+    T[5] += ecp_WordMulAdd(T, T, BPO_MINV64 * T[0], _w_BPO);
     // T + (-1/BPO)*T*BPO mod 2**64 = 0 --> T[0] = 0
     // T[9] could be 2 at most
     while (T[5] != 0) T[5] += ecp_Sub(T+1, T+1, _w_maxBPO);

@@ -19,41 +19,41 @@
 ; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
-include defines.inc
+%include "defines.inc"
 
 ; _______________________________________________________________________
 ; MULSET_S0(YY,BB,XX)
 ; Out:  CARRY:Y = b*X
 ; _______________________________________________________________________
 
-MULSET_S0 macro YY,BB,XX
-    MULT    XX,BB
-    mov     YY,ACL
-    endm
+%macro MULSET_S0 3
+    MULT    %3,%2
+    mov     %1,ACL
+%endmacro
 
 ; _______________________________________________________________________
 ; MULSET_S1(YY,BB,XX)
 ; Out: CARRY:Y = b*X + CARRY
 ; _______________________________________________________________________
 
-MULSET_S1 macro YY,BB,XX
+%macro MULSET_S1 3
     mov     C0,ACH
-    MULT    XX,BB
+    MULT    %3,%2
     add     ACL,C0
     adc     ACH,0
-    mov     YY,ACL
-    endm
+    mov     %1,ACL
+%endmacro
 
 ; _______________________________________________________________________
 ; MULADD_S0(YY,BB,XX)
 ; Out:  CARYY:Y = b*X + Y
 ; _______________________________________________________________________
 
-MULADD_S0 macro YY,BB,XX
-    MULT    XX,BB
-    add     YY,ACL
+%macro MULADD_S0 3
+    MULT    %3,%2
+    add     %1,ACL
     adc     ACH,0
-    endm
+%endmacro
     
 ; _______________________________________________________________________
 ; MULADD_S1(YY,BB,XX)
@@ -61,54 +61,54 @@ MULADD_S0 macro YY,BB,XX
 ;      ZF = set if no carry
 ; _______________________________________________________________________
 
-MULADD_S1 macro YY,BB,XX
+%macro MULADD_S1 3
     mov     C0,ACH
-    MULT    XX,BB
+    MULT    %3,%2
     add     ACL,C0
     adc     ACH,0
-    add     YY,ACL
+    add     %1,ACL
     adc     ACH,0
-    endm
+%endmacro
      
-mulset macro YY,XX
-    MULSET_S0 [YY],XX,A0
-    MULSET_S1 [YY+8],XX,A1
-    MULSET_S1 [YY+16],XX,A2
-    MULSET_S1 [YY+24],XX,A3
-    mov     [YY+32],ACH
-    endm
+%macro mulset 2
+    MULSET_S0 [%1],%2,A0
+    MULSET_S1 [%1+8],%2,A1
+    MULSET_S1 [%1+16],%2,A2
+    MULSET_S1 [%1+24],%2,A3
+    mov     [%1+32],ACH
+%endmacro
 
-muladd macro YY,XX
-    MULADD_S0 [YY],XX,A0
-    MULADD_S1 [YY+8],XX,A1
-    MULADD_S1 [YY+16],XX,A2
-    MULADD_S1 [YY+24],XX,A3
-    mov     [YY+32],ACH
-    endm
+%macro muladd 2
+    MULADD_S0 [%1],%2,A0
+    MULADD_S1 [%1+8],%2,A1
+    MULADD_S1 [%1+16],%2,A2
+    MULADD_S1 [%1+24],%2,A3
+    mov     [%1+32],ACH
+%endmacro
 
 ; _______________________________________________________________________
 ;
 ;   void ecp_MulReduce(U64* Z, const U64* X, const U64* Y)
 ; Uses: A, B, C0
 ; _______________________________________________________________________
-PUBPROC ecp_MulReduce
+    PUBPROC ecp_MulReduce
 
-Z   equ ARG1
-X   equ ARG2
-Y   equ ARG3
+%define Z   ARG1
+%define X   ARG2
+%define Y   ARG3
 
     PushB
     push    Z
     sub     rsp,64                  ; T[8]
 
-T   equ rsp
-U   equ rsp+32
+%define T   rsp
+%define U   rsp+32
     
     LOADA   Y
     LOADB   X
 
-    mulset  T,B0
-    muladd  T+8,B1
+    mulset  T,   B0
+    muladd  T+8, B1
     muladd  T+16,B2
     muladd  T+24,B3
 
@@ -137,5 +137,3 @@ mr_2:
 
     PopB
     ret
-ENDPROC ecp_MulReduce
-END

@@ -31,15 +31,6 @@ extern "C" {
 
 extern const U8 ecp_BasePoint[32];
 
-// Set X = value
-void ecp_SetValue(U64* X, U64 value);
-// Y = X
-void ecp_Copy(U64* Y, const U64* X);
-// Computes Z = X*Y mod P.
-void ecp_MulMod(U64* Z, const U64* X, const U64* Y);
-// Return Y = 1/X mod P
-void ecp_Inverse(U64 *Y, const U64 *X);
-
 // Return point Q = k*P
 void ecp_PointMultiply(OUT U8 *Q, IN const U8 *P, IN const U8 *K, IN int len);
 
@@ -94,6 +85,19 @@ void ecp_WordMulSet(U64 *Y, U64 b, const U64* X);
 void ecp_MulReduce(U64* Z, const U64* X, const U64* Y);
 // Computes Z = X*X
 void ecp_SqrReduce(U64* Y, const U64* X);
+
+// -- internal insterfaces -------------------------------------------------
+// Set X = value
+void ecp_SetValue(U64* X, U64 value);
+// Y = X
+void ecp_Copy(U64* Y, const U64* X);
+// Computes Z = X*Y mod P.
+void ecp_MulMod(U64* Z, const U64* X, const U64* Y);
+// Y = X ** E mod P
+// E is in little-endian format
+void ecp_ExpMod(U64* Y, const U64* X, const U8* E, int bytes);
+// Return Y = 1/X mod P
+void ecp_Inverse(U64 *Y, const U64 *X);
 
 
 #ifdef __cplusplus

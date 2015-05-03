@@ -31,6 +31,14 @@ Timing for point multiplication:
         Donna: 779116 cycles = 229.152 usec @3.4GHz -- ratio: 4.887
         Mehdi: 159438 cycles = 46.894 usec @3.4GHz -- delta: 79.54%     ** MSASM **
 
+    Mingw-x86_64: gcc 9.9.2, nasm 2.11.08
+        Donna: 851840 cycles = 250.541 usec @3.4GHz -- ratio: 5.331
+        Mehdi: 159778 cycles = 46.994 usec @3.4GHz -- delta: 81.24%     ** NASM **
+
+    ubuntu-12.04.3-x86_64: nasm 2.09.10
+        Donna: 867671 cycles = 255.197 usec @3.4GHz -- ratio: 5.464
+        Mehdi: 158787 cycles = 46.702 usec @3.4GHz -- delta: 81.70%     ** NASM **
+
     windows7-64:  VS2010
         Donna: 780131 cycles = 229.450 usec @3.4GHz -- ratio: 1.682
         Mehdi: 463769 cycles = 136.403 usec @3.4GHz -- delta: 40.55%
@@ -60,3 +68,15 @@ switch (see Makefile).
 Second configurable switch controls usage of TSC (Time Stamp Counter). It is
 only used as a high resolution timer for performance measurements. You need 
 to turn ECP_NO_TSC switch on if your target does not support it.
+
+For building the library using the assembly sources, two assemblers are currently
+supported: Microsoft Assembler (Windows) and NASM (Windows/Linux). 
+NASM can be downloaded from: http://www.nasm.us/pub/nasm/releasebuilds/2.11.08/
+
+- For Windows platforms, open windows/EC25519.sln using Visual Studio 2010
+  and build Asm64Test project for x64 configuration.
+  You also have the option of using Mingw and nasm on windows platforms,
+- For Linux platforms, Ubuntu has been tested so far. For X86 assembly support 
+  you need to install nasm first and then run: 'make asm' from project root.
+  Output files will be created in asm64/build/test64.
+

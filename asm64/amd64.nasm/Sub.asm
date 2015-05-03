@@ -19,18 +19,18 @@
 ; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
-include defines.inc
+%include "defines.inc"
 
 ; _______________________________________________________________________
 ;
 ;   Z = X - Y
 ;   U64 ecp_Sub(U64* Z, const U64* X, const U64* Y) 
 ; _______________________________________________________________________
-PUBPROC ecp_Sub
+    PUBPROC ecp_Sub
     
-Z   equ ARG1
-X   equ ARG2
-Y   equ ARG3M
+%define Z   ARG1
+%define X   ARG2
+%define Y   ARG3M
 
     SaveArg3
     LOADA   X
@@ -39,16 +39,14 @@ Y   equ ARG3M
     STOREA  Z
     RestoreArg3
     ret
-
-ENDPROC ecp_Sub
     
 ; _______________________________________________________________________
 ;
 ;   Z = X - Y
 ;   void ecp_SubReduce(U64* Z, const U64* X, const U64* Y) 
 ; _______________________________________________________________________
-PUBPROC ecp_SubReduce
-
+    PUBPROC ecp_SubReduce
+    
     SaveArg3
     LOADA   X
     SUBA    [Y+24],[Y+16],[Y+8],[Y]
@@ -62,21 +60,19 @@ sr_2:
     RestoreArg3
     ret
 
-ENDPROC ecp_SubReduce
-
-;undef X
-;undef Y
-;undef Z
+%undef X
+%undef Y
+%undef Z
 
 ; _______________________________________________________________________
 ;
 ;   compare X and Y, return -1,0,+1
 ;   int ecp_Cmp(const U64* X, const U64* Y) 
 ; _______________________________________________________________________
-PUBPROC ecp_Cmp
+    PUBPROC ecp_Cmp
     
-X   equ ARG1
-Y   equ ARG2
+%define X   ARG1
+%define Y   ARG2
 
     mov     ACL,[X+24]
     sub     ACL,[Y+24]
@@ -95,6 +91,4 @@ cmp_1:
     lea     ACL,[ACL*2+1]
 cmp_2:
     ret
-
-ENDPROC ecp_Cmp
-END    
+    

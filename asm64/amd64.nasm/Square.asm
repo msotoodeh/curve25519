@@ -19,25 +19,24 @@
 ; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
-include defines.inc
+%include "defines.inc"
 
 ; _______________________________________________________________________
 ;
 ;   void ecp_SqrReduce(U64* Y, const U64* X)
 ; _______________________________________________________________________
-PUBPROC ecp_SqrReduce
+    PUBPROC ecp_SqrReduce
 
-Y   equ ARG1
-X   equ ARG2M
-
+%define Y   ARG1
+%define X   ARG2M
     PushB
     push    C1
     SaveArg2
     push    Y
     sub     rsp,64                  ; T[8]
 
-T   equ rsp
-U   equ rsp+32
+%define T   rsp
+%define U   rsp+32
                                     ; B3 | B2 | B1 | B0 | A3 | A2 | A1 | A0
     MULSET  A2,A1, [X],   [X+8]     ;    |         |         |  x0*x1  |
     MULSET  B0,A3, [X],   [X+24]    ;    |         |  x0*x3  |  x0*x1  |
@@ -101,5 +100,3 @@ sqr_2:
     PopB
     ret
 
-ENDPROC ecp_SqrReduce
-END

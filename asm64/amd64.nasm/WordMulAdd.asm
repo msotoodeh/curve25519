@@ -19,82 +19,109 @@
 ; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
-include defines.inc
+%include "defines.inc"
 
 ; _______________________________________________________________________
 ;
-;   Z = X - Y
-;   U64 ecp_Sub(U64* Z, const U64* X, const U64* Y) 
+;   Z[4] = Y[4] + b*X[4]    mod 2**255-19
+;   void ecp_WordMulAddReduce(U64 *Z, const U64* Y, U64 b, const U64* X) 
 ; _______________________________________________________________________
-PUBPROC ecp_Sub
-    
-Z   equ ARG1
-X   equ ARG2
-Y   equ ARG3M
+    PUBPROC ecp_WordMulAddReduce
 
+    SaveArg2
     SaveArg3
-    LOADA   X
-    SUBA    [Y+24],[Y+16],[Y+8],[Y]
-    SBB     ACL,ACL
-    STOREA  Z
-    RestoreArg3
-    ret
+    SaveArg4
 
-ENDPROC ecp_Sub
+%define Z   ARG1
+%define Y   ARG2M
+%define b   ARG3M
+%define X   ARG4M
+
+    MULADD_W0 A0,[Y],b,[X]
+    MULADD_W1 A1,[Y+8],b,[X+8]
+    MULADD_W1 A2,[Y+16],b,[X+16]
+    MULADD_W1 A3,[Y+24],b,[X+24]
+
+    ; ZF set if ACH == 0
+    jz      wma_2
+    MULT    38,ACH
+    ADDA    0,0,ACH,ACL
+    jnc     wma_2
     
+wma_1:
+    ADDA    0,0,0,38
+    jc      wma_1
+    
+wma_2:
+    ; return result
+    STOREA  Z
+
+    RestoreArg4
+    RestoreArg3
+    RestoreArg2
+    ret
+    
+%undef X
+%undef Y
+%undef Z
+%undef b
+
 ; _______________________________________________________________________
 ;
-;   Z = X - Y
-;   void ecp_SubReduce(U64* Z, const U64* X, const U64* Y) 
+;   C:Z[5] = Y[5] + b*X[4]
+;   U64 ecp_WordMulAdd(U64 *Z, const U64* Y, U64 b, const U64* X) 
 ; _______________________________________________________________________
-PUBPROC ecp_SubReduce
+    PUBPROC ecp_WordMulAdd
 
+    SaveArg2
     SaveArg3
-    LOADA   X
-    SUBA    [Y+24],[Y+16],[Y+8],[Y]
-    jnc     sr_2
-sr_1:
-    ; add maxP = 2*P
-    ADDA    -1,-1,-1,-38
-    jnc     sr_1
-sr_2:
+    SaveArg4
+
+%define Z   ARG1
+%define Y   ARG2M
+%define b   ARG3M
+%define X   ARG4M
+
+    MULADD_W0 A0,[Y],b,[X]
+    MULADD_W1 A1,[Y+8],b,[X+8]
+    MULADD_W1 A2,[Y+16],b,[X+16]
+    MULADD_W1 A3,[Y+24],b,[X+24]
     STOREA  Z
+    xor     ACL,ACL
+    add     ACH,[Y+32]
+    adc     ACL,ACL
+    mov     [Z+32],ACH
+
+    RestoreArg4
     RestoreArg3
+    RestoreArg2
     ret
 
-ENDPROC ecp_SubReduce
-
-;undef X
-;undef Y
-;undef Z
+%undef X
+%undef Y
+%undef Z
+%undef b
 
 ; _______________________________________________________________________
 ;
-;   compare X and Y, return -1,0,+1
-;   int ecp_Cmp(const U64* X, const U64* Y) 
+;   Y[5] = b*X[4]
+;   void ecp_WordMulSet(U64 *Y, U64 b, const U64* X) 
 ; _______________________________________________________________________
-PUBPROC ecp_Cmp
-    
-X   equ ARG1
-Y   equ ARG2
+    PUBPROC ecp_WordMulSet
 
-    mov     ACL,[X+24]
-    sub     ACL,[Y+24]
-    jnz     cmp_1
-    mov     ACL,[X+16]
-    sub     ACL,[Y+16]
-    jnz     cmp_1
-    mov     ACL,[X+8]
-    sub     ACL,[Y+8]
-    jnz     cmp_1
-    mov     ACL,[X]
-    sub     ACL,[Y]
-    jz      cmp_2
-cmp_1:
-    sbb     ACL,ACL
-    lea     ACL,[ACL*2+1]
-cmp_2:
+    SaveArg2
+    SaveArg3
+
+%define Y   ARG1
+%define b   ARG2M
+%define X   ARG3M
+
+    MULSET_W0 A0,b,[X]
+    MULSET_W1 A1,b,[X+8]
+    MULSET_W1 A2,b,[X+16]
+    MULSET_W1 A3,b,[X+24]
+    STOREA  Y
+    mov     [Y+32],ACH
+    RestoreArg3
+    RestoreArg2
     ret
-
-ENDPROC ecp_Cmp
-END    

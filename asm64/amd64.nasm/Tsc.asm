@@ -19,45 +19,11 @@
 ; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
-include defines.inc
+%include "defines.inc"
 
-; _______________________________________________________________________
-;
-;   Z = X + Y
-;   U64 ecp_Add(U64* Z, const U64* X, const U64* Y) 
-; _______________________________________________________________________
-Z   equ ARG1
-X   equ ARG2
-Y   equ ARG3M
-
-PUBPROC ecp_Add
-    SaveArg3
-    LOADA   X
-    xor     ACL,ACL
-    ADDA    [Y+24],[Y+16],[Y+8],[Y]
-    adc     ACL,ACL
-    STOREA  Z
-    RestoreArg3
+    PUBPROC readTSC
+    rdtscp
+    shl     rdx,32
+    add     eax,edx
     ret
-ENDPROC ecp_Add
-   
-; _______________________________________________________________________
-;
-;   Z = X + Y
-;   void ecp_AddReduce(U64* Z, const U64* X, const U64* Y) 
-; _______________________________________________________________________
 
-PUBPROC ecp_AddReduce
-    SaveArg3
-    LOADA   X
-    ADDA    [Y+24],[Y+16],[Y+8],[Y]
-    jnc     short ar_2
-ar_1:
-    ADDA    0,0,0,38
-    jc      short ar_1
-ar_2:
-    STOREA  Z
-    RestoreArg3
-    ret
-ENDPROC ecp_AddReduce
-END

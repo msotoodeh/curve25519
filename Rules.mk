@@ -21,10 +21,13 @@ endif
 
 ifneq ($(findstring cygwin,$(TARGET_SYS)),)
 TARGET_OS = Cygwin
+TARGET_ABI = GCC
 else ifneq ($(findstring linux,$(TARGET_SYS)),)
 TARGET_OS = Linux
-else ifneq ($(findstring mingw32,$(TARGET_SYS)),)
-TARGET_OS = Mingw32
+TARGET_ABI = GCC
+else ifneq ($(findstring mingw,$(TARGET_SYS)),)
+TARGET_OS = Mingw
+TARGET_ABI = MSVC
 else
 echo "Target OS not supported ($(TARGET_SYS))"
 exit 1

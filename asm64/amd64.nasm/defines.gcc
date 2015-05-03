@@ -19,250 +19,245 @@
 ; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
-; MASM macros
+;
+; Definitions for NASM assembler
+; ABI: gcc
+;
+; Tested with NASM version 2.11.08
 
-PUBPROC macro pname
-_TEXT segment
-PUBLIC pname
-pname PROC
-    endm
+%macro  PUBPROC 1
+section .text
+    global %1
+%1:
+%endmacro
 
-ENDPROC macro pname
-pname ENDP
-_TEXT ends
-    endm
-
-; Restore these registers across calls: rsp, rbx, rbp, rdi, rsi, r12,r13,r14,r15
+; Restore these registers across calls: rsp, rbx, rbp, r12,r13,r14,r15
 
 ; 128-bit accumulator
-ACL     equ rax
-ACH     equ rdx 
-CARRY   equ ACH
+%define ACL     rax
+%define ACH     rdx 
+%define CARRY   ACH
 
 ; 256-bit accumulator-A
 ; Accumulator-A uses volatile registers
-A0      equ r8
-A1      equ r9
-A2      equ r10
-A3      equ r11
+%define A0      r8
+%define A1      r9
+%define A2      r10
+%define A3      r11
 
 ; 256-bit accumulator-B
-B0      equ r12
-B1      equ r13
-B2      equ r14
-B3      equ r15
+%define B0      r12
+%define B1      r13
+%define B2      r14
+%define B3      r15
 
-C0      equ rcx
-C1      equ rbx
-C2      equ rdi
-C3      equ rsi
-C4      equ rbp
+%define C0      rcx
+%define C1      rbx
+%define C2      rdi
+%define C3      rsi
+%define C4      rbp
 
 ; From left to right
-ARG1    equ rcx
-ARG2    equ rdx
-ARG3    equ r8
-ARG4    equ r9
+%define ARG1    rdi
+%define ARG2    rsi
+%define ARG3    rdx
+%define ARG4    rcx
+%define ARG5    r8
+%define ARG6    r9
 
 ; ARG switching 
-ARG1M   equ rdi
-ARG2M   equ rsi
-ARG3M   equ rbx
-ARG4M   equ rbp
+%define ARG1M   rdi
+%define ARG2M   rsi
+%define ARG3M   rbx
+%define ARG4M   rbp
 
-SaveArg1 macro
-    push    ARG1M
-    mov     ARG1M,ARG1
-    endm
+%macro SaveArg1 0
+%endmacro
 
-RestoreArg1 macro
-    pop     ARG1M
-    endm
+%macro RestoreArg1 0
+%endmacro
 
-SaveArg2 macro
-    push    ARG2M
-    mov     ARG2M,ARG2
-    endm
+%macro SaveArg2 0
+%endmacro
 
-RestoreArg2 macro
-    pop     ARG2M
-    endm
+%macro RestoreArg2 0
+%endmacro
 
-SaveArg3 macro
+%macro SaveArg3 0
     push    ARG3M
     mov     ARG3M,ARG3
-    endm
+%endmacro
 
-RestoreArg3 macro
+%macro RestoreArg3 0
     pop     ARG3M
-    endm
+%endmacro
 
-SaveArg4 macro
+%macro SaveArg4 0
     push    ARG4M
     mov     ARG4M,ARG4
-    endm
+%endmacro
 
-RestoreArg4 macro
+%macro RestoreArg4 0
     pop     ARG4M
-    endm
+%endmacro
 
-PushB macro
+%macro PushB 0
     push    B3
     push    B2
     push    B1
     push    B0
-    endm
+%endmacro
 
-PopB macro
+%macro PopB 0
     pop     B0
     pop     B1
     pop     B2
     pop     B3
-    endm
+%endmacro
 
-LOADA macro XX
-    mov     A3,[XX+24]
-    mov     A2,[XX+16]
-    mov     A1,[XX+8]
-    mov     A0,[XX]
-    endm
+%macro LOADA 1
+    mov     A3,[%1+24]
+    mov     A2,[%1+16]
+    mov     A1,[%1+8]
+    mov     A0,[%1]
+%endmacro
 
-STOREA macro XX
-    mov     [XX+24],A3
-    mov     [XX+16],A2
-    mov     [XX+8],A1
-    mov     [XX],A0
-    endm
+%macro STOREA 1
+    mov     [%1+24],A3
+    mov     [%1+16],A2
+    mov     [%1+8],A1
+    mov     [%1],A0
+%endmacro
 
-LOADB macro XX
-    mov     B3,[XX+24]
-    mov     B2,[XX+16]
-    mov     B1,[XX+8]
-    mov     B0,[XX]
-    endm
+%macro LOADB 1
+    mov     B3,[%1+24]
+    mov     B2,[%1+16]
+    mov     B1,[%1+8]
+    mov     B0,[%1]
+%endmacro
 
-STOREB macro XX
-    mov     [XX+24],B3
-    mov     [XX+16],B2
-    mov     [XX+8],B1
-    mov     [XX],B0
-    endm
+%macro STOREB 1
+    mov     [%1+24],B3
+    mov     [%1+16],B2
+    mov     [%1+8],B1
+    mov     [%1],B0
+%endmacro
 
 ; _______________________________________________________________________
 ;
 ; Out:  Y += X
 ; _______________________________________________________________________
 
-ADD4 macro y3,y2,y1,y0, x3,x2,x1,x0
-    add     y0,x0
-    adc     y1,x1
-    adc     y2,x2
-    adc     y3,x3
-    endm
+%macro ADD4 8
+    add     %4, %8
+    adc     %3, %7
+    adc     %2, %6
+    adc     %1, %5
+%endmacro
 
-ADDA macro x3,x2,x1,x0
-    ADD4 A3,A2,A1,A0, x3,x2,x1,x0
-    endm
+%macro ADDA 4
+    ADD4 A3,A2,A1,A0, %1,%2,%3,%4
+%endmacro
 
-ADDB macro x3,x2,x1,x0
-    ADD4 B3,B2,B1,B0, x3,x2,x1,x0
-    endm
+%macro ADDB 4
+    ADD4 B3,B2,B1,B0, %1,%2,%3,%4
+%endmacro
 
 ; _______________________________________________________________________
 ;
 ; Out:  Y -= X
 ; _______________________________________________________________________
 
-SUB4 macro y3,y2,y1,y0, x3,x2,x1,x0
-    sub     y0,x0
-    sbb     y1,x1
-    sbb     y2,x2
-    sbb     y3,x3
-    endm
+%macro SUB4 8
+    sub     %4, %8
+    sbb     %3, %7
+    sbb     %2, %6
+    sbb     %1, %5
+%endmacro
     
-SUBA macro x3,x2,x1,x0
-    SUB4 A3,A2,A1,A0, x3,x2,x1,x0
-    endm
+%macro SUBA 4
+    SUB4 A3,A2,A1,A0, %1,%2,%3,%4
+%endmacro
 
-SUBB macro x3,x2,x1,x0
-    SUB4 B3,B2,B1,B0, x3,x2,x1,x0
-    endm
+%macro SUBB 4
+    SUB4 B3,B2,B1,B0, %1,%2,%3,%4
+%endmacro
 
 ; _______________________________________________________________________
 ; MULT(a,b)
 ; IN:   a, b
 ; Out:  ACH:ACL = a*b
 ; _______________________________________________________________________
-MULT macro a,b
-    mov     ACL,a
-    mul     qword ptr b
-    endm
+%macro MULT 2
+    mov     ACL,%1
+    mul     qword %2
+%endmacro
    
 ; _______________________________________________________________________
 ; MULSET(u,v,a,b)
 ; IN:   a, b
 ; Out:  u:v = a*b
 ; _______________________________________________________________________
-MULSET macro u,v,a,b
-    MULT    a,b
-    mov     v,ACL
-    mov     u,ACH
-    endm
+%macro MULSET 4
+    MULT    %3,%4
+    mov     %2,ACL
+    mov     %1,ACH
+%endmacro
    
 ; _______________________________________________________________________
 ; MULADD (u,v,a,b)
 ; IN:   a, b
 ; Out:  u:v += a*b
 ; _______________________________________________________________________
-MULADD macro u,v,a,b
-    MULT    a,b
-    add     v,ACL
-    adc     u,ACH
-    endm
+%macro MULADD 4
+    MULT    %3,%4
+    add     %2,ACL
+    adc     %1,ACH
+%endmacro
 
 ; _______________________________________________________________________
 ;
 ; IN:   a
 ; Out:  ACH:ACL = a*a
 ; _______________________________________________________________________
-SQR  macro a
-    mov     ACL,a
+%macro SQR  1
+    mov     ACL,%1
     mul     ACL
-    endm
+%endmacro
 
 ; _______________________________________________________________________
 ; SQRSET(u,v,a)
 ; IN:   a
 ; Out:  u:v = a*a
 ; _______________________________________________________________________
-SQRSET macro u,v,a
-    SQR     a
-    mov     v,ACL
-    mov     u,ACH
-    endm
+%macro SQRSET 3
+    SQR     %3
+    mov     %2,ACL
+    mov     %1,ACH
+%endmacro
 
 ; _______________________________________________________________________
 ; SQRADD(u,v,a)
 ; IN:   a
 ; Out:  u:v += a*a
 ; _______________________________________________________________________
-SQRADD macro u,v,a
-    SQR     a
-    add     v,ACL
-    adc     u,ACH
-    endm
+%macro SQRADD 3
+    SQR     %3
+    add     %2,ACL
+    adc     %1,ACH
+%endmacro
 
 ; _______________________________________________________________________
 ; MULADD_W0(ZZ,YY,BB,XX)
 ; Out:  CARRY:Z = b*X + Y
 ; _______________________________________________________________________
 
-MULADD_W0 macro ZZ,YY,BB,XX
-    MULT    XX,BB
-    add     ACL,YY
+%macro MULADD_W0 4 ; (ZZ,YY,BB,XX)
+    MULT    %4,%3
+    add     ACL,%2
     adc     ACH,0
-    mov     ZZ,ACL
-    endm
+    mov     %1,ACL
+%endmacro
 
 ; _______________________________________________________________________
 ; MULADD_W1(ZZ,YY,BB,XX)
@@ -270,24 +265,24 @@ MULADD_W0 macro ZZ,YY,BB,XX
 ;      ZF = set if no carry
 ; _______________________________________________________________________
 
-MULADD_W1 macro ZZ,YY,BB,XX
-    mov     ZZ,ACH
-    MULT    XX,BB
-    add     ACL,YY
+%macro MULADD_W1 4
+    mov     %1,ACH
+    MULT    %4,%3
+    add     ACL,%2
     adc     ACH,0
-    add     ZZ,ACL
+    add     %1,ACL
     adc     ACH,0
-    endm
+%endmacro
 
 ; _______________________________________________________________________
 ; MULSET_W0(YY,BB,XX)
 ; Out:  CARRY:Y = b*X
 ; _______________________________________________________________________
 
-MULSET_W0 macro YY,BB,XX
-    MULT    XX,BB
-    mov     YY,ACL
-    endm
+%macro MULSET_W0 3
+    MULT    %3,%2
+    mov     %1,ACL
+%endmacro
 
 ; _______________________________________________________________________
 ; MULSET_W1(YY,BB,XX)
@@ -295,9 +290,9 @@ MULSET_W0 macro YY,BB,XX
 ;      ZF = set if no carry
 ; _______________________________________________________________________
 
-MULSET_W1 macro YY,BB,XX
-    mov     YY,ACH
-    MULT    XX,BB
-    add     YY,ACL
+%macro MULSET_W1 3
+    mov     %1,ACH
+    MULT    %3,%2
+    add     %1,ACL
     adc     ACH,0
-    endm
+%endmacro

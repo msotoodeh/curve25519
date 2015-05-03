@@ -24,20 +24,8 @@
 #include "curve25519_mehdi_x64.h"
 #include "curve25519_donna.h"
 
-extern void eco_InvModBPO(OUT U64 *Y, IN const U64 *X);
-
 extern void ecp_PrintBytes(IN const char *name, IN const U8 *data, IN U32 size);
 extern void ecp_PrintWords(IN const char *name, IN const U64 *data, IN U32 size);
-// Computes Z = X*Y mod P.
-// Output fits into 4 words but could be greater than P
-extern void ecp_MulReduce(U64* Z, const U64* X, const U64* Y) ;
-// Computes Z = X*X mod P.
-extern void ecp_SqrReduce(U64* Y, const U64* X) ;
-// Computes Z = X*Y mod P.
-extern void ecp_MulMod(U64* Z, const U64* X, const U64* Y) ;
-// Y = X ** E mod P
-// E is in little-endian format
-extern void ecp_ExpMod(U64* Y, const U64* X, const U8* E, int bytes);
 
 /*
     The curve: y2 = x^3 + 486662x^2 + x  over 2^255 - 19
@@ -56,7 +44,6 @@ extern void ecp_ExpMod(U64* Y, const U64* X, const U8* E, int bytes);
     -------------------------------------------------------------------------
     Internal points are represened as X/Z and maintained as a single array
     of 16 words: {X[4]:Z[4]}
-
 */
 static const U64 inv_5[4] = {   // 1/5 mod p
     0x9999999999999996,0x9999999999999999,0x9999999999999999,0x1999999999999999 };
@@ -119,8 +106,6 @@ static const U64 _w_P[4] = {
     0xFFFFFFFFFFFFFFED,0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFFFFFFF,0x7FFFFFFFFFFFFFFF };
 
 #define ECP_MOD(X)  while (ecp_Cmp(X, _w_P) >= 0) ecp_Sub(X, X, _w_P)
-
-#define PR(V) ecp_PrintBytes(#V, ecp_ReverseByteOrder(a, V), 32)
 
 int ecp_IsZero(IN const U64 *X)
 {

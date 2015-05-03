@@ -23,6 +23,5 @@ distclean: clean
 	@rm -rf windows/Asm64Lib/x64/ windows/Asm64Test/x64/
 
 archive: distclean
-	tar cvf curve25519-mehdi-src.tar *
-
+	tar cvf /tmp/curve25519-mehdi-`date '+%Y%m%d'`-src.tar *
 
