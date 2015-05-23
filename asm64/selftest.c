@@ -24,8 +24,8 @@
 #include "curve25519_mehdi_x64.h"
 #include "curve25519_donna.h"
 
-extern void ecp_PrintBytes(IN const char *name, IN const U8 *data, IN U32 size);
-extern void ecp_PrintWords(IN const char *name, IN const U64 *data, IN U32 size);
+extern void ecp_PrintHexBytes(IN const char *name, IN const U8 *data, IN U32 size);
+extern void ecp_PrintHexWords(IN const char *name, IN const U64 *data, IN U32 size);
 
 /*
     The curve: y2 = x^3 + 486662x^2 + x  over 2^255 - 19
@@ -124,7 +124,7 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert I+p == I mod p FAILED!!\n");
-        ecp_PrintWords("A_1", A, 4);
+        ecp_PrintHexWords("A_1", A, 4);
     }
 
     if (ecp_Cmp(_w_I, _w_P) >= 0)
@@ -145,7 +145,7 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert I*D FAILED!!\n");
-        ecp_PrintWords("A_2", B, 4);
+        ecp_PrintHexWords("A_2", B, 4);
     }
 
     // assert I*I == p-1
@@ -154,7 +154,7 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert mul(I,I) == p-1 FAILED!!\n");
-        ecp_PrintWords("A_3", A, 4);
+        ecp_PrintHexWords("A_3", A, 4);
     }
 
     // assert I**2 == p-1
@@ -164,7 +164,7 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert square(I) == p-1 FAILED!!\n");
-        ecp_PrintWords("B_4", B, 4);
+        ecp_PrintHexWords("B_4", B, 4);
     }
 
     // assert (-I)*(-I) == p-1
@@ -174,8 +174,8 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert mul(-I,-I) == p-1 FAILED!!\n");
-        ecp_PrintWords("A_5", A, 4);
-        ecp_PrintWords("B_5", B, 4);
+        ecp_PrintHexWords("A_5", A, 4);
+        ecp_PrintHexWords("B_5", B, 4);
     }
 
     ecp_SetValue(A, 50153);
@@ -185,8 +185,8 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("invmod FAILED!!\n");
-        ecp_PrintWords("inv_50153", B, 4);
-        ecp_PrintWords("expected_1", A, 4);
+        ecp_PrintHexWords("inv_50153", B, 4);
+        ecp_PrintHexWords("expected_1", A, 4);
     }
 
     // assert expmod(d,(p-1)/2,p) == p-1
@@ -195,7 +195,7 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert expmod(d,(p-1)/2,p) == p-1 FAILED!!\n");
-        ecp_PrintWords("A_3", A, 4);
+        ecp_PrintHexWords("A_3", A, 4);
     }
 
     ecp_CalculateY(a, ecp_BasePoint);
@@ -204,7 +204,7 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert clacY(Base) == Base.y FAILED!!\n");
-        ecp_PrintBytes("Calculated_Base.y", a, 32);
+        ecp_PrintHexBytes("Calculated_Base.y", a, 32);
     }
 
     ecp_PointMultiply(a, ecp_BasePoint, _b_Om1, 32);
@@ -212,7 +212,7 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert (l-1).Base == Base FAILED!!\n");
-        ecp_PrintBytes("A_5", a, 32);
+        ecp_PrintHexBytes("A_5", a, 32);
     }
 
     ecp_PointMultiply(a, ecp_BasePoint, _b_O, 32);
@@ -221,20 +221,20 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert l.Base == 0 FAILED!!\n");
-        ecp_PrintBytes("A_6", a, 32);
+        ecp_PrintHexBytes("A_6", a, 32);
     }
 
     // Key generation
     ecp_PointMultiply(a, ecp_BasePoint, pk1, 32);
-    ecp_PrintBytes("PublicKey1", a, 32);
+    ecp_PrintHexBytes("PublicKey1", a, 32);
     ecp_PointMultiply(b, ecp_BasePoint, pk2, 32);
-    ecp_PrintBytes("PublicKey2", b, 32);
+    ecp_PrintHexBytes("PublicKey2", b, 32);
 
     // ECDH - key exchange
     ecp_PointMultiply(c, b, pk1, 32);
-    ecp_PrintBytes("SharedKey1", c, 32);
+    ecp_PrintHexBytes("SharedKey1", c, 32);
     ecp_PointMultiply(d, a, pk2, 32);
-    ecp_PrintBytes("SharedKey2", d, 32);
+    ecp_PrintHexBytes("SharedKey2", d, 32);
     if (memcmp(c, d, 32) != 0)
     {
         rc++;
@@ -249,9 +249,9 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert k1.k2.D == D FAILED!!\n");
-        ecp_PrintBytes("D", d, 4);
-        ecp_PrintBytes("C", c, 4);
-        ecp_PrintBytes("A", a, 4);
+        ecp_PrintHexBytes("D", d, 4);
+        ecp_PrintHexBytes("C", c, 4);
+        ecp_PrintHexBytes("A", a, 4);
     }
 
     ecp_BytesToWords(A, _b_k1);
@@ -261,8 +261,8 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert 1/k1 == k2 mod BPO FAILED!!\n");
-        ecp_PrintWords("Calc", C, 4);
-        ecp_PrintWords("Expt", B, 4);
+        ecp_PrintHexWords("Calc", C, 4);
+        ecp_PrintHexWords("Expt", B, 4);
     }
 
     eco_MulMod(C, A, B);
@@ -270,7 +270,7 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert k1*k2 == 1 mod BPO FAILED!!\n");
-        ecp_PrintWords("Calc", C, 4);
+        ecp_PrintHexWords("Calc", C, 4);
     }
     return rc;
 }

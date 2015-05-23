@@ -13,8 +13,15 @@ CFLAGS += -I. -I../source -static-libgcc -Wall
 
 test: CFLAGS += -DECP_SELF_TEST
 
-LIB_SRCS = curve25519_mehdi.c curve25519_utils.c curve25519_order.c
-TEST_SRCS = curve25519_donna.c curve25519_test.c
+LIB_SRCS = \
+    curve25519_mehdi.c \
+    curve25519_order.c \
+    curve25519_utils.c \
+    ed25519_sign.c \
+    ed25519_verify.c \
+    sha512.c
+
+TEST_SRCS = curve25519_donna.c curve25519_selftest.c curve25519_test.c
     
 LIB_OBJS = $(LIB_SRCS:%.c=build/%.o)
 TEST_OBJS = $(TEST_SRCS:%.c=build/%.o)

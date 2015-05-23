@@ -47,18 +47,18 @@ typedef struct
     U32 Z[8];   // 
 } XZ_POINT;
 
-static const U32 _w_P[8] = {
+const U32 _w_P[8] = {
     0xFFFFFFED,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,
     0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0x7FFFFFFF
 };
 
 // Maximum number of prime p that fits into 256-bits
-static const U32 _w_maxP[8] = {   // 2*P < 2**256
+const U32 _w_maxP[8] = {   // 2*P < 2**256
     0xFFFFFFDA,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,
     0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF
 };
 
-static const U32 _w_I[8] = {
+const U32 _w_I[8] = {
     0x4A0EA0B0,0xC4EE1B27,0xAD2FE478,0x2F431806,
     0x3DFBD7A7,0x2B4D0099,0x4FC1DF0B,0x2B832480
 };
@@ -77,7 +77,7 @@ void ecp_Inverse(U32 *out, const U32 *z);
 
 #define ECP_MOD(X)  while (ecp_Cmp(X, _w_P) >= 0) ecp_Sub(X, X, _w_P)
 
-static void ecp_SetValue(U32* X, U32 value)
+void ecp_SetValue(U32* X, U32 value)
 {
     X[0] = value;
     X[1] = X[2] = X[3] = X[4] = X[5] = X[6] = X[7] = 0;
@@ -127,14 +127,14 @@ S32 ecp_Sub(U32* Z, const U32* X, const U32* Y)
 }
 
 // Computes Z = X+Y mod P
-static void ecp_AddReduce(U32* Z, const U32* X, const U32* Y) 
+void ecp_AddReduce(U32* Z, const U32* X, const U32* Y) 
 {
     U32 c = ecp_Add(Z, X, Y);
     while (c != 0) c = ecp_Add(Z, Z, _w_V38);
 }
 
 // Computes Z = X-Y mod P
-static void ecp_SubReduce(U32* Z, const U32* X, const U32* Y) 
+void ecp_SubReduce(U32* Z, const U32* X, const U32* Y) 
 {
     S32 b = ecp_Sub(Z, X, Y);
     while (b != 0) { b += ecp_Add(Z, Z, _w_maxP); }
@@ -193,7 +193,7 @@ static void ecp_mul_add(U32* Y, U32 b, const U32* X)
 #define ECP_ADD_C1(Y,X) c.u64 = (U64)(X) + c.u32.hi; Y = c.u32.lo;
 
 // Computes Z = Y + b*X and return carry
-static void ecp_WordMulAdd(U32 *Z, const U32* Y, U32 b, const U32* X) 
+void ecp_WordMulAdd(U32 *Z, const U32* Y, U32 b, const U32* X) 
 {
     M64 c;
     ECP_MULADD_W0(Z[0], Y[0], b, X[0]);
@@ -220,7 +220,7 @@ static void ecp_WordMulAdd(U32 *Z, const U32* Y, U32 b, const U32* X)
 
 // Computes Z = X*Y mod P.
 // Output fits into 8 words but could be greater than P
-static void ecp_MulReduce(U32* Z, const U32* X, const U32* Y) 
+void ecp_MulReduce(U32* Z, const U32* X, const U32* Y) 
 {
     U32 T[16];
 
@@ -238,8 +238,21 @@ static void ecp_MulReduce(U32* Z, const U32* X, const U32* Y)
     ecp_WordMulAdd(Z, T, 38, T+8);
 }
 
+// Computes Z = X*Y
+void ecp_Mul(U32* Z, const U32* X, const U32* Y) 
+{
+    ecp_mul_set(Z+0, X[0], Y);
+    ecp_mul_add(Z+1, X[1], Y);
+    ecp_mul_add(Z+2, X[2], Y);
+    ecp_mul_add(Z+3, X[3], Y);
+    ecp_mul_add(Z+4, X[4], Y);
+    ecp_mul_add(Z+5, X[5], Y);
+    ecp_mul_add(Z+6, X[6], Y);
+    ecp_mul_add(Z+7, X[7], Y);
+}
+
 // Computes Z = X*Y mod P.
-static void ecp_SqrReduce(U32* Y, const U32* X) 
+void ecp_SqrReduce(U32* Y, const U32* X) 
 {
     // TBD: Implementation is based on multiply
     //      Optimize for squaring
@@ -261,7 +274,7 @@ static void ecp_SqrReduce(U32* Y, const U32* X)
 }
 
 // Computes Z = X*Y mod P.
-static void ecp_MulMod(U32* Z, const U32* X, const U32* Y) 
+void ecp_MulMod(U32* Z, const U32* X, const U32* Y) 
 {
     ecp_MulReduce(Z, X, Y);
     ECP_MOD(Z);
@@ -269,7 +282,7 @@ static void ecp_MulMod(U32* Z, const U32* X, const U32* Y)
 
 // Y = X ** E mod P
 // E is in little-endian format
-static void ecp_ExpMod(U32* Y, const U32* X, const U8* E, int bytes)
+void ecp_ExpMod(U32* Y, const U32* X, const U8* E, int bytes)
 {
     int i;
     ecp_SetValue(Y, 1);
@@ -308,7 +321,7 @@ static void ecp_MontAdd(XZ_POINT *Z, const XZ_POINT *X, const XZ_POINT *Y, IN co
 #endif
 
 // Y = X + X
-static void ecp_MontDouble(XZ_POINT *Y, const XZ_POINT *X)
+void ecp_MontDouble(XZ_POINT *Y, const XZ_POINT *X)
 {
     U32 A[8], B[8];
     //  x2 = (x+z)^2 * (x-z)^2
@@ -325,7 +338,7 @@ static void ecp_MontDouble(XZ_POINT *Y, const XZ_POINT *X)
 }
 
 // return P = P + Q, Q = 2Q
-static void ecp_Mont(XZ_POINT *P, XZ_POINT *Q, IN const U32 *Base)
+void ecp_Mont(XZ_POINT *P, XZ_POINT *Q, IN const U32 *Base)
 {
     U32 A[8], B[8], C[8], D[8], E[8];
     // x3 = ((x1-z1)(x2+z2) + (x1+z1)(x2-z2))^2*zb      // zb=1
@@ -532,70 +545,20 @@ void ecp_Inverse(U32 *out, const U32 *z)
 }
 #endif
 
-#ifdef ECP_INVERSE_METHOD_EUCLID
-static const U32 _w_ONE[8] = { 1,0,0,0,0,0,0,0 };
-
-#define ECP_SHR_W0(X) c.u32.hi = c0; c.u32.lo = X; X = (U32)(c.u64 >> 1)
-#define ECP_SHR_W1(X) c.u32.hi = c.u32.lo; c.u32.lo = X; X = (U32)(c.u64 >> 1)
-
-// Calculate X >>= 1
-static U32 ecp_ShiftRightOne(
-    IN OUT U32* X,
-    IN U32 c0)
+// Return public key associated with sk
+void curve25519_dh_CalculatePublicKey(
+    unsigned char *pk,          // [32-bytes] OUT: Public key
+    unsigned char *sk)          // [32-bytes] IN/OUT: Your secret key
 {
-    M64 c;
-    ECP_SHR_W0(X[7]);
-    ECP_SHR_W1(X[6]);
-    ECP_SHR_W1(X[5]);
-    ECP_SHR_W1(X[4]);
-    ECP_SHR_W1(X[3]);
-    ECP_SHR_W1(X[2]);
-    ECP_SHR_W1(X[1]);
-    ECP_SHR_W1(X[0]);
-    return c.u32.lo & 1;
+    ecp_TrimSecretKey(sk);
+    ecp_PointMultiply(pk, ecp_BasePoint, sk, 32);
 }
 
-// Return Y = 1/X mod p using Euclid's binary algorithm
-void ecp_Inverse(OUT U32 *Y, IN const U32 *X)
-{ 
-    // ecp_EuclidAlgo() kills the input arrays, make temps
-    U32 A[8] = {1}, B[8] = {0}, U[8], V[8], c;
-
-    ecp_Copy(U, X);
-    ecp_Copy(V, _w_P);
-    ECP_MOD(U);
-
-    while (ecp_Cmp(U, _w_ONE) > 0 && ecp_Cmp(V, _w_ONE) > 0)
-    {
-        while ((U[0] & 1) == 0)
-        {
-            c = ecp_ShiftRightOne(U, 0);
-            if (A[0] & 1) c = ecp_Add(A, A, _w_P);
-            ecp_ShiftRightOne(A, c);
-        }   
-        while ((V[0] & 1) == 0)
-        {
-            c = ecp_ShiftRightOne(V, 0);
-            if (B[0] & 1) c = ecp_Add(B, B, _w_P);
-            ecp_ShiftRightOne(B, c);
-        }   
-        if (ecp_Cmp(U, V) > 0)
-        {
-            ecp_Sub(U, U, V);
-            //ecp_Sub(T, _w_P, B);
-            //c = ecp_Add(A, A, T);
-            if (ecp_Sub(A, A, B)) ecp_Add(A, A, _w_P);
-        }
-        else
-        {
-            ecp_Sub(V, V, U);
-            if (ecp_Sub(B, B, A)) ecp_Add(B, B, _w_P);
-        }
-    }
-    ecp_Copy(Y, (ecp_Cmp(U, _w_ONE) == 0) ? A : B);
+void curve25519_dh_CreateSharedKey(
+    unsigned char *shared,      // [32-bytes] OUT: Created shared key
+    const unsigned char *pk,    // [32-bytes] IN: Other side's public key
+    unsigned char *sk)          // [32-bytes] IN/OUT: Your secret key
+{
+    ecp_TrimSecretKey(sk);
+    ecp_PointMultiply(shared, pk, sk, 32);
 }
-#endif
-
-#ifdef ECP_SELF_TEST
-#include "../test/curve25519.selftest"
-#endif

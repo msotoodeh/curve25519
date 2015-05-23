@@ -55,6 +55,20 @@ void ecp_PrintWords(IN const char *name, IN const U64 *data, IN U32 size)
     printf(" };\n");
 }
 
+void ecp_PrintHexBytes(IN const char *name, IN const U8 *data, IN U32 size)
+{
+    printf("\n%s = 0x", name);
+    while (size > 0) printf("%02X", data[--size]);
+    printf("\n");
+}
+
+void ecp_PrintHexWords(IN const char *name, IN const U32 *data, IN U32 size)
+{
+    printf("\n%s = 0x", name);
+    while (size > 0) printf("%08X", data[--size]);
+    printf("\n");
+}
+
 extern int curve25519_SelfTest(int level);
 
 int main(int argc, char**argv)
@@ -72,17 +86,17 @@ int main(int argc, char**argv)
     // generate key
     memset(secret_key, 0x42, 32);
     ecp_TrimSecretKey(secret_key);
-    ecp_PrintBytes("secret_key", secret_key, 32);
+    ecp_PrintHexBytes("secret_key", secret_key, 32);
 
     // Make sure both generate identical public key
     curve25519_donna(donna_publickey, secret_key, ecp_BasePoint);
     ecp_PointMultiply(mehdi_publickey, ecp_BasePoint, secret_key, 32);
 
-    ecp_PrintBytes("mehdi_public_key", mehdi_publickey, 32);
+    ecp_PrintHexBytes("mehdi_public_key", mehdi_publickey, 32);
 
     if (memcmp(mehdi_publickey, donna_publickey, 32) != 0)
     {
-        ecp_PrintBytes("donna_public_key", donna_publickey, 32);
+        ecp_PrintHexBytes("donna_public_key", donna_publickey, 32);
         printf("\n*********** Public keys do not match!! ********************\n");
         //return 1;
     }

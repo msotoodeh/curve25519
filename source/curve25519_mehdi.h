@@ -29,7 +29,35 @@ extern "C" {
 
 #define ECP_VERSION_STR     "1.0.0"
 
-extern const U8 ecp_BasePoint[32];
+#ifdef WORDSIZE_IS_64BITS
+#define U_WORD          U64
+#define S_WORD          S64
+#define WORDSIZE_64
+#else
+#define U_WORD          U32
+#define S_WORD          S32
+#define WORDSIZE_32
+#endif
+
+#define K_BYTES         32
+#define K_WORDS         (K_BYTES/sizeof(U_WORD))
+
+// Affine coordinates
+typedef struct {
+    U_WORD x[K_WORDS];
+    U_WORD y[K_WORDS];
+} Affine_POINT;
+
+// Projective coordinates
+typedef struct {
+    U_WORD x[K_WORDS];  // x/z
+    U_WORD y[K_WORDS];  // y/z
+    U_WORD z[K_WORDS];
+    U_WORD t[K_WORDS];  // xy/z
+} Ext_POINT;
+
+
+extern const U8 ecp_BasePoint[K_BYTES];
 
 // Return point Q = k*P
 void ecp_PointMultiply(OUT U8 *Q, IN const U8 *P, IN const U8 *K, IN int len);
@@ -45,24 +73,58 @@ void ecp_TrimSecretKey(U8 *X);
 // Convert big-endian byte array to little-endian byte array and vice versa
 U8* ecp_ReverseByteOrder(OUT U8 *Y, IN const U8 *X);
 // Convert little-endian byte array to little-endian word array
-U32* ecp_BytesToWords(OUT U32 *Y, IN const U8 *X);
+U_WORD* ecp_BytesToWords(OUT U_WORD *Y, IN const U8 *X);
 // Convert little-endian word array to little-endian byte array
-U8* ecp_WordsToBytes(OUT U8 *Y, IN const U32 *X);
+U8* ecp_WordsToBytes(OUT U8 *Y, IN const U_WORD *X);
+// Return parity(X): 0 = even, 1 = odd
+U8 ecp_CalcParity(IN const U_WORD *X);
+U8* ecp_EncodeInt(OUT U8 *Y, IN const U32 *X, IN U8 parity);
+U8 ecp_DecodeInt(OUT U32 *Y, IN const U8 *X);
 
 // -- base point order ------------------------------------------------------
 
 // Z = (X*Y)/R mod BPO
-void eco_MontMul(OUT U32 *Z, IN const U32 *X, IN const U32 *Y);
+void eco_MontMul(OUT U_WORD *Z, IN const U_WORD *X, IN const U_WORD *Y);
 // Return Y = X*R mod BPO
-void eco_ToMont(OUT U32 *Y, IN const U32 *X);
+void eco_ToMont(OUT U_WORD *Y, IN const U_WORD *X);
 // Return Y = X/R mod BPO
-void eco_FromMont(OUT U32 *Y, IN const U32 *X);
+void eco_FromMont(OUT U_WORD *Y, IN const U_WORD *X);
 // Calculate Y = X**E mod BPO
-void eco_ExpModBPO(OUT U32 *Y, IN const U32 *X, IN const U8 *E, IN int bytes);
+void eco_ExpModBPO(OUT U_WORD *Y, IN const U_WORD *X, IN const U8 *E, IN int bytes);
 // Calculate Y = 1/X mod BPO
-void eco_InvModBPO(OUT U32 *Y, IN const U32 *X);
+void eco_InvModBPO(OUT U_WORD *Y, IN const U_WORD *X);
 // Z = X*Y mod BPO
-void eco_MulMod(OUT U32 *Z, IN const U32 *X, IN const U32 *Y);
+void eco_MulReduce(OUT U_WORD *Z, IN const U_WORD *X, IN const U_WORD *Y);
+// Z = X*Y mod BPO
+void eco_MulMod(OUT U_WORD *Z, IN const U_WORD *X, IN const U_WORD *Y);
+// Return Y = D mod BPO where D is 512-bit big-endian byte array (i.e SHA512 digest)
+void eco_DigestToWords( OUT U_WORD *Y, IN const U8 *D);
+// Z = X + Y mod BPO
+void eco_AddMod(OUT U_WORD *Z, IN const U_WORD *X, IN const U_WORD *Y);
+// X mod BPO
+void eco_Mod(U_WORD *X);
+
+#define ed25519_PackPoint(buff, Y, parity) ecp_EncodeInt(buff, Y, (U8)(parity & 1))
+
+// -- big-number ------------------------------------------------------
+U_WORD ecp_Add(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
+S_WORD ecp_Sub(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
+void ecp_SetValue(U_WORD* X, U_WORD value);
+void ecp_Copy(U_WORD* Y, const U_WORD* X);
+void ecp_AddReduce(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
+void ecp_SubReduce(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
+void ecp_MulReduce(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
+void ecp_SqrReduce(U_WORD* Y, const U_WORD* X);
+int  ecp_Cmp(const U_WORD* X, const U_WORD* Y);
+void ecp_ModExp2523(U_WORD *Y, const U_WORD *X);
+void ecp_Inverse(U32 *out, const U32 *z);
+void ecp_MulMod(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
+void ecp_ExpMod(U_WORD* Y, const U_WORD* X, const U8* E, int bytes);
+
+void ed25519_BasePointMultiply(OUT Affine_POINT *Q, IN const U8 *sk);
+void ed25519_AddBasePoint(Ext_POINT *p);
+void ed25519_DoublePoint(Ext_POINT *p);
+
 
 #ifdef __cplusplus
 }

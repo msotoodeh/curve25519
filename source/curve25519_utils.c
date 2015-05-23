@@ -38,13 +38,17 @@ U8* ecp_ReverseByteOrder(OUT U8 *Y, IN const U8 *X)
 // Convert little-endian byte array to little-endian word array
 U32* ecp_BytesToWords(OUT U32 *Y, IN const U8 *X)
 {
-    int i, j;
-    for (i = j = 0; j < 8; i += 4, j++)
+    int i;
+    M32 m;
+    
+    for (i = 0; i < 8; i++)
     {
-        Y[j] = ((U32)X[i+0]      ) |
-               ((U32)X[i+1] <<  8) |
-               ((U32)X[i+2] << 16) |
-               ((U32)X[i+3] << 24);
+        m.u8.b0 = *X++;
+        m.u8.b1 = *X++;
+        m.u8.b2 = *X++;
+        m.u8.b3 = *X++;
+        
+        Y[i] = m.u32;
     }
     return Y;
 }
@@ -52,13 +56,65 @@ U32* ecp_BytesToWords(OUT U32 *Y, IN const U8 *X)
 // Convert little-endian word array to little-endian byte array
 U8* ecp_WordsToBytes(OUT U8 *Y, IN const U32 *X)
 {
-    int i, j;
-    for (i = j = 0; j < 8; j++)
+    int i;
+    M32 m;
+    
+    for (i = 0; i < 32;)
     {
-        Y[i++] = (U8)(X[j]      );
-        Y[i++] = (U8)(X[j] >>  8);
-        Y[i++] = (U8)(X[j] >> 16);
-        Y[i++] = (U8)(X[j] >> 24);
+        m.u32 = *X++;
+        Y[i++] = m.u8.b0;
+        Y[i++] = m.u8.b1;
+        Y[i++] = m.u8.b2;
+        Y[i++] = m.u8.b3;
     }
     return Y;
 }
+
+U8* ecp_EncodeInt(OUT U8 *Y, IN const U32 *X, IN U8 parity)
+{
+    int i;
+    M32 m;
+    
+    for (i = 0; i < 28;)
+    {
+        m.u32 = *X++;
+        Y[i++] = m.u8.b0;
+        Y[i++] = m.u8.b1;
+        Y[i++] = m.u8.b2;
+        Y[i++] = m.u8.b3;
+    }
+
+    m.u32 = *X;
+    Y[28] = m.u8.b0;
+    Y[29] = m.u8.b1;
+    Y[30] = m.u8.b2;
+    Y[31] = (U8)((m.u8.b3 & 0x7f) | (parity << 7));
+
+    return Y;
+}
+
+U8 ecp_DecodeInt(OUT U32 *Y, IN const U8 *X)
+{
+    int i;
+    M32 m;
+    
+    for (i = 0; i < 7; i++)
+    {
+        m.u8.b0 = *X++;
+        m.u8.b1 = *X++;
+        m.u8.b2 = *X++;
+        m.u8.b3 = *X++;
+        
+        Y[i] = m.u32;
+    }
+
+    m.u8.b0 = *X++;
+    m.u8.b1 = *X++;
+    m.u8.b2 = *X++;
+    m.u8.b3 = *X & 0x7f;
+        
+    Y[7] = m.u32;
+
+    return (U8)((*X >> 7) & 1);
+}
+

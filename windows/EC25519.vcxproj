@@ -141,18 +141,22 @@
   <ItemGroup>
     <ClCompile Include="..\source\curve25519_mehdi.c" />
     <ClCompile Include="..\source\curve25519_order.c" />
+    <ClCompile Include="..\source\ed25519_verify.c" />
     <ClCompile Include="..\source\curve25519_utils.c" />
+    <ClCompile Include="..\source\ed25519_sign.c" />
+    <ClCompile Include="..\source\sha512.c" />
     <ClCompile Include="..\test\curve25519_donna.c" />
+    <ClCompile Include="..\test\curve25519_selftest.c" />
     <ClCompile Include="..\test\curve25519_test.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\BaseTypes.h" />
+    <ClInclude Include="..\source\curve25519_dh.h" />
     <ClInclude Include="..\source\curve25519_mehdi.h" />
+    <ClInclude Include="..\source\ed25519_signature.h" />
+    <ClInclude Include="..\source\sha512.h" />
     <ClInclude Include="..\test\curve25519_donna.h" />
     <ClInclude Include="..\test\curve25519_SelfTest.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\test\curve25519.selftest" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

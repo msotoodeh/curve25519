@@ -20,14 +20,23 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <memory.h>
 #include "curve25519_mehdi.h"
 #include "curve25519_donna.h"
 #include "curve25519_SelfTest.h"
+#include "sha512.h"
 
 extern void eco_InvModBPO(OUT U32 *Y, IN const U32 *X);
 
-extern void ecp_PrintBytes(IN const char *name, IN const U8 *data, IN U32 size);
-extern void ecp_PrintWords(IN const char *name, IN const U32 *data, IN U32 size);
+extern void ecp_PrintHexBytes(IN const char *name, IN const U8 *data, IN U32 size);
+extern void ecp_PrintHexWords(IN const char *name, IN const U32 *data, IN U32 size);
+
+extern const U_WORD _w_P[K_WORDS];
+extern const U_WORD _w_maxP[K_WORDS];
+extern const U_WORD _w_I[K_WORDS];
+extern const U_WORD _w_BPO[K_WORDS];
+
+#define ECP_MOD(X)  while (ecp_Cmp(X, _w_P) >= 0) ecp_Sub(X, X, _w_P)
 
 /*
     The curve: y2 = x^3 + 486662x^2 + x  over 2^255 - 19
@@ -109,18 +118,76 @@ static const U32 _w_IxD[8] = {
     0x9E451EDD,0x71C41B45,0x7FBCC19E,0x49800849,
     0xBBCB7C34,0xF4C5CE99,0xB32C1AB4,0x024AEE07 };
 
-#define PR(V) ecp_PrintBytes(#V, ecp_ReverseByteOrder(a, V), 32)
+static const U8 sha512_abc[] = {    // 'abc'
+    0xDD,0xAF,0x35,0xA1,0x93,0x61,0x7A,0xBA,0xCC,0x41,0x73,0x49,0xAE,0x20,0x41,0x31,
+    0x12,0xE6,0xFA,0x4E,0x89,0xA9,0x7E,0xA2,0x0A,0x9E,0xEE,0xE6,0x4B,0x55,0xD3,0x9A,
+    0x21,0x92,0x99,0x2A,0x27,0x4F,0xC1,0xA8,0x36,0xBA,0x3C,0x23,0xA3,0xFE,0xEB,0xBD,
+    0x45,0x4D,0x44,0x23,0x64,0x3C,0xE8,0x0E,0x2A,0x9A,0xC9,0x4F,0xA5,0x4C,0xA4,0x9F };
+
+static const U8 sha512_ax1m[] = {   // 'a' repeated 1,000,000 times
+    0xE7,0x18,0x48,0x3D,0x0C,0xE7,0x69,0x64,0x4E,0x2E,0x42,0xC7,0xBC,0x15,0xB4,0x63,
+    0x8E,0x1F,0x98,0xB1,0x3B,0x20,0x44,0x28,0x56,0x32,0xA8,0x03,0xAF,0xA9,0x73,0xEB,
+    0xDE,0x0F,0xF2,0x44,0x87,0x7E,0xA6,0x0A,0x4C,0xB0,0x43,0x2C,0xE5,0x77,0xC3,0x1B,
+    0xEB,0x00,0x9C,0x5C,0x2C,0x49,0xAA,0x2E,0x4E,0xAD,0xB2,0x17,0xAD,0x8C,0xC0,0x9B };
+
+#define PR(V) ecp_PrintHexBytes(#V, ecp_ReverseByteOrder(a, V), 32)
 
 int ecp_IsZero(IN const U32 *X)
 {
     return (X[0] | X[1] | X[2] | X[3] | X[4] | X[5] | X[6] | X[7]) == 0;
 }
 
+int hash_test(int level)
+{
+    int i, rc = 0;
+    SHA512_CTX H;
+    U8 buff[100], md[SHA512_DIGEST_LENGTH];
+
+    // [a:b] = H(sk)
+    SHA512_Init(&H);
+    SHA512_Update(&H, "abc", 3);
+    SHA512_Final(md, &H);
+    if (memcmp(md, sha512_abc, SHA512_DIGEST_LENGTH) != 0)
+    {
+        rc++;
+        printf("KAT: SHA512('abc') FAILED!!\n");
+        ecp_PrintHexBytes("H_1", md, SHA512_DIGEST_LENGTH);
+    }
+
+    SHA512_Init(&H);
+    memset (buff, 'a', 100);
+    for (i = 0; i < 10000; i++) SHA512_Update(&H, buff, 100);
+    SHA512_Final(md, &H);
+    if (memcmp(md, sha512_ax1m, SHA512_DIGEST_LENGTH) != 0)
+    {
+        rc++;
+        printf("KAT: SHA512('a'*1000000) FAILED!!\n");
+        ecp_PrintHexBytes("H_2", md, SHA512_DIGEST_LENGTH);
+    }
+    return rc;
+}
+
 int curve25519_SelfTest(int level)
 {
     int rc = 0;
+    M32 m;
     U32 A[8], B[8], C[8];
     U8 a[32], b[32], c[32], d[32];
+
+    // Make sure library is built with correct byte ordering
+    m.u32 = 0x12345678;
+    if (m.u16.w1 != 0x1234 || m.u16.w0 != 0x5678 ||
+        m.u8.b3 != 0x12 || m.u8.b2 != 0x34 || m.u8.b1 != 0x56 || m.u8.b0 != 0x78)
+    {
+        rc++;
+        if (m.bytes[0] == 0x12) // big-endian 
+            printf("Incorrect byte order configuration used (define ECP_BIG_ENDIAN).\n");
+        if (m.bytes[0] == 0x78) // little-endian 
+            printf("Incorrect byte order configuration used (define ECP_LITTLE_ENDIAN).\n");
+        return rc;
+    }
+
+    rc = hash_test(level);
 
     ecp_AddReduce(A, _w_I, _w_P);
     ECP_MOD(A);
@@ -128,7 +195,7 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert I+p == I mod p FAILED!!\n");
-        ecp_PrintWords("A_1", A, 8);
+        ecp_PrintHexWords("A_1", A, 8);
     }
     ecp_MulReduce(B, _w_I, _w_D);
     ECP_MOD(B);
@@ -136,7 +203,7 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert I*D FAILED!!\n");
-        ecp_PrintWords("A_2", B, 8);
+        ecp_PrintHexWords("A_2", B, 8);
     }
 
     ecp_SetValue(A, 50153);
@@ -146,8 +213,8 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("invmod FAILED!!\n");
-        ecp_PrintWords("inv_50153", B, 8);
-        ecp_PrintWords("expected_1", A, 8);
+        ecp_PrintHexWords("inv_50153", B, 8);
+        ecp_PrintHexWords("expected_1", A, 8);
     }
 
     // assert expmod(d,(p-1)/2,p) == p-1
@@ -156,7 +223,7 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert expmod(d,(p-1)/2,p) == p-1 FAILED!!\n");
-        ecp_PrintWords("A_3", A, 8);
+        ecp_PrintHexWords("A_3", A, 8);
     }
     // assert I**2 == p-1
     ecp_MulMod(A, _w_I, _w_I);
@@ -164,7 +231,7 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert expmod(I,2,p) == p-1 FAILED!!\n");
-        ecp_PrintWords("A_4", A, 8);
+        ecp_PrintHexWords("A_4", A, 8);
     }
 
     ecp_CalculateY(a, ecp_BasePoint);
@@ -173,7 +240,7 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert clacY(Base) == Base.y FAILED!!\n");
-        ecp_PrintBytes("Calculated_Base.y", a, 32);
+        ecp_PrintHexBytes("Calculated_Base.y", a, 32);
     }
 
     ecp_PointMultiply(a, ecp_BasePoint, _b_Om1, 32);
@@ -181,7 +248,7 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert (l-1).Base == Base FAILED!!\n");
-        ecp_PrintBytes("A_5", a, 32);
+        ecp_PrintHexBytes("A_5", a, 32);
     }
 
     ecp_PointMultiply(a, ecp_BasePoint, _b_O, 32);
@@ -190,24 +257,24 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert l.Base == 0 FAILED!!\n");
-        ecp_PrintBytes("A_6", a, 32);
+        ecp_PrintHexBytes("A_6", a, 32);
     }
 
     // Key generation
     ecp_PointMultiply(a, ecp_BasePoint, pk1, 32);
-    ecp_PrintBytes("PublicKey1", a, 32);
     ecp_PointMultiply(b, ecp_BasePoint, pk2, 32);
-    ecp_PrintBytes("PublicKey2", b, 32);
 
     // ECDH - key exchange
     ecp_PointMultiply(c, b, pk1, 32);
-    ecp_PrintBytes("SharedKey1", c, 32);
     ecp_PointMultiply(d, a, pk2, 32);
-    ecp_PrintBytes("SharedKey2", d, 32);
     if (memcmp(c, d, 32) != 0)
     {
         rc++;
         printf("ECDH key exchange FAILED!!\n");
+        ecp_PrintHexBytes("PublicKey1", a, 32);
+        ecp_PrintHexBytes("PublicKey2", b, 32);
+        ecp_PrintHexBytes("SharedKey1", c, 32);
+        ecp_PrintHexBytes("SharedKey2", d, 32);
     }
 
     memset(a, 0x44, 32);        // our secret key
@@ -218,9 +285,9 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert k1.k2.D == D FAILED!!\n");
-        ecp_PrintBytes("D", d, 8);
-        ecp_PrintBytes("C", c, 8);
-        ecp_PrintBytes("A", a, 8);
+        ecp_PrintHexBytes("D", d, 8);
+        ecp_PrintHexBytes("C", c, 8);
+        ecp_PrintHexBytes("A", a, 8);
     }
 
     ecp_BytesToWords(A, _b_k1);
@@ -230,8 +297,8 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert 1/k1 == k2 mod BPO FAILED!!\n");
-        ecp_PrintWords("Calc", C, 8);
-        ecp_PrintWords("Expt", B, 8);
+        ecp_PrintHexWords("Calc", C, 8);
+        ecp_PrintHexWords("Expt", B, 8);
     }
 
     eco_MulMod(C, A, B);
@@ -239,7 +306,7 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert k1*k2 == 1 mod BPO FAILED!!\n");
-        ecp_PrintWords("Calc", C, 8);
+        ecp_PrintHexWords("Calc", C, 8);
     }
     return rc;
 }

@@ -7,25 +7,42 @@ Copyright Mehdi Sotoodeh.  All rights reserved.
 
 This code and accompanying files are put in public domain by the author.
 You are free to use, copy, modify and distribute this software as long
-as you comply with the license terms. See license.txt file for details.
+as you comply with the license terms. See license file for details.
 
+This library supports DH key exchange using curve25519 as well as sign/verify
+operations based on twisted Edwards curve 25519.
+Code base include portable C code as well as X86_64 assembly language for 64-bit 
+AMD/Intel CPU architectures.
+
+TBD: sign/verify for x64 
 
 Performance:
 ------------
-This version of the library includes assembly language implementation using
-Microsoft assembler for windows 64-bit platforms. It improves the C performance
-by a factor of almost 3. Point multiplication now takes 159K cycles!!
+The portable C version is nearly twice faster than Google's implementation (http://code.google.com/p/curve25519-donna/) on 64-bit platforms and a factor 
+of close to 4 on 32-bit platforms.
+The assembly implementation is approximately 3 times faster than C implementation 
+on 64-bit platforms. Who calls C language 'portable assembly'!
 
 
-Assembly version of the library for Linux-based platforms will be added soon. 
-Keep watching this repository. 
+Timing for ed25519 sign/verify:
+```
+    windows7-64:  VS2010
+        KeyGen: 589092 cycles = 173.262 usec @3.4GHz
+          Sign: 576532 cycles = 169.568 usec @3.4GHz
+        Verify: 726902 cycles = 213.795 usec @3.4GHz
+        
+    windows7-32:  VS2010
+        KeyGen: 2440085 cycles = 717.672 usec @3.4GHz
+          Sign: 2377679 cycles = 699.317 usec @3.4GHz
+        Verify: 3008183 cycles = 884.760 usec @3.4GHz
+    
+    cygwin-32: gcc 4.5.3
+        KeyGen: 1796212 cycles = 528.298 usec @3.4GHz
+          Sign: 1753546 cycles = 515.749 usec @3.4GHz
+        Verify: 2208338 cycles = 649.511 usec @3.4GHz
+```
 
-
-The C library outperforms google's implementation by a big margin. 
-See (http://code.google.com/p/curve25519-donna/).
-
-
-Timing for point multiplication:
+Timing for DH point multiplication:
 ```
     windows7-64: VS2010 + MS Assembler
         Donna: 779116 cycles = 229.152 usec @3.4GHz -- ratio: 4.887
