@@ -126,9 +126,9 @@ const Ext_POINT ed25519_BasePoint = {   // y = 4/5 mod P
 /*
     Reference: http://eprint.iacr.org/2008/522
     Cost: 7M + 7add
-    Return: P = P + BasePoint
+    Return: R = P + BasePoint
 */
-void ed25519_AddBasePoint(Ext_POINT *p)
+void ed25519_AddBasePoint(Ext_POINT *r, const Ext_POINT *p)
 {
     U_WORD a[K_WORDS], b[K_WORDS], c[K_WORDS], d[K_WORDS], e[K_WORDS];
 
@@ -143,10 +143,10 @@ void ed25519_AddBasePoint(Ext_POINT *p)
     ecp_SubReduce(a, d, c);                 /* F = D-C */
     ecp_AddReduce(d, d, c);                 /* G = D+C */
 
-    ecp_MulReduce(p->x, e, a);              /* E*F */
-    ecp_MulReduce(p->y, b, d);              /* H*G */
-    ecp_MulReduce(p->t, e, b);              /* E*H */
-    ecp_MulReduce(p->z, d, a);              /* G*F */
+    ecp_MulReduce(r->x, e, a);              /* E*F */
+    ecp_MulReduce(r->y, b, d);              /* H*G */
+    ecp_MulReduce(r->t, e, b);              /* E*H */
+    ecp_MulReduce(r->z, d, a);              /* G*F */
 }
 
 /*
@@ -177,7 +177,44 @@ void ed25519_DoublePoint(Ext_POINT *p)
     ecp_MulReduce(p->t, e, a);      /* E*H */
 }
 
-#define ECP_MONT_B(n) ed25519_DoublePoint(&P); if (k&n) ed25519_AddBasePoint(&P)
+#ifdef ECP_CONSTANT_TIME
+#define ECP_MONT_C(n) ed25519_DoublePoint(&P); ed25519_AddBasePoint(PP[(k>>n)&1], &P)
+
+// --------------------------------------------------------------------------
+// Return Q = k*B where B is ed25519 base point
+// This is constant time implementation
+void ed25519_BasePointMultiply(OUT Affine_POINT *Q, IN const U8 *sk)
+{
+    int k, len = 32;
+    Ext_POINT P, T, *PP[2];
+
+    ecp_SetValue(P.x, 0);
+    ecp_SetValue(P.y, 1);
+    ecp_SetValue(P.t, 0);
+    ecp_SetValue(P.z, 1);
+
+    PP[0] = &T;
+    PP[1] = &P;
+
+    do
+    {
+        k = sk[--len];
+        ECP_MONT_C(7);
+        ECP_MONT_C(6);
+        ECP_MONT_C(5);
+        ECP_MONT_C(4);
+        ECP_MONT_C(3);
+        ECP_MONT_C(2);
+        ECP_MONT_C(1);
+        ECP_MONT_C(0);
+    } while (len > 0);
+
+    ecp_Inverse(P.z, P.z);
+    ecp_MulMod(Q->x, P.x, P.z);
+    ecp_MulMod(Q->y, P.y, P.z);
+}
+#else
+#define ECP_MONT_B(n) ed25519_DoublePoint(&P); if (k&n) ed25519_AddBasePoint(&P, &P)
 
 // --------------------------------------------------------------------------
 // Return Q = k*B where B is ed25519 base point
@@ -222,6 +259,7 @@ void ed25519_BasePointMultiply(OUT Affine_POINT *Q, IN const U8 *sk)
     ecp_SetValue(Q->x, 0);
     ecp_SetValue(Q->y, 1);
 }
+#endif
 
 // Generate public and private key pair associated with the secret key
 void ed25519_CreateKeyPair(
@@ -243,7 +281,6 @@ void ed25519_CreateKeyPair(
     PrintHexBytes("sk", sk, 32);
     PrintHexBytes("a", md, 32);
     PrintHexBytes("b", md+32, 32);
-    // y-only part of a*B
     ed25519_BasePointMultiply(&Q, md);
     ed25519_PackPoint(pubKey, Q.y, Q.x[0]);
 
@@ -288,7 +325,6 @@ void ed25519_SignMessage(
 
     // R = r*P
     ecp_WordsToBytes(md, r);
-    // y-only part of a*B
     ed25519_BasePointMultiply(&R, md);
     PrintHexWords("R.x", R.x, K_WORDS);
     PrintHexWords("R.y", R.y, K_WORDS);

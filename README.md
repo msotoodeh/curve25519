@@ -31,6 +31,11 @@ Timing for ed25519 sign/verify:
           Sign: 576532 cycles = 169.568 usec @3.4GHz
         Verify: 726902 cycles = 213.795 usec @3.4GHz
         
+    windows7-64:  VS2010, Constant-time
+        KeyGen: 753311 cycles = 221.562 usec @3.4GHz
+          Sign: 759549 cycles = 223.397 usec @3.4GHz
+        Verify: 726857 cycles = 213.781 usec @3.4GHz
+
     windows7-32:  VS2010
         KeyGen: 2440085 cycles = 717.672 usec @3.4GHz
           Sign: 2377679 cycles = 699.317 usec @3.4GHz
@@ -85,6 +90,9 @@ switch (see Makefile).
 Second configurable switch controls usage of TSC (Time Stamp Counter). It is
 only used as a high resolution timer for performance measurements. You need 
 to turn ECP_NO_TSC switch on if your target does not support it.
+
+Another configurable switch named ECP_CONSTANT_TIME is added for constant-time
+implementation of the library when it operates on private keys.
 
 For building the library using the assembly sources, two assemblers are currently
 supported: Microsoft Assembler (Windows) and NASM (Windows/Linux). 

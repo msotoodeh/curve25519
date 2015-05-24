@@ -235,7 +235,7 @@ static void ed25519_DualPointMultiply(
     ecp_Copy(S.y, q->y);
     ecp_SetValue(S.z, 1);
     ecp_MulReduce(S.t, S.x, S.y);
-    ed25519_AddBasePoint(&S);   // S = P + Q
+    ed25519_AddBasePoint(&S, &S);   // S = P + Q
     // 
     ecp_AddReduce(V.YpX, S.y, S.x);
     ecp_SubReduce(V.YmX, S.y, S.x);
@@ -257,7 +257,7 @@ static void ed25519_DualPointMultiply(
             ed25519_DoublePoint(&S);
             switch (k.u32 & 0x8080)
             {
-            case 0x0080: ed25519_AddBasePoint(&S); break;
+            case 0x0080: ed25519_AddBasePoint(&S, &S); break;
             case 0x8000: ed25519_AddAffinePoint(&S, &U); break;
             case 0x8080: ed25519_AddPoint(&S, &V); break;
             }

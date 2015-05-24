@@ -117,12 +117,12 @@ void ecp_MulReduce(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
 void ecp_SqrReduce(U_WORD* Y, const U_WORD* X);
 int  ecp_Cmp(const U_WORD* X, const U_WORD* Y);
 void ecp_ModExp2523(U_WORD *Y, const U_WORD *X);
-void ecp_Inverse(U32 *out, const U32 *z);
+void ecp_Inverse(U_WORD *out, const U_WORD *z);
 void ecp_MulMod(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
 void ecp_ExpMod(U_WORD* Y, const U_WORD* X, const U8* E, int bytes);
 
 void ed25519_BasePointMultiply(OUT Affine_POINT *Q, IN const U8 *sk);
-void ed25519_AddBasePoint(Ext_POINT *p);
+void ed25519_AddBasePoint(Ext_POINT *r, const Ext_POINT *p);
 void ed25519_DoublePoint(Ext_POINT *p);
 
 

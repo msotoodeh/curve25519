@@ -5,6 +5,9 @@ include $(ROOT)/Rules.mk
 
 CFLAGS += -I. -I../source -static-libgcc -Wall
 
+# For constant time support uncomment next line 
+#CFLAGS += -DECP_CONSTANT_TIME
+
 # Uncomment next line for big-endian target CPUs
 #CFLAGS += -DECP_CONFIG_BIG_ENDIAN
 
