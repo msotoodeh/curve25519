@@ -29,6 +29,42 @@ extern "C" {
 
 #define ECP_VERSION_STR     "1.1.0"
 
+#ifdef WORDSIZE_IS_64BITS
+#define U_WORD          U64
+#define S_WORD          S64
+#define WORDSIZE_64
+#else
+#define U_WORD          U32
+#define S_WORD          S32
+#define WORDSIZE_32
+#endif
+
+#define K_BYTES         32
+#define K_WORDS         (K_BYTES/sizeof(U_WORD))
+
+// Affine coordinates
+typedef struct {
+    U_WORD x[K_WORDS];
+    U_WORD y[K_WORDS];
+} Affine_POINT;
+
+// Projective coordinates
+typedef struct {
+    U_WORD x[K_WORDS];  // x/z
+    U_WORD y[K_WORDS];  // y/z
+    U_WORD z[K_WORDS];
+    U_WORD t[K_WORDS];  // xy/z
+} Ext_POINT;
+
+// pre-computed, extended point
+typedef struct
+{
+    U_WORD YpX[K_WORDS];        // Y+X
+    U_WORD YmX[K_WORDS];        // Y-X
+    U_WORD T2d[K_WORDS];        // 2d*T
+    U_WORD Z2[K_WORDS];         // 2*Z
+} Pre_POINT;
+
 extern const U8 ecp_BasePoint[32];
 
 // Return point Q = k*P
@@ -48,6 +84,8 @@ U8* ecp_ReverseByteOrder(OUT U8 *Y, IN const U8 *X);
 U64* ecp_BytesToWords(OUT U64 *Y, IN const U8 *X);
 // Convert little-endian word array to little-endian byte array
 U8* ecp_WordsToBytes(OUT U8 *Y, IN const U64 *X);
+U8* ecp_EncodeInt(OUT U8 *Y, IN const U64 *X, IN U8 parity);
+U8 ecp_DecodeInt(OUT U64 *Y, IN const U8 *X);
 
 // -- base point order ------------------------------------------------------
 
@@ -63,6 +101,16 @@ void eco_ExpModBPO(OUT U64 *Y, IN const U64 *X, IN const U8 *E, IN int bytes);
 void eco_InvModBPO(OUT U64 *Y, IN const U64 *X);
 // Z = X*Y mod BPO
 void eco_MulMod(OUT U64 *Z, IN const U64 *X, IN const U64 *Y);
+// Z = X*Y mod BPO
+void eco_MulReduce(OUT U64 *Z, IN const U64 *X, IN const U64 *Y);
+// X mod BPO
+void eco_Mod(U64 *X);
+// Z = X + Y mod BPO
+void eco_AddReduce(OUT U64 *Z, IN const U64 *X, IN const U64 *Y);
+// Z = X + Y mod BPO
+void eco_AddMod(OUT U64 *Z, IN const U64 *X, IN const U64 *Y);
+// Return Y = D mod BPO where D is 512-bit message digest (i.e SHA512 digest)
+void eco_DigestToWords( OUT U64 *Y, IN const U8 *md);
 
 // -- asm insterfaces ------------------------------------------------------
 // Computes Z = X+Y
@@ -81,6 +129,8 @@ U64 ecp_WordMulAdd(U64 *Z, const U64* Y, U64 b, const U64* X);
 void ecp_WordMulAddReduce(U64 *Z, const U64* Y, U64 b, const U64* X);
 // Computes Y = b*X
 void ecp_WordMulSet(U64 *Y, U64 b, const U64* X);
+// Computes Z = X*Y
+void ecp_Mul(U64* Z, const U64* X, const U64* Y);
 // Computes Z = X*Y mod P
 void ecp_MulReduce(U64* Z, const U64* X, const U64* Y);
 // Computes Z = X*X

@@ -6,15 +6,13 @@ Copyright Mehdi Sotoodeh.  All rights reserved.
 <mehdisotoodeh@gmail.com>
 
 This code and accompanying files are put in public domain by the author.
-You are free to use, copy, modify and distribute this software as long
+You can freely use, copy, modify and distribute this software as long
 as you comply with the license terms. See license file for details.
 
 This library supports DH key exchange using curve25519 as well as sign/verify
 operations based on twisted Edwards curve 25519.
-Code base include portable C code as well as X86_64 assembly language for 64-bit 
+Code includes portable C code as well as X86_64 assembly language for 64-bit 
 AMD/Intel CPU architectures.
-
-TBD: sign/verify for x64 
 
 Performance:
 ------------
@@ -26,25 +24,35 @@ on 64-bit platforms. Who calls C language 'portable assembly'!
 
 Timing for ed25519 sign/verify:
 ```
-    windows7-64:  VS2010
-        KeyGen: 589092 cycles = 173.262 usec @3.4GHz
-          Sign: 576532 cycles = 169.568 usec @3.4GHz
-        Verify: 726902 cycles = 213.795 usec @3.4GHz
+    windows7-64: VS2010 + MS Assembler
+        KeyGen: 192276 cycles = 56.552 usec @3.4GHz
+          Sign: 188232 cycles = 55.362 usec @3.4GHz
+        Verify: 257272 cycles = 75.668 usec @3.4GHz
         
+    windows7-64: VS2010 + MS Assembler (constant-time)
+        KeyGen: 202148 cycles = 59.455 usec @3.4GHz
+          Sign: 205156 cycles = 60.340 usec @3.4GHz
+        Verify: 257756 cycles = 75.811 usec @3.4GHz
+
+    windows7-64:  VS2010
+        KeyGen: 553940 cycles = 162.924 usec @3.4GHz
+          Sign: 540488 cycles = 158.967 usec @3.4GHz
+        Verify: 727140 cycles = 213.865 usec @3.4GHz
+
     windows7-64:  VS2010, Constant-time
-        KeyGen: 753311 cycles = 221.562 usec @3.4GHz
-          Sign: 759549 cycles = 223.397 usec @3.4GHz
-        Verify: 726857 cycles = 213.781 usec @3.4GHz
+        KeyGen: 579192 cycles = 170.351 usec @3.4GHz
+          Sign: 584234 cycles = 171.834 usec @3.4GHz
+        Verify: 725878 cycles = 213.494 usec @3.4GHz
 
     windows7-32:  VS2010
-        KeyGen: 2440085 cycles = 717.672 usec @3.4GHz
-          Sign: 2377679 cycles = 699.317 usec @3.4GHz
-        Verify: 3008183 cycles = 884.760 usec @3.4GHz
+        KeyGen: 2335613 cycles = 686.945 usec @3.4GHz
+          Sign: 2259537 cycles = 664.570 usec @3.4GHz
+        Verify: 3006601 cycles = 884.294 usec @3.4GHz
     
     cygwin-32: gcc 4.5.3
-        KeyGen: 1796212 cycles = 528.298 usec @3.4GHz
-          Sign: 1753546 cycles = 515.749 usec @3.4GHz
-        Verify: 2208338 cycles = 649.511 usec @3.4GHz
+        KeyGen: 1696521 cycles = 498.977 usec @3.4GHz
+          Sign: 1652167 cycles = 485.931 usec @3.4GHz
+        Verify: 2211727 cycles = 650.508 usec @3.4GHz
 ```
 
 Timing for DH point multiplication:

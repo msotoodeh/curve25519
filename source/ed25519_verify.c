@@ -44,6 +44,7 @@ extern const U_WORD _w_I[K_WORDS];
 extern const U_WORD _w_BPO[K_WORDS];
 extern const Ext_POINT ed25519_BasePoint;
 
+void ed25519_AddAffinePoint(Ext_POINT *p, const Pre_POINT *q);
 
 #ifdef PRINT_DETAILS
 void ecp_PrintHexBytes(IN const char *name, IN const U8 *data, IN U32 size);
@@ -56,18 +57,8 @@ void ecp_PrintHexWords(IN const char *name, IN const U_WORD *data, IN U32 size);
 #define PrintHexWords(name,data,size)
 #endif
 
-// extended coordinates + pre-compute
-typedef struct
-{
-    //Ext_POINT p;
-    U_WORD YpX[K_WORDS];        // Y+X
-    U_WORD YmX[K_WORDS];        // Y-X
-    U_WORD T2d[K_WORDS];        // 2d*T
-    U_WORD Z2[K_WORDS];         // 2*Z
-} Pre_POINT;
-
 #ifdef WORDSIZE_64
-static const U_WORD _w_d[K_WORDS] = {
+const U_WORD _w_d[K_WORDS] = {
     0x75EB4DCA135978A3,0x00700A4D4141D8AB,
     0x8CC740797779E898,0x52036CEE2B6FFE73
 };
@@ -77,7 +68,7 @@ static const U_WORD _w_2d[K_WORDS] = {    // 2d mod p
 };
 static const U_WORD _w_Zero[K_WORDS] = { 0,0,0,0 };
 #else
-static const U_WORD _w_d[K_WORDS] = {
+const U_WORD _w_d[K_WORDS] = {
     0x135978A3,0x75EB4DCA,0x4141D8AB,0x00700A4D,
     0x7779E898,0x8CC74079,0x2B6FFE73,0x52036CEE
 };
@@ -88,7 +79,7 @@ static const U_WORD _w_2d[K_WORDS] = {    // 2d mod p
 static const U_WORD _w_Zero[K_WORDS] = { 0,0,0,0,0,0,0,0 };
 #endif
 
-void ed25519_CalculateX(OUT U32 *X, IN const U32 *Y, U32 parity)
+void ed25519_CalculateX(OUT U_WORD *X, IN const U_WORD *Y, U_WORD parity)
 {
     U_WORD u[K_WORDS], v[K_WORDS], a[K_WORDS], b[K_WORDS];
 
@@ -187,31 +178,6 @@ static void ed25519_AddPoint(Ext_POINT *p, const Pre_POINT *q)
 }
 
 /*
-    Assumptions: pre-computed q, q->Z=1
-    Cost: 7M + 7add
-    Return: P = P + Q
-*/
-static void ed25519_AddAffinePoint(Ext_POINT *p, const Pre_POINT *q)
-{
-    U_WORD a[K_WORDS], b[K_WORDS], c[K_WORDS], d[K_WORDS], e[K_WORDS];
-    ecp_SubReduce(a, p->y, p->x);           /* A = (Y1-X1)*(Y2-X2) */
-    ecp_MulReduce(a, a, q->YmX);
-    ecp_AddReduce(b, p->y, p->x);           /* B = (Y1+X1)*(Y2+X2) */
-    ecp_MulReduce(b, b, q->YpX);
-    ecp_MulReduce(c, p->t, q->T2d);         /* C = T1*2d*T2 */
-    ecp_AddReduce(d, p->z, p->z);           /* D = Z1*2*Z2 (Z2=1)*/
-    ecp_SubReduce(e, b, a);                 /* E = B-A */
-    ecp_AddReduce(b, b, a);                 /* H = B+A */
-    ecp_SubReduce(a, d, c);                 /* F = D-C */
-    ecp_AddReduce(d, d, c);                 /* G = D+C */
-
-    ecp_MulReduce(p->x, e, a);              /* E*F */
-    ecp_MulReduce(p->y, b, d);              /* H*G */
-    ecp_MulReduce(p->t, e, b);              /* E*H */
-    ecp_MulReduce(p->z, d, a);              /* G*F */
-}
-
-/*
 Calculate: point R = a*P + b*Q  where P is base point
 */
 static void ed25519_DualPointMultiply(
@@ -235,7 +201,7 @@ static void ed25519_DualPointMultiply(
     ecp_Copy(S.y, q->y);
     ecp_SetValue(S.z, 1);
     ecp_MulReduce(S.t, S.x, S.y);
-    ed25519_AddBasePoint(&S, &S);   // S = P + Q
+    ed25519_AddBasePoint(&S);   // S = P + Q
     // 
     ecp_AddReduce(V.YpX, S.y, S.x);
     ecp_SubReduce(V.YmX, S.y, S.x);
@@ -257,7 +223,7 @@ static void ed25519_DualPointMultiply(
             ed25519_DoublePoint(&S);
             switch (k.u32 & 0x8080)
             {
-            case 0x0080: ed25519_AddBasePoint(&S, &S); break;
+            case 0x0080: ed25519_AddBasePoint(&S); break;
             case 0x8000: ed25519_AddAffinePoint(&S, &U); break;
             case 0x8080: ed25519_AddPoint(&S, &V); break;
             }

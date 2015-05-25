@@ -46,11 +46,15 @@ typedef struct
     U64 Z[4];   // 
 } XZ_POINT;
 
-static const U64 _w_P[4] = {
-    0xFFFFFFFFFFFFFFED, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0x7FFFFFFFFFFFFFFF };
+const U64 _w_P[4] = {
+    0xFFFFFFFFFFFFFFED,0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFFFFFFF,0x7FFFFFFFFFFFFFFF };
 
-static const U64 _w_I[4] = {
-    0xC4EE1B274A0EA0B0, 0x2F431806AD2FE478, 0x2B4D00993DFBD7A7, 0x2B8324804FC1DF0B };
+// Maximum multiple of prime p < 2**256
+const U64 _w_maxP[4] = {   // 2*P
+    0xFFFFFFFFFFFFFFDA,0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFFFFFFF };
+
+const U64 _w_I[4] = {
+    0xC4EE1B274A0EA0B0,0x2F431806AD2FE478,0x2B4D00993DFBD7A7,0x2B8324804FC1DF0B };
 
 static const U8 _b_Pp3d8[32] = {    // (P+3)/8
     0xFE,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
@@ -349,3 +353,20 @@ void ecp_Inverse(U64 *out, const U64 *z)
 }
 #endif
 
+// Return public key associated with sk
+void curve25519_dh_CalculatePublicKey(
+    unsigned char *pk,          // [32-bytes] OUT: Public key
+    unsigned char *sk)          // [32-bytes] IN/OUT: Your secret key
+{
+    ecp_TrimSecretKey(sk);
+    ecp_PointMultiply(pk, ecp_BasePoint, sk, 32);
+}
+
+void curve25519_dh_CreateSharedKey(
+    unsigned char *shared,      // [32-bytes] OUT: Created shared key
+    const unsigned char *pk,    // [32-bytes] IN: Other side's public key
+    unsigned char *sk)          // [32-bytes] IN/OUT: Your secret key
+{
+    ecp_TrimSecretKey(sk);
+    ecp_PointMultiply(shared, pk, sk, 32);
+}

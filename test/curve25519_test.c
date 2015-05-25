@@ -216,7 +216,7 @@ int speed_test(int loops)
     for (i = 0; i < loops; i++)
     {
         t1 = TimeNow();
-        ed25519_SignMessage(sig, privkey, "abc", 3);
+        ed25519_SignMessage(sig, privkey, (const unsigned char*)"abc", 3);
         t2 = TimeNow() - t1;
         if (t2 < tm) tm = t2;
     }

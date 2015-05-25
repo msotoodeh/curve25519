@@ -126,11 +126,56 @@ void eco_InvModBPO(OUT U64 *Y, IN const U64 *X)
 }
 
 // Z = X*Y mod BPO
+void eco_MulReduce(OUT U64 *Z, IN const U64 *X, IN const U64 *Y)
+{
+    U64 T[8];
+    ecp_Mul(T, X, Y);               // [T2:T1] = X*Y
+    eco_MontMul(T+4, T+4, _w_R2);   // T2*(R*R)/R == T2*R mod BPO
+    eco_AddReduce(Z, T+4, T);       // Z = T2*R + T1 = X*Y mod BPO
+}
+
+// Z = X*Y mod BPO
 void eco_MulMod(OUT U64 *Z, IN const U64 *X, IN const U64 *Y)
 {
-    U64 T[4];
-    eco_MontMul(T, X, _w_R2);   // T = X*(R*R)/R = X*R
-    eco_MontMul(Z, Y, T);       // Z = Y*(X*R)/R = X*Y
+    U64 T[8];
+    ecp_Mul(T, X, Y);               // [T2:T1] = X*Y
+    eco_MontMul(T+4, T+4, _w_R2);   // T2*(R*R)/R == T2*R mod BPO
+    eco_AddMod(Z, T+4, T);          // Z = T2*R + T1 = X*Y mod BPO
+}
+
+// X mod BPO
+void eco_Mod(U64 *X)
+{
+    while(ecp_Cmp(X, _w_BPO) >= 0) ecp_Sub(X, X, _w_BPO);
+}
+
+// Z = X + Y mod BPO
+void eco_AddReduce(OUT U64 *Z, IN const U64 *X, IN const U64 *Y)
+{
+    U64 c = ecp_Add(Z, X, Y);
+    while(c != 0) c += ecp_Sub(Z, Z, _w_maxBPO);
+}
+
+// Z = X + Y mod BPO
+void eco_AddMod(OUT U64 *Z, IN const U64 *X, IN const U64 *Y)
+{
+    U64 c = ecp_Add(Z, X, Y);
+    while(c != 0) c += ecp_Sub(Z, Z, _w_maxBPO);
     while(ecp_Cmp(Z, _w_BPO) >= 0) ecp_Sub(Z, Z, _w_BPO);
+}
+
+// Return Y = D mod BPO where D is 512-bit message digest (i.e SHA512 digest)
+void eco_DigestToWords( OUT U64 *Y, IN const U8 *md)
+{
+    U64 H[4], L[4];
+
+    // We use digest value as little-endian byte array.
+    ecp_BytesToWords(L, md);
+    ecp_BytesToWords(H, md+32);
+
+    // Value of digest is equal to H*2^256 + L = H*R + L = mont(H,R**2) + L mod BPO
+    // This is way simpler and faster than Barrett reduction
+    eco_MontMul(H, H, _w_R2);       // H*(R*R)/R = H*R
+    eco_AddReduce(Y, H, L);         // Y = H*R + L 
 }
 

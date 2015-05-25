@@ -56,6 +56,14 @@ typedef struct {
     U_WORD t[K_WORDS];  // xy/z
 } Ext_POINT;
 
+// pre-computed, extended point
+typedef struct
+{
+    U_WORD YpX[K_WORDS];        // Y+X
+    U_WORD YmX[K_WORDS];        // Y-X
+    U_WORD T2d[K_WORDS];        // 2d*T
+    U_WORD Z2[K_WORDS];         // 2*Z
+} Pre_POINT;
 
 extern const U8 ecp_BasePoint[K_BYTES];
 
@@ -78,8 +86,8 @@ U_WORD* ecp_BytesToWords(OUT U_WORD *Y, IN const U8 *X);
 U8* ecp_WordsToBytes(OUT U8 *Y, IN const U_WORD *X);
 // Return parity(X): 0 = even, 1 = odd
 U8 ecp_CalcParity(IN const U_WORD *X);
-U8* ecp_EncodeInt(OUT U8 *Y, IN const U32 *X, IN U8 parity);
-U8 ecp_DecodeInt(OUT U32 *Y, IN const U8 *X);
+U8* ecp_EncodeInt(OUT U8 *Y, IN const U_WORD *X, IN U8 parity);
+U8 ecp_DecodeInt(OUT U_WORD *Y, IN const U8 *X);
 
 // -- base point order ------------------------------------------------------
 
@@ -122,7 +130,7 @@ void ecp_MulMod(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
 void ecp_ExpMod(U_WORD* Y, const U_WORD* X, const U8* E, int bytes);
 
 void ed25519_BasePointMultiply(OUT Affine_POINT *Q, IN const U8 *sk);
-void ed25519_AddBasePoint(Ext_POINT *r, const Ext_POINT *p);
+void ed25519_AddBasePoint(Ext_POINT *p);
 void ed25519_DoublePoint(Ext_POINT *p);
 
 

@@ -137,3 +137,28 @@ mr_2:
 
     PopB
     ret
+
+; _______________________________________________________________________
+;
+;   void ecp_Mul(U64* Z, const U64* X, const U64* Y)
+; _______________________________________________________________________
+    PUBPROC ecp_Mul
+
+%define Z   ARG1M
+%define X   ARG2
+%define Y   ARG3
+
+    PushB
+    SaveArg1
+    
+    LOADA   Y
+    LOADB   X
+
+    mulset  Z,   B0
+    muladd  Z+8, B1
+    muladd  Z+16,B2
+    muladd  Z+24,B3
+
+    RestoreArg1
+    PopB
+    ret

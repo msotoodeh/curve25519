@@ -13,11 +13,17 @@
   <ItemGroup>
     <ClInclude Include="..\..\asm64\BaseTypes.h" />
     <ClInclude Include="..\..\asm64\curve25519_mehdi_x64.h" />
+    <ClInclude Include="..\..\source\curve25519_dh.h" />
+    <ClInclude Include="..\..\source\ed25519_signature.h" />
+    <ClInclude Include="..\..\source\sha512.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\asm64\curve25519_mehdi_x64.c" />
     <ClCompile Include="..\..\asm64\curve25519_order_x64.c" />
     <ClCompile Include="..\..\asm64\curve25519_utils_x64.c" />
+    <ClCompile Include="..\..\source\ed25519_sign.c" />
+    <ClCompile Include="..\..\source\ed25519_verify.c" />
+    <ClCompile Include="..\..\source\sha512.c" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="..\..\asm64\amd64.masm\Add.asm" />
@@ -65,7 +71,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WORDSIZE_IS_64BITS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
     </ClCompile>
     <Link>
@@ -118,7 +124,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WORDSIZE_IS_64BITS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

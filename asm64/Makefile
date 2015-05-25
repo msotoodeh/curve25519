@@ -7,7 +7,8 @@ CFLAGS = -c -O2 -m64 -Wall -Wno-format
 #CFLAGS += -g -D_DEBUG
 
 A_SRCS = $(wildcard amd64.nasm/*.asm)
-C_SRCS = curve25519_mehdi_x64.c curve25519_order_x64.c curve25519_utils_x64.c
+C_SRCS = curve25519_mehdi_x64.c curve25519_order_x64.c curve25519_utils_x64.c \
+    ed25519_sign.c ed25519_verify.c sha512.c
 T_SRCS = curve25519_donna.c selftest.c test64.c
 
 LIB_OBJS = $(patsubst amd64.nasm/%.asm,build/s_%.o,$(A_SRCS)) $(C_SRCS:%.c=build/%.o)
@@ -18,7 +19,7 @@ TEST_TARGET = build/test64
 
 LD = ld -static --architecture=x86_64 -EL -Lbuild -lcurve25519x64
 NASM = nasm -felf64 -D$(TARGET_ABI) -I amd64.nasm/ -s
-CFLAGS += -I . -I amd64.nasm -I ../test
+CFLAGS += -I . -I amd64.nasm -I ../source -I ../test
 
 .PHONY: all init clean distclean test
 
@@ -37,6 +38,9 @@ build/%.o: %.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 build/%.o: ../test/%.c
+	$(CC) $(CFLAGS) -o $@ $<
+
+build/%.o: ../source/%.c
 	$(CC) $(CFLAGS) -o $@ $<
 
 $(LIB_TARGET): init $(LIB_OBJS)
