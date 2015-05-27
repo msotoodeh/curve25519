@@ -99,4 +99,3 @@ sqr_2:
     pop     C1
     PopB
     ret
-

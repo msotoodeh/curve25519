@@ -212,4 +212,3 @@ void eco_DigestToWords( OUT U32 *Y, IN const U8 *md)
     eco_MontMul(H, H, _w_R2);       // H*(R*R)/R = H*R
     eco_AddReduce(Y, H, L);         // Y = H*R + L 
 }
-

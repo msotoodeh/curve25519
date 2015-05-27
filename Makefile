@@ -21,6 +21,7 @@ distclean: clean
 	$(MAKE) -C asm64 distclean
 	@rm -rf windows/Debug/ windows/Release/ windows/ipch/ windows/x64/ windows/*.sdf windows/*.suo
 	@rm -rf windows/Asm64Lib/x64/ windows/Asm64Test/x64/
+	@rm -rf windows/Curve25519Lib/x64/ windows/Curve25519Lib/Debug/ windows/Curve25519Lib/Release/
 
 archive: distclean
 	tar cvf /tmp/curve25519-mehdi-`date '+%Y%m%d'`-src.tar *

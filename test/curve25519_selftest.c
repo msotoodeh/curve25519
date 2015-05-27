@@ -30,10 +30,12 @@ extern void eco_InvModBPO(OUT U32 *Y, IN const U32 *X);
 
 extern void ecp_PrintHexBytes(IN const char *name, IN const U8 *data, IN U32 size);
 extern void ecp_PrintHexWords(IN const char *name, IN const U32 *data, IN U32 size);
+void ecp_PrintWords(IN const char *name, IN const U_WORD *data, IN U32 size);
 
 extern const U_WORD _w_P[K_WORDS];
 extern const U_WORD _w_maxP[K_WORDS];
 extern const U_WORD _w_I[K_WORDS];
+extern const U_WORD _w_2d[K_WORDS];
 extern const U_WORD _w_BPO[K_WORDS];
 
 #define ECP_MOD(X)  while (ecp_Cmp(X, _w_P) >= 0) ecp_Sub(X, X, _w_P)
@@ -165,6 +167,48 @@ int hash_test(int level)
         ecp_PrintHexBytes("H_2", md, SHA512_DIGEST_LENGTH);
     }
     return rc;
+}
+
+void print_words(IN const char *txt, IN const U32 *data, IN U32 size)
+{
+    U32 i;
+    printf("%s0x%08X", txt, *data++);
+    for (i = 1; i < size; i++) printf(",0x%08X", *data++);
+}
+
+void pre_compute_base_point()
+{
+    Ext_POINT P = {{0},{1},{1},{0}};
+    Pre_POINT R;
+    int i;
+    printf("\nconst Pre_POINT pre_BaseMultiples[16] = \n{\n");
+    for (i = 0; i < 16; i++)
+    {
+        printf("  { // %d*P\n", i);
+        ecp_AddReduce(R.YpX, P.y, P.x); ECP_MOD(R.YpX);
+        ecp_SubReduce(R.YmX, P.y, P.x); ECP_MOD(R.YmX);
+        ecp_MulMod(R.T2d, P.t, _w_2d);
+        ecp_SetValue(R.Z2, 2);
+
+        print_words("    W256(",R.YpX, K_WORDS);
+        print_words("),\n    W256(",R.YmX, K_WORDS);
+        print_words("),\n    W256(",R.T2d, K_WORDS);
+        print_words("),\n    W256(",R.Z2, K_WORDS);
+        if (i == 15)
+        {
+            printf(")\n  }\n};\n");
+            break;
+        }
+        printf(")\n  },\n");
+
+        ed25519_AddBasePoint(&P);
+        // make it affine
+        ecp_Inverse(P.z, P.z);
+        ecp_MulMod(P.x, P.x, P.z);
+        ecp_MulMod(P.y, P.y, P.z);
+        ecp_MulMod(P.t, P.x, P.y);
+        ecp_SetValue(P.z, 1);
+    }
 }
 
 int curve25519_SelfTest(int level)
@@ -308,5 +352,8 @@ int curve25519_SelfTest(int level)
         printf("assert k1*k2 == 1 mod BPO FAILED!!\n");
         ecp_PrintHexWords("Calc", C, 8);
     }
+
+    //pre_compute_base_point();
+
     return rc;
 }

@@ -42,42 +42,16 @@ extern const U_WORD _w_P[K_WORDS];
 extern const U_WORD _w_maxP[K_WORDS];
 extern const U_WORD _w_I[K_WORDS];
 extern const U_WORD _w_BPO[K_WORDS];
-extern const Ext_POINT ed25519_BasePoint;
+extern const U_WORD _w_2d[K_WORDS];
 
-void ed25519_AddAffinePoint(Ext_POINT *p, const Pre_POINT *q);
+extern const Pre_POINT pre_BaseMultiples[16];
 
-#ifdef PRINT_DETAILS
-void ecp_PrintHexBytes(IN const char *name, IN const U8 *data, IN U32 size);
-void ecp_PrintHexWords(IN const char *name, IN const U_WORD *data, IN U32 size);
+#define _w_Zero     pre_BaseMultiples[0].T2d
+#define _w_One      pre_BaseMultiples[0].YpX
+#define _w_Two      pre_BaseMultiples[0].Z2
 
-#define PrintHexBytes(name,data,size) ecp_PrintHexBytes(name,data,size)
-#define PrintHexWords(name,data,size) ecp_PrintHexWords(name,data,size)
-#else
-#define PrintHexBytes(name,data,size)
-#define PrintHexWords(name,data,size)
-#endif
-
-#ifdef WORDSIZE_64
-const U_WORD _w_d[K_WORDS] = {
-    0x75EB4DCA135978A3,0x00700A4D4141D8AB,
-    0x8CC740797779E898,0x52036CEE2B6FFE73
-};
-static const U_WORD _w_2d[K_WORDS] = {    // 2d mod p
-    0xEBD69B9426B2F159,0x00E0149A8283B156,
-    0x198E80F2EEF3D130,0x2406D9DC56DFFCE7
-};
-static const U_WORD _w_Zero[K_WORDS] = { 0,0,0,0 };
-#else
-const U_WORD _w_d[K_WORDS] = {
-    0x135978A3,0x75EB4DCA,0x4141D8AB,0x00700A4D,
-    0x7779E898,0x8CC74079,0x2B6FFE73,0x52036CEE
-};
-static const U_WORD _w_2d[K_WORDS] = {    // 2d mod p
-    0x26B2F159,0xEBD69B94,0x8283B156,0x00E0149A,
-    0xEEF3D130,0x198E80F2,0x56DFFCE7,0x2406D9DC
-};
-static const U_WORD _w_Zero[K_WORDS] = { 0,0,0,0,0,0,0,0 };
-#endif
+static const U_WORD _w_d[K_WORDS] =
+    W256(0x135978A3,0x75EB4DCA,0x4141D8AB,0x00700A4D,0x7779E898,0x8CC74079,0x2B6FFE73,0x52036CEE);
 
 void ed25519_CalculateX(OUT U_WORD *X, IN const U_WORD *Y, U_WORD parity)
 {
@@ -85,10 +59,10 @@ void ed25519_CalculateX(OUT U_WORD *X, IN const U_WORD *Y, U_WORD parity)
 
     // Calculate sqrt((y^2 - 1)/(d*y^2 + 1))
 
-    ecp_SqrReduce(u, Y);                        // u = y^2
-    ecp_MulReduce(v, u, _w_d);                  // v = dy^2
-    ecp_SubReduce(u, u, ed25519_BasePoint.z);   // u = y^2-1
-    ecp_AddReduce(v, v, ed25519_BasePoint.z);   // v = dy^2+1
+    ecp_SqrReduce(u, Y);            // u = y^2
+    ecp_MulReduce(v, u, _w_d);      // v = dy^2
+    ecp_SubReduce(u, u, _w_One);    // u = y^2-1
+    ecp_AddReduce(v, v, _w_One);    // v = dy^2+1
 
     // Calculate:  sqrt(u/v) = u*v^3 * (u*v^7)^((p-5)/8)
 
@@ -245,7 +219,6 @@ int ed25519_VerifySignature(
     U_WORD h[K_WORDS];
     U8 md[SHA512_DIGEST_LENGTH];
 
-    //ed25519_UnpackPoint(&Q, publicKey);
     md[0] = ecp_DecodeInt(Q.y, publicKey);
     ed25519_CalculateX(Q.x, Q.y, ~md[0]);       // Invert parity for -Q
 
@@ -262,7 +235,6 @@ int ed25519_VerifySignature(
 
     // T = s*P + h*(-Q) = (s - h*a)*P = r*P = R
 
-    //ecp_Sub(h, _w_BPO, h);          // -h
     ecp_WordsToBytes(md, h);
     ed25519_DualPointMultiply(&T, signature+32, md, &Q);
     ed25519_PackPoint(md, T.y, T.x[0]);
@@ -273,12 +245,19 @@ int ed25519_VerifySignature(
 #ifdef ECP_SELF_TEST
 #include <stdio.h>
 
+static U8 m_6[32] = {6};
 static U8 m_7[32] = {7};
 static U8 m_11[32] = {11};
 static U8 m_50[32] = {50};
 static U8 m_127[32] = {127};
 
-static U8 m_6[32] = {6};
+// Pre-calculate base point values
+static const Affine_POINT ed25519_BasePoint = {   // y = 4/5 mod P
+    W256(0x8F25D51A,0xC9562D60,0x9525A7B2,0x692CC760,0xFDD6DC5C,0xC0A4E231,0xCD6E53FE,0x216936D3),
+    W256(0x66666658,0x66666666,0x66666666,0x66666666,0x66666666,0x66666666,0x66666666,0x66666666)
+};
+
+void ecp_PrintHexWords(IN const char *name, IN const U_WORD *data, IN U32 size);
 
 int ed25519_selftest()
 {
@@ -293,7 +272,7 @@ int ed25519_selftest()
     {
         rc++;
         printf("-- Unpack error.");
-        PrintHexWords("a_x", a.x, K_WORDS);
+        ecp_PrintHexWords("a_x", a.x, K_WORDS);
     }
 
     // a = 7*B
@@ -313,10 +292,10 @@ int ed25519_selftest()
     {
         rc++;
         printf("-- ecp_DualPointMultiply(1) FAILED!!");
-        PrintHexWords("c_x", c.x, K_WORDS);
-        PrintHexWords("c_y", c.y, K_WORDS);
-        PrintHexWords("d_x", d.x, K_WORDS);
-        PrintHexWords("d_y", d.y, K_WORDS);
+        ecp_PrintHexWords("c_x", c.x, K_WORDS);
+        ecp_PrintHexWords("c_y", c.y, K_WORDS);
+        ecp_PrintHexWords("d_x", d.x, K_WORDS);
+        ecp_PrintHexWords("d_y", d.y, K_WORDS);
     }
 
     // c = 11*b + 6*B = 127*B
@@ -326,10 +305,10 @@ int ed25519_selftest()
     {
         rc++;
         printf("-- ecp_DualPointMultiply(2) FAILED!!");
-        PrintHexWords("c_x", c.x, K_WORDS);
-        PrintHexWords("c_y", c.y, K_WORDS);
-        PrintHexWords("d_x", d.x, K_WORDS);
-        PrintHexWords("d_y", d.y, K_WORDS);
+        ecp_PrintHexWords("c_x", c.x, K_WORDS);
+        ecp_PrintHexWords("c_y", c.y, K_WORDS);
+        ecp_PrintHexWords("d_x", d.x, K_WORDS);
+        ecp_PrintHexWords("d_y", d.y, K_WORDS);
     }
 
     ecp_SetValue(u, 0x11223344);
@@ -340,12 +319,12 @@ int ed25519_selftest()
     ecp_WordsToBytes(m2, v);
     ed25519_DualPointMultiply(&a, m2, m1, &a);  // v*B + u*A = (-u^2 + u*u)*B
     // assert a == infinty
-    if (ecp_Cmp(a.x, _w_Zero) != 0 || ecp_Cmp(a.y, ed25519_BasePoint.z) != 0)
+    if (ecp_Cmp(a.x, _w_Zero) != 0 || ecp_Cmp(a.y, _w_One) != 0)
     {
         rc++;
         printf("-- ecp_DualPointMultiply(3) FAILED!!");
-        PrintHexWords("a_x", a.x, K_WORDS);
-        PrintHexWords("a_y", a.y, K_WORDS);
+        ecp_PrintHexWords("a_x", a.x, K_WORDS);
+        ecp_PrintHexWords("a_y", a.y, K_WORDS);
     }
 
     return rc;

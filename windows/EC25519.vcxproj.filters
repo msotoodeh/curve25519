@@ -5,62 +5,32 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="LibFiles">
-      <UniqueIdentifier>{686a5337-3998-4ce9-bf8f-401c49100eeb}</UniqueIdentifier>
-    </Filter>
     <Filter Include="TestFiles">
       <UniqueIdentifier>{8d709ec6-33c2-440e-80e2-9c020eb24b35}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\source\curve25519_mehdi.c">
-      <Filter>LibFiles</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\curve25519_order.c">
-      <Filter>LibFiles</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\curve25519_utils.c">
-      <Filter>LibFiles</Filter>
-    </ClCompile>
     <ClCompile Include="..\test\curve25519_donna.c">
       <Filter>TestFiles</Filter>
     </ClCompile>
     <ClCompile Include="..\test\curve25519_test.c">
       <Filter>TestFiles</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\sha512.c">
-      <Filter>LibFiles</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\ed25519_verify.c">
-      <Filter>LibFiles</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\ed25519_sign.c">
-      <Filter>LibFiles</Filter>
-    </ClCompile>
     <ClCompile Include="..\test\curve25519_selftest.c">
       <Filter>TestFiles</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\test\curve25519_donna.h">
-      <Filter>TestFiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\test\curve25519_SelfTest.h">
-      <Filter>TestFiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\sha512.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\curve25519_mehdi.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\BaseTypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\ed25519_signature.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\source\curve25519_dh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\curve25519_donna.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test\curve25519_SelfTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

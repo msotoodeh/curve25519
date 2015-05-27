@@ -9,50 +9,60 @@ This code and accompanying files are put in public domain by the author.
 You can freely use, copy, modify and distribute this software as long
 as you comply with the license terms. See license file for details.
 
+This library delivers high performance and high security while having a small
+footprint with minimum resource requirements.
 This library supports DH key exchange using curve25519 as well as sign/verify
 operations based on twisted Edwards curve 25519.
-Code includes portable C code as well as X86_64 assembly language for 64-bit 
-AMD/Intel CPU architectures.
+
 
 Performance:
 ------------
-The portable C version is nearly twice faster than Google's implementation (http://code.google.com/p/curve25519-donna/) on 64-bit platforms and a factor 
-of close to 4 on 32-bit platforms.
-The assembly implementation is approximately 3 times faster than C implementation 
-on 64-bit platforms. Who calls C language 'portable assembly'!
+Google's implementation (http://code.google.com/p/curve25519-donna/) is used
+here for performance comparison only. This library outperforms Google's code 
+by a factor of 1.6 to 5.4 depending on the platform and selected language.
+
+For best performance, use the 64-bit assembly version on AMD/Intel CPU 
+architectures. The portable C code is provided mainly for 32-bit OS's and
+other CPU types.
+
+Note that the assembly implementation is approximately 3 times faster than C 
+implementation on 64-bit platforms.
+On 32-bit platforms, the biggest hit is due to usage of standard C library for
+64-bit arithmetic operations. Numbers below indicate that GCC and glibc does a 
+much better job than MSVC.
 
 
-Timing for ed25519 sign/verify:
+Timing for ed25519 sign/verify (short message & constant-time):
 ```
     windows7-64: VS2010 + MS Assembler
-        KeyGen: 192276 cycles = 56.552 usec @3.4GHz
-          Sign: 188232 cycles = 55.362 usec @3.4GHz
-        Verify: 257272 cycles = 75.668 usec @3.4GHz
-        
-    windows7-64: VS2010 + MS Assembler (constant-time)
-        KeyGen: 202148 cycles = 59.455 usec @3.4GHz
-          Sign: 205156 cycles = 60.340 usec @3.4GHz
-        Verify: 257756 cycles = 75.811 usec @3.4GHz
+        KeyGen: 170258 cycles = 50.076 usec @3.4GHz
+          Sign: 173560 cycles = 51.047 usec @3.4GHz
+        Verify: 257994 cycles = 75.881 usec @3.4GHz
 
     windows7-64:  VS2010
-        KeyGen: 553940 cycles = 162.924 usec @3.4GHz
-          Sign: 540488 cycles = 158.967 usec @3.4GHz
-        Verify: 727140 cycles = 213.865 usec @3.4GHz
-
-    windows7-64:  VS2010, Constant-time
-        KeyGen: 579192 cycles = 170.351 usec @3.4GHz
-          Sign: 584234 cycles = 171.834 usec @3.4GHz
-        Verify: 725878 cycles = 213.494 usec @3.4GHz
-
+        KeyGen: 499052 cycles = 146.780 usec @3.4GHz
+          Sign: 502174 cycles = 147.698 usec @3.4GHz
+        Verify: 727178 cycles = 213.876 usec @3.4GHz
+    
     windows7-32:  VS2010
-        KeyGen: 2335613 cycles = 686.945 usec @3.4GHz
-          Sign: 2259537 cycles = 664.570 usec @3.4GHz
-        Verify: 3006601 cycles = 884.294 usec @3.4GHz
+        KeyGen: 2069688 cycles = 608.732 usec @3.4GHz
+          Sign: 2082760 cycles = 612.576 usec @3.4GHz
+        Verify: 3007596 cycles = 884.587 usec @3.4GHz
     
     cygwin-32: gcc 4.5.3
-        KeyGen: 1696521 cycles = 498.977 usec @3.4GHz
-          Sign: 1652167 cycles = 485.931 usec @3.4GHz
-        Verify: 2211727 cycles = 650.508 usec @3.4GHz
+        KeyGen: 1529706 cycles = 449.914 usec @3.4GHz
+          Sign: 1545370 cycles = 454.521 usec @3.4GHz
+        Verify: 2220586 cycles = 653.114 usec @3.4GHz
+        
+    x86_64-w64-mingw32: gcc 4.9.2 + NASM 2.11.08
+        KeyGen: 171528 cycles = 50.449 usec @3.4GHz
+          Sign: 176172 cycles = 51.815 usec @3.4GHz
+        Verify: 261740 cycles = 76.982 usec @3.4GHz
+
+    x86_64-w64-mingw32: gcc 4.9.2
+        KeyGen: 521278 cycles = 153.317 usec @3.4GHz
+          Sign: 524676 cycles = 154.316 usec @3.4GHz
+        Verify: 757684 cycles = 222.848 usec @3.4GHz
 ```
 
 Timing for DH point multiplication:
@@ -98,9 +108,6 @@ switch (see Makefile).
 Second configurable switch controls usage of TSC (Time Stamp Counter). It is
 only used as a high resolution timer for performance measurements. You need 
 to turn ECP_NO_TSC switch on if your target does not support it.
-
-Another configurable switch named ECP_CONSTANT_TIME is added for constant-time
-implementation of the library when it operates on private keys.
 
 For building the library using the assembly sources, two assemblers are currently
 supported: Microsoft Assembler (Windows) and NASM (Windows/Linux). 

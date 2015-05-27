@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include "curve25519_mehdi.h"
 #include "curve25519_donna.h"
 #include "curve25519_SelfTest.h"
 #include "curve25519_dh.h"
@@ -39,7 +38,6 @@ U64 TimeNow()
 #else
 #if defined(_MSC_VER)
 #include <intrin.h>
-//#pragma intrinsic(__rdtsc)
 U64 TimeNow() 
 { 
     return __rdtsc();
@@ -96,6 +94,10 @@ void ecp_PrintHexWords(IN const char *name, IN const U32 *data, IN U32 size)
     printf("\n");
 }
 
+// Needed for donna
+extern void ecp_TrimSecretKey(U8 *X);
+const unsigned char BasePoint[32] = {9};
+
 int speed_test(int loops)
 {
     U64 t1, t2, tovr = 0, td = (U64)(-1), tm = (U64)(-1);
@@ -108,7 +110,7 @@ int speed_test(int loops)
     ecp_TrimSecretKey(secret_key);
 
     // Make sure both generate identical public key
-    curve25519_donna(donna_publickey, secret_key, ecp_BasePoint);
+    curve25519_donna(donna_publickey, secret_key, BasePoint);
     curve25519_dh_CalculatePublicKey(mehdi_publickey, secret_key);
 
     if (memcmp(mehdi_publickey, donna_publickey, 32) != 0)
@@ -171,7 +173,7 @@ int speed_test(int loops)
     for (i = 0; i < loops; ++i) 
     {
         t1 = TimeNow();
-        curve25519_donna(donna_publickey, secret_key, ecp_BasePoint);
+        curve25519_donna(donna_publickey, secret_key, BasePoint);
         t2 = TimeNow() - t1;
         if (t2 < td) td = t2;
     }
@@ -229,7 +231,7 @@ int speed_test(int loops)
     for (i = 0; i < loops; i++)
     {
         t1 = TimeNow();
-        ed25519_VerifySignature(sig, pubkey, "abc", 3);
+        ed25519_VerifySignature(sig, pubkey, (const unsigned char*)"abc", 3);
         t2 = TimeNow() - t1;
         if (t2 < tm) tm = t2;
     }
@@ -380,4 +382,3 @@ int main(int argc, char**argv)
 
     return rc;
 }
-

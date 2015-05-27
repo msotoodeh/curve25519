@@ -58,7 +58,7 @@ const U32 _w_maxP[8] = {   // 2*P < 2**256
     0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF
 };
 
-const U32 _w_I[8] = {
+const U32 _w_I[8] = {   // sqrt(-1)
     0x4A0EA0B0,0xC4EE1B27,0xAD2FE478,0x2F431806,
     0x3DFBD7A7,0x2B4D0099,0x4FC1DF0B,0x2B832480
 };
@@ -299,27 +299,6 @@ void ecp_ExpMod(U32* Y, const U32* X, const U8* E, int bytes)
     ECP_MOD(Y);
 }
 
-#if 0
-// Z = X + Y
-static void ecp_MontAdd(XZ_POINT *Z, const XZ_POINT *X, const XZ_POINT *Y, IN const U32 *Base)
-{
-    U32 A[8], B[8], C[8];
-    // x3 = ((x1-z1)(x2+z2) + (x1+z1)(x2-z2))^2*zb      // zb=1
-    // z3 = ((x1-z1)(x2+z2) - (x1+z1)(x2-z2))^2*xb      // xb=Base
-    ecp_SubReduce(A, X->X, X->Z);       // A = x1-z1
-    ecp_AddReduce(B, Y->X, Y->Z);       // B = x2+z2
-    ecp_MulReduce(A, A, B);             // A = (x1-z1)(x2+z2)
-    ecp_AddReduce(B, X->X, X->Z);       // B = x1+z1
-    ecp_SubReduce(C, Y->X, Y->Z);       // C = x2-z2
-    ecp_MulReduce(B, B, C);             // B = (x1+z1)(x2-z2)
-    ecp_AddReduce(C, A, B);             // C = (x1-z1)(x2+z2) + (x1+z1)(x2-z2)
-    ecp_SubReduce(B, A, B);             // B = (x1-z1)(x2+z2) - (x1+z1)(x2-z2)
-    ecp_SqrReduce(Z->X, C);             // x3 = ((x1-z1)(x2+z2) + (x1+z1)(x2-z2))^2
-    ecp_SqrReduce(A, B);                // A = ((x1-z1)(x2+z2) - (x1+z1)(x2-z2))^2
-    ecp_MulReduce(Z->Z, A, Base);       // z3 = ((x1-z1)(x2+z2) - (x1+z1)(x2-z2))^2*Base
-}
-#endif
-
 // Y = X + X
 void ecp_MontDouble(XZ_POINT *Y, const XZ_POINT *X)
 {
@@ -457,21 +436,7 @@ void ecp_CalculateY(OUT U8 *Y, IN const U8 *X)
     ecp_WordsToBytes(Y, T);
 }
 
-#ifdef ECP_INVERSE_METHOD_EXPMOD
-static const U8 _b_Pm2[32] = {      // p-2
-    0xEB,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
-    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x7F };
-
-// Y = 1/X mod P
-void ecp_Inverse(U32* Y, const U32* X)
-{
-    // TBD: use Ext. Euclid instead
-    ecp_ExpMod(Y, X, _b_Pm2, 32);
-}
-#endif
-
-#ifdef ECP_INVERSE_METHOD_DJB
-// Donna's implementation for reference
+// Courtesy of DJB
 // Return out = 1/z mod P
 void ecp_Inverse(U32 *out, const U32 *z) 
 {
@@ -543,8 +508,8 @@ void ecp_Inverse(U32 *out, const U32 *z)
   /* 2^255 - 2^5 */     ecp_SqrReduce(t1,t0);
   /* 2^255 - 21 */      ecp_MulReduce(out,t1,z11);
 }
-#endif
 
+// -- DH key exchange interfaces -----------------------------------------
 // Return public key associated with sk
 void curve25519_dh_CalculatePublicKey(
     unsigned char *pk,          // [32-bytes] OUT: Public key
@@ -554,6 +519,7 @@ void curve25519_dh_CalculatePublicKey(
     ecp_PointMultiply(pk, ecp_BasePoint, sk, 32);
 }
 
+// Create a shared secret
 void curve25519_dh_CreateSharedKey(
     unsigned char *shared,      // [32-bytes] OUT: Created shared key
     const unsigned char *pk,    // [32-bytes] IN: Other side's public key

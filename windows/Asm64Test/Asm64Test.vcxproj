@@ -78,8 +78,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\asm64\BaseTypes.h" />
-    <ClInclude Include="..\..\asm64\curve25519_mehdi_x64.h" />
+    <ClInclude Include="..\..\source\curve25519_dh.h" />
+    <ClInclude Include="..\..\source\ed25519_signature.h" />
     <ClInclude Include="..\..\test\curve25519_donna.h" />
   </ItemGroup>
   <ItemGroup>

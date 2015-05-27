@@ -7,7 +7,7 @@ extern "C" {
 
 #include "BaseTypes.h"
 
-typedef U8 u8;
+typedef unsigned char u8;
 typedef S64 felem;
 
 void curve25519_donna(u8 *donna_publickey, const u8 *secret, const u8 *basepoint);

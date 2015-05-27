@@ -33,14 +33,18 @@ extern "C" {
 #define U_WORD          U64
 #define S_WORD          S64
 #define WORDSIZE_64
+#define W64(lo,hi)      ((U64)hi<<32)+lo
 #else
 #define U_WORD          U32
 #define S_WORD          S32
 #define WORDSIZE_32
+#define W64(lo,hi)      lo,hi
 #endif
 
 #define K_BYTES         32
 #define K_WORDS         (K_BYTES/sizeof(U_WORD))
+
+#define W256(x0,x1,x2,x3,x4,x5,x6,x7) {W64(x0,x1),W64(x2,x3),W64(x4,x5),W64(x6,x7)}
 
 // Affine coordinates
 typedef struct {
@@ -130,9 +134,9 @@ void ecp_MulMod(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
 void ecp_ExpMod(U_WORD* Y, const U_WORD* X, const U8* E, int bytes);
 
 void ed25519_BasePointMultiply(OUT Affine_POINT *Q, IN const U8 *sk);
+void ed25519_AddAffinePoint(Ext_POINT *p, const Pre_POINT *q);
 void ed25519_AddBasePoint(Ext_POINT *p);
 void ed25519_DoublePoint(Ext_POINT *p);
-
 
 #ifdef __cplusplus
 }

@@ -160,7 +160,7 @@ int speed_test(int loops)
     for (i = 0; i < loops; i++)
     {
         t1 = readTSC();
-        ed25519_SignMessage(sig, privkey, "abc", 3);
+        ed25519_SignMessage(sig, privkey, (const unsigned char*)"abc", 3);
         t2 = readTSC() - t1;
         if (t2 < tm) tm = t2;
     }
@@ -298,12 +298,9 @@ int dh_test()
     return rc;
 }
 
-//void pre_compute_base_point();
-
 int main(int argc, char**argv)
 {
     int rc = 0;
-    //pre_compute_base_point();
 
     if (curve25519_SelfTest(1) != 0)
     {

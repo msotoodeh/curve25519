@@ -53,7 +53,7 @@ const U64 _w_P[4] = {
 const U64 _w_maxP[4] = {   // 2*P
     0xFFFFFFFFFFFFFFDA,0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFFFFFFF,0xFFFFFFFFFFFFFFFF };
 
-const U64 _w_I[4] = {
+const U64 _w_I[4] = {   // sqrt(-1)
     0xC4EE1B274A0EA0B0,0x2F431806AD2FE478,0x2B4D00993DFBD7A7,0x2B8324804FC1DF0B };
 
 static const U8 _b_Pp3d8[32] = {    // (P+3)/8
@@ -265,21 +265,7 @@ void ecp_CalculateY(OUT U8 *Y, IN const U8 *X)
     ecp_WordsToBytes(Y, T);
 }
 
-#ifdef ECP_INVERSE_METHOD_EXPMOD
-static const U8 _b_Pm2[32] = {      // p-2
-    0xEB,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
-    0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x7F };
-
-// Y = 1/X mod P
-void ecp_Inverse(U64* Y, const U64* X)
-{
-    // TBD: use Ext. Euclid instead
-    ecp_ExpMod(Y, X, _b_Pm2, 32);
-}
-#endif
-
-#ifdef ECP_INVERSE_METHOD_DJB
-// Donna's implementation for reference
+// Courtesy of DJB
 // Return out = 1/z mod P
 void ecp_Inverse(U64 *out, const U64 *z) 
 {
@@ -351,7 +337,6 @@ void ecp_Inverse(U64 *out, const U64 *z)
   /* 2^255 - 2^5 */     ecp_SqrReduce(t1,t0);
   /* 2^255 - 21 */      ecp_MulReduce(out,t1,z11);
 }
-#endif
 
 // Return public key associated with sk
 void curve25519_dh_CalculatePublicKey(

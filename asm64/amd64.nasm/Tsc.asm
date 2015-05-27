@@ -26,4 +26,3 @@
     shl     rdx,32
     add     eax,edx
     ret
-

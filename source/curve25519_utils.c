@@ -117,4 +117,3 @@ U8 ecp_DecodeInt(OUT U32 *Y, IN const U8 *X)
 
     return (U8)((*X >> 7) & 1);
 }
-
