@@ -67,7 +67,15 @@ typedef struct
     U_WORD YmX[K_WORDS];        // Y-X
     U_WORD T2d[K_WORDS];        // 2d*T
     U_WORD Z2[K_WORDS];         // 2*Z
-} Pre_POINT;
+} PE_POINT;
+
+// pre-computed, Affine point
+typedef struct
+{
+    U_WORD YpX[K_WORDS];        // Y+X
+    U_WORD YmX[K_WORDS];        // Y-X
+    U_WORD T2d[K_WORDS];        // 2d*T
+} PA_POINT;
 
 extern const U8 ecp_BasePoint[K_BYTES];
 
@@ -133,8 +141,8 @@ void ecp_Inverse(U_WORD *out, const U_WORD *z);
 void ecp_MulMod(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
 void ecp_ExpMod(U_WORD* Y, const U_WORD* X, const U8* E, int bytes);
 
-void ed25519_BasePointMultiply(OUT Affine_POINT *Q, IN const U8 *sk);
-void ed25519_AddAffinePoint(Ext_POINT *p, const Pre_POINT *q);
+void ed25519_BasePointMultiply(OUT Affine_POINT *Q, IN const U_WORD *sk);
+void ed25519_AddAffinePoint(Ext_POINT *p, const PA_POINT *q);
 void ed25519_AddBasePoint(Ext_POINT *p);
 void ed25519_DoublePoint(Ext_POINT *p);
 

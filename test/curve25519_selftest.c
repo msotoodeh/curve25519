@@ -132,8 +132,6 @@ static const U8 sha512_ax1m[] = {   // 'a' repeated 1,000,000 times
     0xDE,0x0F,0xF2,0x44,0x87,0x7E,0xA6,0x0A,0x4C,0xB0,0x43,0x2C,0xE5,0x77,0xC3,0x1B,
     0xEB,0x00,0x9C,0x5C,0x2C,0x49,0xAA,0x2E,0x4E,0xAD,0xB2,0x17,0xAD,0x8C,0xC0,0x9B };
 
-#define PR(V) ecp_PrintHexBytes(#V, ecp_ReverseByteOrder(a, V), 32)
-
 int ecp_IsZero(IN const U32 *X)
 {
     return (X[0] | X[1] | X[2] | X[3] | X[4] | X[5] | X[6] | X[7]) == 0;
@@ -179,7 +177,7 @@ void print_words(IN const char *txt, IN const U32 *data, IN U32 size)
 void pre_compute_base_point()
 {
     Ext_POINT P = {{0},{1},{1},{0}};
-    Pre_POINT R;
+    PA_POINT R;
     int i;
     printf("\nconst Pre_POINT pre_BaseMultiples[16] = \n{\n");
     for (i = 0; i < 16; i++)
@@ -188,12 +186,10 @@ void pre_compute_base_point()
         ecp_AddReduce(R.YpX, P.y, P.x); ECP_MOD(R.YpX);
         ecp_SubReduce(R.YmX, P.y, P.x); ECP_MOD(R.YmX);
         ecp_MulMod(R.T2d, P.t, _w_2d);
-        ecp_SetValue(R.Z2, 2);
 
         print_words("    W256(",R.YpX, K_WORDS);
         print_words("),\n    W256(",R.YmX, K_WORDS);
         print_words("),\n    W256(",R.T2d, K_WORDS);
-        print_words("),\n    W256(",R.Z2, K_WORDS);
         if (i == 15)
         {
             printf(")\n  }\n};\n");

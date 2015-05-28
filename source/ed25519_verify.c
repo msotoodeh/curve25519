@@ -44,11 +44,10 @@ extern const U_WORD _w_I[K_WORDS];
 extern const U_WORD _w_BPO[K_WORDS];
 extern const U_WORD _w_2d[K_WORDS];
 
-extern const Pre_POINT pre_BaseMultiples[16];
+extern const PA_POINT pre_BaseMultiples[16];
 
 #define _w_Zero     pre_BaseMultiples[0].T2d
 #define _w_One      pre_BaseMultiples[0].YpX
-#define _w_Two      pre_BaseMultiples[0].Z2
 
 static const U_WORD _w_d[K_WORDS] =
     W256(0x135978A3,0x75EB4DCA,0x4141D8AB,0x00700A4D,0x7779E898,0x8CC74079,0x2B6FFE73,0x52036CEE);
@@ -130,7 +129,7 @@ void ecp_ModExp2523(U_WORD *Y, const U_WORD *X)
     Cost: 8M + 6add
     Return: P = P + Q
 */
-static void ed25519_AddPoint(Ext_POINT *p, const Pre_POINT *q)
+static void ed25519_AddPoint(Ext_POINT *p, const PE_POINT *q)
 {
     U_WORD a[K_WORDS], b[K_WORDS], c[K_WORDS], d[K_WORDS], e[K_WORDS];
 
@@ -161,14 +160,14 @@ static void ed25519_DualPointMultiply(
     int i, j;
     M32 k;
     Ext_POINT S;
-    Pre_POINT U, V;
+    PA_POINT U;
+    PE_POINT V;
 
     // U = pre-compute(Q)
     ecp_AddReduce(U.YpX, q->y, q->x);
     ecp_SubReduce(U.YmX, q->y, q->x);
     ecp_MulReduce(U.T2d, q->y, q->x);
     ecp_MulReduce(U.T2d, U.T2d, _w_2d);
-    ecp_SetValue(U.Z2, 2);
 
     // set V = pre-compute(P + Q)
     ecp_Copy(S.x, q->x);
@@ -249,7 +248,7 @@ static U8 m_6[32] = {6};
 static U8 m_7[32] = {7};
 static U8 m_11[32] = {11};
 static U8 m_50[32] = {50};
-static U8 m_127[32] = {127};
+//static U8 m_127[32] = {127};
 
 // Pre-calculate base point values
 static const Affine_POINT ed25519_BasePoint = {   // y = 4/5 mod P
@@ -276,16 +275,19 @@ int ed25519_selftest()
     }
 
     // a = 7*B
-    ed25519_BasePointMultiply(&a, m_7);
+    ecp_SetValue(u, 7);
+    ed25519_BasePointMultiply(&a, u);
 
     // b = 11*B
-    ed25519_BasePointMultiply(&b, m_11);
+    ecp_SetValue(u, 11);
+    ed25519_BasePointMultiply(&b, u);
 
     // c = 50*B + 7*b = 127*B
     ed25519_DualPointMultiply(&c, m_50, m_7, &b);
 
     // d = 127*B
-    ed25519_BasePointMultiply(&d, m_127);
+    ecp_SetValue(u, 127);
+    ed25519_BasePointMultiply(&d, u);
 
     // check c == d
     if (ecp_Cmp(c.y, d.y) != 0 || ecp_Cmp(c.x, d.x) != 0)
@@ -313,7 +315,7 @@ int ed25519_selftest()
 
     ecp_SetValue(u, 0x11223344);
     ecp_WordsToBytes(m1, u);
-    ed25519_BasePointMultiply(&a, m1);      // a = u*B
+    ed25519_BasePointMultiply(&a, u);      // a = u*B
     eco_MulMod(v, u, u);
     ecp_Sub(v, _w_BPO, v);          // v = -u^2
     ecp_WordsToBytes(m2, v);
