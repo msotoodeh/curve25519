@@ -1,6 +1,6 @@
 # curve25519
-Highly performance implementation of elliptic curve 25519
-=========================================================
+High performance implementation of elliptic curve 25519
+=======================================================
 
 Copyright Mehdi Sotoodeh.  All rights reserved.
 <mehdisotoodeh@gmail.com>
