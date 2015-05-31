@@ -1,6 +1,6 @@
 # curve25519
-Efficient implementation of elliptic curve 25519
-================================================
+Highly performance implementation of elliptic curve 25519
+=========================================================
 
 Copyright Mehdi Sotoodeh.  All rights reserved.
 <mehdisotoodeh@gmail.com>
@@ -17,16 +17,23 @@ operations based on twisted Edwards curve 25519.
 
 Performance:
 ------------
+The new version of this library sets NEW SPEED RECORDS. This is achieved 
+without taking advantage of special CPU instructions or multi-CPU parallel 
+processing.
+The library implements a new technique (I call it FOLDING for now) that 
+effectively reduces the number of EC point operations by a factor of 2, 4 
+or even more. The trade off is the pre computation and cost of cached memory.
+
 Google's implementation (http://code.google.com/p/curve25519-donna/) is used
 here for performance comparison only. This library outperforms Google's code 
-by a factor of 1.6 to 5.4 depending on the platform and selected language.
+by a factor of 1.6 to 11 depending on the platform and selected language.
 
 For best performance, use the 64-bit assembly version on AMD/Intel CPU 
-architectures. The portable C code is provided mainly for 32-bit OS's and
-other CPU types.
+architectures. The portable C code can be used for 32-bit OS's and other CPU 
+types.
 
 Note that the assembly implementation is approximately 3 times faster than C 
-implementation on 64-bit platforms.
+implementation on 64-bit platforms (C != PortableAssembly).
 On 32-bit platforms, the biggest hit is due to usage of standard C library for
 64-bit arithmetic operations. Numbers below indicate that GCC and glibc does a 
 much better job than MSVC.
@@ -35,67 +42,60 @@ much better job than MSVC.
 Timing for ed25519 sign/verify (short message & constant-time):
 ```
     windows7-64: VS2010 + MS Assembler
-        KeyGen: 170258 cycles = 50.076 usec @3.4GHz
-          Sign: 173560 cycles = 51.047 usec @3.4GHz
-        Verify: 257994 cycles = 75.881 usec @3.4GHz
+        KeyGen: 76188 cycles = 22.408 usec @3.4GHz
+          Sign: 79972 cycles = 23.521 usec @3.4GHz
+        Verify: 125396 cycles = 36.881 usec @3.4GHz (Init)
+                110596 cycles = 32.528 usec @3.4GHz (Check)
 
-    windows7-64:  VS2010
-        KeyGen: 499052 cycles = 146.780 usec @3.4GHz
-          Sign: 502174 cycles = 147.698 usec @3.4GHz
-        Verify: 727178 cycles = 213.876 usec @3.4GHz
+    windows7:  VS2010, Portable-C, 64-bit
+        KeyGen: 215870 cycles = 63.491 usec @3.4GHz
+          Sign: 219972 cycles = 64.698 usec @3.4GHz
+        Verify: 370388 cycles = 108.938 usec @3.4GHz (Init)
+                306322 cycles = 90.095 usec @3.4GHz (Check)
     
-    windows7-32:  VS2010
-        KeyGen: 2069688 cycles = 608.732 usec @3.4GHz
-          Sign: 2082760 cycles = 612.576 usec @3.4GHz
-        Verify: 3007596 cycles = 884.587 usec @3.4GHz
-    
-    cygwin-32: gcc 4.5.3
-        KeyGen: 1529706 cycles = 449.914 usec @3.4GHz
-          Sign: 1545370 cycles = 454.521 usec @3.4GHz
-        Verify: 2220586 cycles = 653.114 usec @3.4GHz
-        
+    windows7:  VS2010, Portable-C, 32-bit
+        KeyGen: 914630 cycles = 269.009 usec @3.4GHz
+          Sign: 926174 cycles = 272.404 usec @3.4GHz
+        Verify: 1550028 cycles = 455.891 usec @3.4GHz (Init)
+                1300068 cycles = 382.373 usec @3.4GHz (Check)
+
+    cygwin-32: gcc 4.5.3, Portable-C, 32-bit
+        KeyGen: 667780 cycles = 196.406 usec @3.4GHz
+          Sign: 683420 cycles = 201.006 usec @3.4GHz
+        Verify: 1132878 cycles = 333.199 usec @3.4GHz (Init)
+                951252 cycles = 279.780 usec @3.4GHz (Check)
+
     x86_64-w64-mingw32: gcc 4.9.2 + NASM 2.11.08
-        KeyGen: 171528 cycles = 50.449 usec @3.4GHz
-          Sign: 176172 cycles = 51.815 usec @3.4GHz
-        Verify: 261740 cycles = 76.982 usec @3.4GHz
-
-    x86_64-w64-mingw32: gcc 4.9.2
-        KeyGen: 521278 cycles = 153.317 usec @3.4GHz
-          Sign: 524676 cycles = 154.316 usec @3.4GHz
-        Verify: 757684 cycles = 222.848 usec @3.4GHz
-```
-
+        KeyGen: 76758 cycles = 22.576 usec @3.4GHz
+          Sign: 80586 cycles = 23.702 usec @3.4GHz
+        Verify: 126716 cycles = 37.269 usec @3.4GHz (Init)
+                111124 cycles = 32.684 usec @3.4GHz (Check)
+    
 Timing for DH point multiplication:
 ```
     windows7-64: VS2010 + MS Assembler
-        Donna: 779116 cycles = 229.152 usec @3.4GHz -- ratio: 4.887
-        Mehdi: 159438 cycles = 46.894 usec @3.4GHz -- delta: 79.54%     ** MSASM **
+        Donna: 778914 cycles = 229.092 usec @3.4GHz -- ratio: 10.491
+        Mehdi: 74248 cycles = 21.838 usec @3.4GHz -- delta: 90.47%      ** MSASM **
 
     Mingw-x86_64: gcc 9.9.2, nasm 2.11.08
-        Donna: 851840 cycles = 250.541 usec @3.4GHz -- ratio: 5.331
-        Mehdi: 159778 cycles = 46.994 usec @3.4GHz -- delta: 81.24%     ** NASM **
+        Donna: 852662 cycles = 250.783 usec @3.4GHz -- ratio: 11.431
+        Mehdi: 74594 cycles = 21.939 usec @3.4GHz -- delta: 91.25%
 
     ubuntu-12.04.3-x86_64: nasm 2.09.10
         Donna: 867671 cycles = 255.197 usec @3.4GHz -- ratio: 5.464
         Mehdi: 158787 cycles = 46.702 usec @3.4GHz -- delta: 81.70%     ** NASM **
 
-    windows7-64:  VS2010
-        Donna: 780131 cycles = 229.450 usec @3.4GHz -- ratio: 1.682
-        Mehdi: 463769 cycles = 136.403 usec @3.4GHz -- delta: 40.55%
+    windows7:  VS2010, Portable-C, 64-bit
+        Donna: 780008 cycles = 229.414 usec @3.4GHz -- ratio: 3.692
+        Mehdi: 211272 cycles = 62.139 usec @3.4GHz -- delta: 72.91%
 
-    windows7-32:  VS2010
-        Donna: 7398408 cycles = 2176.002 usec @3.4GHz -- ratio: 3.832
-        Mehdi: 1930862 cycles = 567.901 usec @3.4GHz -- delta: 73.90%
+    windows7:  VS2010, Portable-C, 32-bit
+        Donna: 7460048 cycles = 2194.132 usec @3.4GHz -- ratio: 8.208
+        Mehdi: 908870 cycles = 267.315 usec @3.4GHz -- delta: 87.82%
 
-    cygwin-32: gcc 4.5.3
-        Donna: 2550650 cycles = 750.191 usec @3.4GHz -- ratio: 1.810
-        Mehdi: 1409196 cycles = 414.469 usec @3.4GHz -- delta: 44.75%
-                    
-    -- Linux debian6-64 2.6.32-5-amd64 #1 SMP Mon Sep 23 22:14:43 UTC 2013 x86_64 GNU/Linux
-
-    debian-64: gcc (Debian 4.4.5-8) 4.4.5
-        Donna: 860872 cycles = 253.198 usec @3.4GHz -- ratio: 1.610
-        Mehdi: 534584 cycles = 157.231 usec @3.4GHz -- delta: 37.90%      
+    cygwin-32: gcc 4.5.3, Portable-C, 32-bit
+        Donna: 2550612 cycles = 750.180 usec @3.4GHz -- ratio: 3.899
+        Mehdi: 654232 cycles = 192.421 usec @3.4GHz -- delta: 74.35%
 ```
 
 Building:

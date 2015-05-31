@@ -53,6 +53,17 @@ int ed25519_VerifySignature(
     const unsigned char *msg,           // IN: [msg_size bytes] message to sign
     size_t msg_size);                   // IN: size of message
 
+void * ed25519_Verify_Init(
+    void *context,                      // IN: null or context to use
+    const unsigned char *publicKey);    // IN: [32 bytes] public key
+
+int ed25519_Verify_Check(
+    const void          *context,               // IN: created by ed25519_Verify_Init
+    const unsigned char *signature,             // IN: signature (R,S)
+    const unsigned char *msg, size_t msg_size); // IN: message to sign
+
+void ed25519_Verify_Finish(void *ctx);
+
 #ifdef __cplusplus
 }
 #endif

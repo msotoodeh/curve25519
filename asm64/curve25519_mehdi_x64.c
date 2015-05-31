@@ -36,10 +36,6 @@
     l = 2**252 + 27742317777372353535851937790883648493
 */
 
-// Pick a modular inverse method. One of:
-//#define ECP_INVERSE_METHOD_EXPMOD
-#define ECP_INVERSE_METHOD_DJB
-
 typedef struct
 {
     U64 X[4];   // x = X/Z
@@ -338,13 +334,18 @@ void ecp_Inverse(U64 *out, const U64 *z)
   /* 2^255 - 21 */      ecp_MulReduce(out,t1,z11);
 }
 
+void x25519_BasePointMultiply(OUT U8 *r, IN const U8 *sk);
+
 // Return public key associated with sk
 void curve25519_dh_CalculatePublicKey(
     unsigned char *pk,          // [32-bytes] OUT: Public key
     unsigned char *sk)          // [32-bytes] IN/OUT: Your secret key
 {
+    //Affine_POINT Q;
     ecp_TrimSecretKey(sk);
-    ecp_PointMultiply(pk, ecp_BasePoint, sk, 32);
+    //ecp_PointMultiply(pk, ecp_BasePoint, sk, 32);
+    // Use faster method
+    x25519_BasePointMultiply(pk, sk);
 }
 
 void curve25519_dh_CreateSharedKey(

@@ -20,6 +20,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <memory.h>
+#include <malloc.h>
 #include "curve25519_mehdi.h"
 #include "ed25519_signature.h"
 #include "sha512.h"
@@ -38,16 +39,21 @@
  *      l = 0x1000000000000000000000000000000014DEF9DEA2F79CD65812631A5CF5D3ED
  */
 
+typedef struct {
+    unsigned char pk[32];
+    PE_POINT q_table[16];
+} EDP_SIGV_CTX;
+
 extern const U_WORD _w_P[K_WORDS];
 extern const U_WORD _w_maxP[K_WORDS];
 extern const U_WORD _w_I[K_WORDS];
 extern const U_WORD _w_BPO[K_WORDS];
 extern const U_WORD _w_2d[K_WORDS];
 
-extern const PA_POINT pre_BaseMultiples[16];
+extern const PA_POINT _w_basepoint_perm64[16];
 
-#define _w_Zero     pre_BaseMultiples[0].T2d
-#define _w_One      pre_BaseMultiples[0].YpX
+#define _w_Zero     _w_basepoint_perm64[0].T2d
+#define _w_One      _w_basepoint_perm64[0].YpX
 
 static const U_WORD _w_d[K_WORDS] =
     W256(0x135978A3,0x75EB4DCA,0x4141D8AB,0x00700A4D,0x7779E898,0x8CC74079,0x2B6FFE73,0x52036CEE);
@@ -87,7 +93,6 @@ void ed25519_CalculateX(OUT U_WORD *X, IN const U_WORD *Y, U_WORD parity)
     if (((X[0] ^ parity) & 1) != 0)
         ecp_Sub(X, _w_P, X);
 }
-
 
 void ed25519_UnpackPoint(Affine_POINT *r, const unsigned char *p)
 {
@@ -129,7 +134,7 @@ void ecp_ModExp2523(U_WORD *Y, const U_WORD *X)
     Cost: 8M + 6add
     Return: P = P + Q
 */
-static void ed25519_AddPoint(Ext_POINT *p, const PE_POINT *q)
+void edp_AddPoint(Ext_POINT *p, const PE_POINT *q)
 {
     U_WORD a[K_WORDS], b[K_WORDS], c[K_WORDS], d[K_WORDS], e[K_WORDS];
 
@@ -150,64 +155,7 @@ static void ed25519_AddPoint(Ext_POINT *p, const PE_POINT *q)
     ecp_MulReduce(p->z, d, a);              /* G*F */
 }
 
-/*
-Calculate: point R = a*P + b*Q  where P is base point
-*/
-static void ed25519_DualPointMultiply(
-    Affine_POINT *r,
-    const U8 *a, const U8 *b, const Affine_POINT *q)
-{
-    int i, j;
-    M32 k;
-    Ext_POINT S;
-    PA_POINT U;
-    PE_POINT V;
-
-    // U = pre-compute(Q)
-    ecp_AddReduce(U.YpX, q->y, q->x);
-    ecp_SubReduce(U.YmX, q->y, q->x);
-    ecp_MulReduce(U.T2d, q->y, q->x);
-    ecp_MulReduce(U.T2d, U.T2d, _w_2d);
-
-    // set V = pre-compute(P + Q)
-    ecp_Copy(S.x, q->x);
-    ecp_Copy(S.y, q->y);
-    ecp_SetValue(S.z, 1);
-    ecp_MulReduce(S.t, S.x, S.y);
-    ed25519_AddBasePoint(&S);   // S = P + Q
-    // 
-    ecp_AddReduce(V.YpX, S.y, S.x);
-    ecp_SubReduce(V.YmX, S.y, S.x);
-    ecp_MulReduce(V.T2d, S.t, _w_2d);
-    ecp_AddReduce(V.Z2, S.z, S.z);
-
-    // Set S = (0,1)
-    ecp_SetValue(S.x, 0);
-    ecp_SetValue(S.y, 1);
-    ecp_SetValue(S.z, 1);
-    ecp_SetValue(S.t, 0);
-
-    for (i = 32; i-- > 0;)
-    {
-        k.u8.b0 = a[i];
-        k.u8.b1 = b[i];
-        for (j = 0; j < 8; j++)
-        {
-            ed25519_DoublePoint(&S);
-            switch (k.u32 & 0x8080)
-            {
-            case 0x0080: ed25519_AddBasePoint(&S); break;
-            case 0x8000: ed25519_AddAffinePoint(&S, &U); break;
-            case 0x8080: ed25519_AddPoint(&S, &V); break;
-            }
-            k.u32 <<= 1;
-        }
-    }
-    ecp_Inverse(S.z, S.z);
-    ecp_MulMod(r->x, S.x, S.z);
-    ecp_MulMod(r->y, S.y, S.z);
-}
-
+#if 0   // Use this version if optimizing for memory usage
 int ed25519_VerifySignature(
     const unsigned char *signature,             // IN: signature (R,S)
     const unsigned char *publicKey,             // IN: public key
@@ -235,101 +183,174 @@ int ed25519_VerifySignature(
     // T = s*P + h*(-Q) = (s - h*a)*P = r*P = R
 
     ecp_WordsToBytes(md, h);
-    ed25519_DualPointMultiply(&T, signature+32, md, &Q);
+    edp_DualPointMultiply(&T, signature+32, md, &Q);
     ed25519_PackPoint(md, T.y, T.x[0]);
 
     return (memcmp(md, signature, 32) == 0);
 }
+#endif
 
-#ifdef ECP_SELF_TEST
-#include <stdio.h>
-
-static U8 m_6[32] = {6};
-static U8 m_7[32] = {7};
-static U8 m_11[32] = {11};
-static U8 m_50[32] = {50};
-//static U8 m_127[32] = {127};
-
-// Pre-calculate base point values
-static const Affine_POINT ed25519_BasePoint = {   // y = 4/5 mod P
-    W256(0x8F25D51A,0xC9562D60,0x9525A7B2,0x692CC760,0xFDD6DC5C,0xC0A4E231,0xCD6E53FE,0x216936D3),
-    W256(0x66666658,0x66666666,0x66666666,0x66666666,0x66666666,0x66666666,0x66666666,0x66666666)
-};
-
-void ecp_PrintHexWords(IN const char *name, IN const U_WORD *data, IN U32 size);
-
-int ed25519_selftest()
+int ed25519_VerifySignature(
+    const unsigned char *signature,             // IN: signature (R,S)
+    const unsigned char *publicKey,             // IN: public key
+    const unsigned char *msg, size_t msg_size)  // IN: message to sign
 {
-    int rc = 0;
-    U8 pp[32], m1[32], m2[32];
-    U_WORD u[K_WORDS], v[K_WORDS];
-    Affine_POINT a, b, c, d;
+    EDP_SIGV_CTX ctx;
 
-    ed25519_PackPoint(pp, ed25519_BasePoint.y, ed25519_BasePoint.x[0] & 1);
-    ed25519_UnpackPoint(&a, pp);
-    if (ecp_Cmp(a.x, ed25519_BasePoint.x) != 0)
-    {
-        rc++;
-        printf("-- Unpack error.");
-        ecp_PrintHexWords("a_x", a.x, K_WORDS);
-    }
+    ed25519_Verify_Init(&ctx, publicKey);
 
-    // a = 7*B
-    ecp_SetValue(u, 7);
-    ed25519_BasePointMultiply(&a, u);
-
-    // b = 11*B
-    ecp_SetValue(u, 11);
-    ed25519_BasePointMultiply(&b, u);
-
-    // c = 50*B + 7*b = 127*B
-    ed25519_DualPointMultiply(&c, m_50, m_7, &b);
-
-    // d = 127*B
-    ecp_SetValue(u, 127);
-    ed25519_BasePointMultiply(&d, u);
-
-    // check c == d
-    if (ecp_Cmp(c.y, d.y) != 0 || ecp_Cmp(c.x, d.x) != 0)
-    {
-        rc++;
-        printf("-- ecp_DualPointMultiply(1) FAILED!!");
-        ecp_PrintHexWords("c_x", c.x, K_WORDS);
-        ecp_PrintHexWords("c_y", c.y, K_WORDS);
-        ecp_PrintHexWords("d_x", d.x, K_WORDS);
-        ecp_PrintHexWords("d_y", d.y, K_WORDS);
-    }
-
-    // c = 11*b + 6*B = 127*B
-    ed25519_DualPointMultiply(&c, m_6, m_11, &b);
-    // check c == d
-    if (ecp_Cmp(c.y, d.y) != 0 || ecp_Cmp(c.x, d.x) != 0)
-    {
-        rc++;
-        printf("-- ecp_DualPointMultiply(2) FAILED!!");
-        ecp_PrintHexWords("c_x", c.x, K_WORDS);
-        ecp_PrintHexWords("c_y", c.y, K_WORDS);
-        ecp_PrintHexWords("d_x", d.x, K_WORDS);
-        ecp_PrintHexWords("d_y", d.y, K_WORDS);
-    }
-
-    ecp_SetValue(u, 0x11223344);
-    ecp_WordsToBytes(m1, u);
-    ed25519_BasePointMultiply(&a, u);      // a = u*B
-    eco_MulMod(v, u, u);
-    ecp_Sub(v, _w_BPO, v);          // v = -u^2
-    ecp_WordsToBytes(m2, v);
-    ed25519_DualPointMultiply(&a, m2, m1, &a);  // v*B + u*A = (-u^2 + u*u)*B
-    // assert a == infinty
-    if (ecp_Cmp(a.x, _w_Zero) != 0 || ecp_Cmp(a.y, _w_One) != 0)
-    {
-        rc++;
-        printf("-- ecp_DualPointMultiply(3) FAILED!!");
-        ecp_PrintHexWords("a_x", a.x, K_WORDS);
-        ecp_PrintHexWords("a_y", a.y, K_WORDS);
-    }
-
-    return rc;
+    return ed25519_Verify_Check(&ctx, signature, msg, msg_size);
 }
 
-#endif
+static void ExtPoint2PE(PE_POINT *r, const Ext_POINT *p)
+{
+    ecp_AddReduce(r->YpX, p->y, p->x);
+    ecp_SubReduce(r->YmX, p->y, p->x);
+    ecp_MulReduce(r->T2d, p->t, _w_2d);
+    ecp_AddReduce(r->Z2, p->z, p->z);
+}
+
+void * ed25519_Verify_Init(
+    void *context,                      // IN: null or context buffer to use
+    const unsigned char *publicKey)     // IN: [32 bytes] public key
+{
+    int i;
+    PE_POINT Q0, Q1, Q2, Q3;
+    Ext_POINT Q;
+    EDP_SIGV_CTX *ctx = (EDP_SIGV_CTX*)context;
+
+    if (ctx == 0) ctx = (EDP_SIGV_CTX*)malloc(sizeof(EDP_SIGV_CTX));
+
+    memcpy(ctx->pk, publicKey, 32);
+    i = ecp_DecodeInt(Q.y, publicKey);
+    ed25519_CalculateX(Q.x, Q.y, ~i);       // Invert parity for -Q
+    ecp_MulMod(Q.t, Q.x, Q.y);
+    ecp_SetValue(Q.z, 1);
+
+    // pre-compute q-table
+
+    // Calculate: Q0=Q, Q1=(2^64)*Q, Q2=(2^128)*Q, Q3=(2^192)*Q
+    ExtPoint2PE(&Q0, &Q);
+    for (i = 0; i < 64; i++) edp_DoublePoint(&Q);
+    ExtPoint2PE(&Q1, &Q);
+    do edp_DoublePoint(&Q); while (++i < 128);
+    ExtPoint2PE(&Q2, &Q);
+    do edp_DoublePoint(&Q); while (++i < 192);
+    ExtPoint2PE(&Q3, &Q);
+
+    // TODO: optimize this
+    for (i = 0; i < 16; i++)
+    {
+        ecp_SetValue(Q.x, 0);
+        ecp_SetValue(Q.y, 1);
+        ecp_SetValue(Q.z, 1);
+        ecp_SetValue(Q.t, 0);
+
+        if (i & 1) edp_AddPoint(&Q, &Q0);
+        if (i & 2) edp_AddPoint(&Q, &Q1);
+        if (i & 4) edp_AddPoint(&Q, &Q2);
+        if (i & 8) edp_AddPoint(&Q, &Q3);
+        ExtPoint2PE(&ctx->q_table[i], &Q);
+    }
+    return ctx;
+}
+
+void ed25519_Verify_Finish(void *ctx)
+{
+    free(ctx);
+}
+
+#define MVBIT(x,from,to) (((x >> (from)) << to) & (1<<to))
+
+#define BMASK(x,b) \
+    MVBIT(x,b,0) | MVBIT(x,b+8,1) | MVBIT(x,b+16,2) | MVBIT(x,b+24,3)
+
+#define DBLADD_PQ(S,x,y,b) edp_DoublePoint(S); \
+    edp_AddAffinePoint(S, &_w_basepoint_perm64[BMASK(x,b)]); \
+    edp_AddPoint(S, &qtable[BMASK(y,b)])
+
+static void edp_dual_mul_byte(
+    IN OUT Ext_POINT *S, 
+    U32 x, U32 y,
+    const PE_POINT *qtable)
+{
+    DBLADD_PQ(S,x,y,7);
+    DBLADD_PQ(S,x,y,6);
+    DBLADD_PQ(S,x,y,5);
+    DBLADD_PQ(S,x,y,4);
+    DBLADD_PQ(S,x,y,3);
+    DBLADD_PQ(S,x,y,2);
+    DBLADD_PQ(S,x,y,1);
+    DBLADD_PQ(S,x,y,0);
+}
+
+#define DPMUL_B4(n) \
+    x.u8.b0=a[n]; x.u8.b1=a[n+8]; x.u8.b2=a[n+16]; x.u8.b3=a[n+24]; \
+    y.u8.b0=b[n]; y.u8.b1=b[n+8]; y.u8.b2=b[n+16]; y.u8.b3=b[n+24]; \
+    edp_dual_mul_byte(&S, x.u32, y.u32, qtable)
+
+/*
+    Assumptions: qtable = pre-computed Q
+    Calculate: point R = a*P + b*Q  where P is base point
+*/
+static void edp_PolyPointMultiply(
+    Affine_POINT *r, 
+    const U8 *a, 
+    const U8 *b, 
+    const PE_POINT *qtable)
+{
+    M32 x, y;
+    Ext_POINT S;
+
+    // Set S = (0,1)
+    ecp_SetValue(S.x, 0);
+    ecp_SetValue(S.y, 1);
+    ecp_SetValue(S.z, 1);
+    ecp_SetValue(S.t, 0);
+
+    DPMUL_B4(7);
+    DPMUL_B4(6);
+    DPMUL_B4(5);
+    DPMUL_B4(4);
+    DPMUL_B4(3);
+    DPMUL_B4(2);
+    DPMUL_B4(1);
+    DPMUL_B4(0);
+
+    ecp_Inverse(S.z, S.z);
+    ecp_MulMod(r->x, S.x, S.z);
+    ecp_MulMod(r->y, S.y, S.z);
+}
+
+/*
+    This function can be used for batch verification.
+    Assumptions: context = ed25519_Verify_Init(pk)
+
+*/
+int ed25519_Verify_Check(
+    const void  *context,                       // IN: precomputes
+    const unsigned char *signature,             // IN: signature (R,S)
+    const unsigned char *msg, size_t msg_size)  // IN: message to sign
+{
+    SHA512_CTX H;
+    Affine_POINT T;
+    U_WORD h[K_WORDS];
+    U8 md[SHA512_DIGEST_LENGTH];
+
+    // h = H(enc(R) + pk + m)  mod BPO
+    SHA512_Init(&H);
+    SHA512_Update(&H, signature, 32);       // enc(R)
+    SHA512_Update(&H, ((EDP_SIGV_CTX*)context)->pk, 32);
+    SHA512_Update(&H, msg, msg_size);
+    SHA512_Final(md, &H);
+    eco_DigestToWords(h, md);
+    eco_Mod(h);
+
+    // T = s*P + h*(-Q) = (s - h*a)*P = r*P = R
+
+    ecp_WordsToBytes(md, h);
+    edp_PolyPointMultiply(&T, signature+32, md, ((EDP_SIGV_CTX*)context)->q_table);
+    ed25519_PackPoint(md, T.y, T.x[0]);
+
+    return (memcmp(md, signature, 32) == 0) ? 1 : 0;
+}

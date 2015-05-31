@@ -126,7 +126,7 @@ void eco_Mod(U_WORD *X);
 
 #define ed25519_PackPoint(buff, Y, parity) ecp_EncodeInt(buff, Y, (U8)(parity & 1))
 
-// -- big-number ------------------------------------------------------
+// -- big-number ------------------------------------------------------------
 U_WORD ecp_Add(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
 S_WORD ecp_Sub(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
 void ecp_SetValue(U_WORD* X, U_WORD value);
@@ -141,10 +141,13 @@ void ecp_Inverse(U_WORD *out, const U_WORD *z);
 void ecp_MulMod(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
 void ecp_ExpMod(U_WORD* Y, const U_WORD* X, const U8* E, int bytes);
 
-void ed25519_BasePointMultiply(OUT Affine_POINT *Q, IN const U_WORD *sk);
-void ed25519_AddAffinePoint(Ext_POINT *p, const PA_POINT *q);
-void ed25519_AddBasePoint(Ext_POINT *p);
-void ed25519_DoublePoint(Ext_POINT *p);
+// -- ed25519 ---------------------------------------------------------------
+void ed25519_UnpackPoint(Affine_POINT *r, const unsigned char *p);
+void edp_BasePointMultiply(OUT Affine_POINT *Q, IN const U8 *sk);
+void edp_AddAffinePoint(Ext_POINT *p, const PA_POINT *q);
+void edp_AddBasePoint(Ext_POINT *p);
+void edp_AddPoint(Ext_POINT *p, const PE_POINT *q);
+void edp_DoublePoint(Ext_POINT *p);
 
 #ifdef __cplusplus
 }

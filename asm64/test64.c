@@ -78,6 +78,7 @@ int speed_test(int loops)
     U64 t1, t2, tovr = 0, td = (U64)(-1), tm = (U64)(-1);
     U8 secret_key[32], donna_publickey[32], mehdi_publickey[32];
     unsigned char pubkey[32], privkey[64], sig[64];
+    void *ver_context = 0;
     int i;
 
     // generate key
@@ -180,6 +181,35 @@ int speed_test(int loops)
     tm -= tovr;
 
     printf ("    Verify: %lld cycles = %.3f usec @3.4GHz\n", tm, (double)tm/3400.0);
+    // ---------------------------------------------------------------------
+    tm = (U64)(-1);
+    for (i = 0; i < loops; i++)
+    {
+        t1 = readTSC();
+        ver_context = ed25519_Verify_Init(ver_context, pubkey);
+        t2 = readTSC() - t1;
+        if (t2 < tm) tm = t2;
+    }
+    tm -= tovr;
+
+    printf ("    Verify: %lld cycles = %.3f usec @3.4GHz (Init)\n", 
+        tm, (double)tm/3400.0);
+    // ---------------------------------------------------------------------
+    tm = (U64)(-1);
+    for (i = 0; i < loops; i++)
+    {
+        t1 = readTSC();
+        ed25519_Verify_Check(ver_context, sig, (const unsigned char*)"abc", 3);
+        t2 = readTSC() - t1;
+        if (t2 < tm) tm = t2;
+    }
+    tm -= tovr;
+
+    printf ("            %lld cycles = %.3f usec @3.4GHz (Check)\n", 
+        tm, (double)tm/3400.0);
+
+    ed25519_Verify_Finish(ver_context);
+
     return 0;
 }
 
@@ -248,8 +278,6 @@ unsigned char msg1_sig[ed25519_signature_size] = {
     0x38,0x7b,0x2e,0xae,0xb4,0x30,0x2a,0xee,0xb0,0x0d,0x29,0x16,0x12,0xbb,0x0c,0x00
 };
 
-int ed25519_selftest();
-
 int dh_test()
 {
     int rc = 0;
@@ -302,11 +330,13 @@ int main(int argc, char**argv)
 {
     int rc = 0;
 
+#ifdef ECP_SELF_TEST
     if (curve25519_SelfTest(1) != 0)
     {
-        printf("Self-test FAILED!");
+        printf("curve25519_SelfTest() FAILED!");
         return 1;
     }
+#endif
 
     rc += dh_test();
 

@@ -36,11 +36,6 @@
     l = 2**252 + 27742317777372353535851937790883648493
 */
 
-// Pick a modular inverse method. One of:
-//#define ECP_INVERSE_METHOD_EXPMOD
-#define ECP_INVERSE_METHOD_DJB
-//#define ECP_INVERSE_METHOD_EUCLID
-
 typedef struct
 {
     U32 X[8];   // x = X/Z
@@ -174,7 +169,6 @@ static void ecp_mul_set(U32* Y, U32 b, const U32* X)
 #define ECP_MULADD_W1(Z,Y,b,X) c.u64 = (U64)(b)*(X) + (U64)(Y) + c.u32.hi; Z = c.u32.lo;
 
 // Computes Y += b*X
-// Assumes upper-word of Y is 0 on entry
 // Addition is performed on lower 8-words of Y
 static void ecp_mul_add(U32* Y, U32 b, const U32* X) 
 {
@@ -352,14 +346,6 @@ void ecp_Mont(XZ_POINT *P, XZ_POINT *Q, IN const U32 *Base)
 #define ECP_MONT(n) j = (k >> n) & 1; ecp_Mont(PP[j], QP[j], X)
 
 // --------------------------------------------------------------------------
-// Implementations that use if-else logic are prone to side channel attacks
-// due to side effects of conditional jump that can leak data due to branch
-// prediction, cache/instruction queue flushing and in general un-balanced 
-// instruction execution on each condition.
-// if(bit) { op(1) } else { op(0) } 
-//      if bit==1: op(1); jump $$2
-//      if bit==0: jump $$1; $$1:op(0); $$2:
-// --------------------------------------------------------------------------
 // Return point Q = k*P
 // K in a little-endian byte array
 void ecp_PointMultiply(
@@ -510,13 +496,18 @@ void ecp_Inverse(U32 *out, const U32 *z)
 }
 
 // -- DH key exchange interfaces -----------------------------------------
+
+void x25519_BasePointMultiply(OUT U8 *r, IN const U8 *sk);
+
 // Return public key associated with sk
 void curve25519_dh_CalculatePublicKey(
     unsigned char *pk,          // [32-bytes] OUT: Public key
     unsigned char *sk)          // [32-bytes] IN/OUT: Your secret key
 {
     ecp_TrimSecretKey(sk);
-    ecp_PointMultiply(pk, ecp_BasePoint, sk, 32);
+    // Use faster method
+    x25519_BasePointMultiply(pk, sk);
+    //ecp_PointMultiply(pk, ecp_BasePoint, sk, 32);
 }
 
 // Create a shared secret

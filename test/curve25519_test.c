@@ -103,6 +103,7 @@ int speed_test(int loops)
     U64 t1, t2, tovr = 0, td = (U64)(-1), tm = (U64)(-1);
     U8 secret_key[32], donna_publickey[32], mehdi_publickey[32];
     unsigned char pubkey[32], privkey[64], sig[64];
+    void *ver_context = 0;
     int i;
 
     // generate key
@@ -238,6 +239,35 @@ int speed_test(int loops)
     tm -= tovr;
 
     printf ("    Verify: %lld cycles = %.3f usec @3.4GHz\n", tm, (double)tm/3400.0);
+    // ---------------------------------------------------------------------
+    tm = (U64)(-1);
+    for (i = 0; i < loops; i++)
+    {
+        t1 = TimeNow();
+        ver_context = ed25519_Verify_Init(ver_context, pubkey);
+        t2 = TimeNow() - t1;
+        if (t2 < tm) tm = t2;
+    }
+    tm -= tovr;
+
+    printf ("    Verify: %lld cycles = %.3f usec @3.4GHz (Init)\n", 
+        tm, (double)tm/3400.0);
+    // ---------------------------------------------------------------------
+    tm = (U64)(-1);
+    for (i = 0; i < loops; i++)
+    {
+        t1 = TimeNow();
+        ed25519_Verify_Check(ver_context, sig, (const unsigned char*)"abc", 3);
+        t2 = TimeNow() - t1;
+        if (t2 < tm) tm = t2;
+    }
+    tm -= tovr;
+
+    printf ("            %lld cycles = %.3f usec @3.4GHz (Check)\n", 
+        tm, (double)tm/3400.0);
+
+    ed25519_Verify_Finish(ver_context);
+
 #endif
     return 0;
 }

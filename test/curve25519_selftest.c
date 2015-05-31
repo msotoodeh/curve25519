@@ -18,6 +18,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef ECP_SELF_TEST
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -37,6 +40,10 @@ extern const U_WORD _w_maxP[K_WORDS];
 extern const U_WORD _w_I[K_WORDS];
 extern const U_WORD _w_2d[K_WORDS];
 extern const U_WORD _w_BPO[K_WORDS];
+extern const PA_POINT _w_basepoint_perm64[16];
+
+#define _w_Zero     _w_basepoint_perm64[0].T2d
+#define _w_One      _w_basepoint_perm64[0].YpX
 
 #define ECP_MOD(X)  while (ecp_Cmp(X, _w_P) >= 0) ecp_Sub(X, X, _w_P)
 
@@ -106,7 +113,6 @@ static const U8 pk2[32] = {
     0x5A,0x26,0x6A,0xD3,0xD0,0x8D,0x9E,0x9B,0x8B,0xD9,0x2A,0xCC,0xCD,0x87,0xD5,0xB9,
     0x96,0xD1,0xDB,0xBA,0xB6,0xBC,0xC9,0x75,0x62,0x76,0xD7,0x61,0xF9,0x37,0x5F,0xA7 };
 
-static const U32 _w_One[8] = {  1,0,0,0,0,0,0,0 };
 static const U32 _w_Two[8] = {  2,0,0,0,0,0,0,0 };
 static const U32 _w_V19[8] = { 19,0,0,0,0,0,0,0 };
 
@@ -167,6 +173,64 @@ int hash_test(int level)
     return rc;
 }
 
+/*
+    Calculate: point R = a*P + b*Q  where P is base point
+*/
+void edp_DualPointMultiply(
+    Affine_POINT *r,
+    const U8 *a, const U8 *b, const Affine_POINT *q)
+{
+    int i, j;
+    M32 k;
+    Ext_POINT S;
+    PA_POINT U;
+    PE_POINT V;
+
+    // U = pre-compute(Q)
+    ecp_AddReduce(U.YpX, q->y, q->x);
+    ecp_SubReduce(U.YmX, q->y, q->x);
+    ecp_MulReduce(U.T2d, q->y, q->x);
+    ecp_MulReduce(U.T2d, U.T2d, _w_2d);
+
+    // set V = pre-compute(P + Q)
+    ecp_Copy(S.x, q->x);
+    ecp_Copy(S.y, q->y);
+    ecp_SetValue(S.z, 1);
+    ecp_MulReduce(S.t, S.x, S.y);
+    edp_AddBasePoint(&S);   // S = P + Q
+    // 
+    ecp_AddReduce(V.YpX, S.y, S.x);
+    ecp_SubReduce(V.YmX, S.y, S.x);
+    ecp_MulReduce(V.T2d, S.t, _w_2d);
+    ecp_AddReduce(V.Z2, S.z, S.z);
+
+    // Set S = (0,1)
+    ecp_SetValue(S.x, 0);
+    ecp_SetValue(S.y, 1);
+    ecp_SetValue(S.z, 1);
+    ecp_SetValue(S.t, 0);
+
+    for (i = 32; i-- > 0;)
+    {
+        k.u8.b0 = a[i];
+        k.u8.b1 = b[i];
+        for (j = 0; j < 8; j++)
+        {
+            edp_DoublePoint(&S);
+            switch (k.u32 & 0x8080)
+            {
+            case 0x0080: edp_AddBasePoint(&S); break;
+            case 0x8000: edp_AddAffinePoint(&S, &U); break;
+            case 0x8080: edp_AddPoint(&S, &V); break;
+            }
+            k.u32 <<= 1;
+        }
+    }
+    ecp_Inverse(S.z, S.z);
+    ecp_MulMod(r->x, S.x, S.z);
+    ecp_MulMod(r->y, S.y, S.z);
+}
+
 void print_words(IN const char *txt, IN const U32 *data, IN U32 size)
 {
     U32 i;
@@ -179,7 +243,7 @@ void pre_compute_base_point()
     Ext_POINT P = {{0},{1},{1},{0}};
     PA_POINT R;
     int i;
-    printf("\nconst Pre_POINT pre_BaseMultiples[16] = \n{\n");
+    printf("\nconst PA_POINT pre_BaseMultiples[16] = \n{\n");
     for (i = 0; i < 16; i++)
     {
         printf("  { // %d*P\n", i);
@@ -197,13 +261,76 @@ void pre_compute_base_point()
         }
         printf(")\n  },\n");
 
-        ed25519_AddBasePoint(&P);
+        edp_AddBasePoint(&P);
         // make it affine
         ecp_Inverse(P.z, P.z);
         ecp_MulMod(P.x, P.x, P.z);
         ecp_MulMod(P.y, P.y, P.z);
         ecp_MulMod(P.t, P.x, P.y);
         ecp_SetValue(P.z, 1);
+    }
+}
+
+static const Ext_POINT _w_BasePoint = {   // y = 4/5 mod P
+    W256(0x8F25D51A,0xC9562D60,0x9525A7B2,0x692CC760,0xFDD6DC5C,0xC0A4E231,0xCD6E53FE,0x216936D3),
+    W256(0x66666658,0x66666666,0x66666666,0x66666666,0x66666666,0x66666666,0x66666666,0x66666666),
+    W256(0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000),
+    W256(0xA5B7DDA3,0x6DDE8AB3,0x775152F5,0x20F09F80,0x64ABE37D,0x66EA4E8E,0xD78B7665,0x67875F0F)
+};
+
+void Ext2Affine(PA_POINT *r, Ext_POINT *p)
+{
+    ecp_Inverse(p->z, p->z);
+    ecp_MulMod(p->x, p->x, p->z);
+    ecp_MulMod(p->y, p->y, p->z);
+    ecp_MulMod(p->t, p->x, p->y);
+    ecp_SetValue(p->z, 1);
+
+    ecp_AddReduce(r->YpX, p->y, p->x); ECP_MOD(r->YpX);
+    ecp_SubReduce(r->YmX, p->y, p->x); ECP_MOD(r->YmX);
+    ecp_MulMod(r->T2d, p->t, _w_2d);
+}
+
+void pre_compute_base_powers()
+{
+    Ext_POINT S = _w_BasePoint;
+    PA_POINT P0, P1, P2, P3;
+    PA_POINT R;
+    int i, j;
+
+    // Calculate: P0=base, P1=(2^64)*P0, P2=(2^64)*P1, P3=(2^64)*P2
+    Ext2Affine(&P0, &S);
+    for (j = 0; j < 64; j++) edp_DoublePoint(&S);
+    Ext2Affine(&P1, &S);
+    for (j = 0; j < 64; j++) edp_DoublePoint(&S);
+    Ext2Affine(&P2, &S);
+    for (j = 0; j < 64; j++) edp_DoublePoint(&S);
+    Ext2Affine(&P3, &S);
+
+    printf("\nconst PA_POINT _w_basepoint_perm64[16] = \n{\n");
+    for (i = 0; i < 16; i++)
+    {
+        ecp_SetValue(S.x, 0);
+        ecp_SetValue(S.y, 1);
+        ecp_SetValue(S.z, 1);
+        ecp_SetValue(S.t, 0);
+
+        if (i & 1) edp_AddAffinePoint(&S, &P0);
+        if (i & 2) edp_AddAffinePoint(&S, &P1);
+        if (i & 4) edp_AddAffinePoint(&S, &P2);
+        if (i & 8) edp_AddAffinePoint(&S, &P3);
+        Ext2Affine(&R, &S);
+
+        printf("  { // P{%d}\n", i);
+        print_words("    W256(",R.YpX, K_WORDS);
+        print_words("),\n    W256(",R.YmX, K_WORDS);
+        print_words("),\n    W256(",R.T2d, K_WORDS);
+        if (i == 15)
+        {
+            printf(")\n  }\n};\n");
+            break;
+        }
+        printf(")\n  },\n");
     }
 }
 
@@ -350,6 +477,98 @@ int curve25519_SelfTest(int level)
     }
 
     //pre_compute_base_point();
+    //pre_compute_base_powers();
 
     return rc;
 }
+
+static U8 m_6[32] = {6};
+static U8 m_7[32] = {7};
+static U8 m_11[32] = {11};
+static U8 m_50[32] = {50};
+static U8 m_127[32] = {127};
+
+// Pre-calculate base point values
+static const Affine_POINT ed25519_BasePoint = {   // y = 4/5 mod P
+    W256(0x8F25D51A,0xC9562D60,0x9525A7B2,0x692CC760,0xFDD6DC5C,0xC0A4E231,0xCD6E53FE,0x216936D3),
+    W256(0x66666658,0x66666666,0x66666666,0x66666666,0x66666666,0x66666666,0x66666666,0x66666666)
+};
+
+void ecp_PrintHexWords(IN const char *name, IN const U_WORD *data, IN U32 size);
+
+void edp_DualPointMultiply(
+    Affine_POINT *r,
+    const U8 *a, const U8 *b, const Affine_POINT *q);
+
+int ed25519_selftest()
+{
+    int rc = 0;
+    U8 pp[32], m1[32], m2[32];
+    U_WORD u[K_WORDS], v[K_WORDS];
+    Affine_POINT a, b, c, d;
+
+    ed25519_PackPoint(pp, ed25519_BasePoint.y, ed25519_BasePoint.x[0] & 1);
+    ed25519_UnpackPoint(&a, pp);
+    if (ecp_Cmp(a.x, ed25519_BasePoint.x) != 0)
+    {
+        rc++;
+        printf("-- Unpack error.");
+        ecp_PrintHexWords("a_x", a.x, K_WORDS);
+    }
+
+    // a = 7*B
+    edp_BasePointMultiply(&a, m_7);
+
+    // b = 11*B
+    edp_BasePointMultiply(&b, m_11);
+
+    // c = 50*B + 7*b = 127*B
+    edp_DualPointMultiply(&c, m_50, m_7, &b);
+
+    // d = 127*B
+    edp_BasePointMultiply(&d, m_127);
+
+    // check c == d
+    if (ecp_Cmp(c.y, d.y) != 0 || ecp_Cmp(c.x, d.x) != 0)
+    {
+        rc++;
+        printf("-- edp_DualPointMultiply(1) FAILED!!");
+        ecp_PrintHexWords("c_x", c.x, K_WORDS);
+        ecp_PrintHexWords("c_y", c.y, K_WORDS);
+        ecp_PrintHexWords("d_x", d.x, K_WORDS);
+        ecp_PrintHexWords("d_y", d.y, K_WORDS);
+    }
+
+    // c = 11*b + 6*B = 127*B
+    edp_DualPointMultiply(&c, m_6, m_11, &b);
+    // check c == d
+    if (ecp_Cmp(c.y, d.y) != 0 || ecp_Cmp(c.x, d.x) != 0)
+    {
+        rc++;
+        printf("-- edp_DualPointMultiply(2) FAILED!!");
+        ecp_PrintHexWords("c_x", c.x, K_WORDS);
+        ecp_PrintHexWords("c_y", c.y, K_WORDS);
+        ecp_PrintHexWords("d_x", d.x, K_WORDS);
+        ecp_PrintHexWords("d_y", d.y, K_WORDS);
+    }
+
+    ecp_SetValue(u, 0x11223344);
+    ecp_WordsToBytes(m1, u);
+    edp_BasePointMultiply(&a, m1);      // a = u*B
+    eco_MulMod(v, u, u);
+    ecp_Sub(v, _w_BPO, v);          // v = -u^2
+    ecp_WordsToBytes(m2, v);
+    edp_DualPointMultiply(&a, m2, m1, &a);  // v*B + u*A = (-u^2 + u*u)*B
+    // assert a == infinty
+    if (ecp_Cmp(a.x, _w_Zero) != 0 || ecp_Cmp(a.y, _w_One) != 0)
+    {
+        rc++;
+        printf("-- edp_DualPointMultiply(3) FAILED!!");
+        ecp_PrintHexWords("a_x", a.x, K_WORDS);
+        ecp_PrintHexWords("a_y", a.y, K_WORDS);
+    }
+
+    return rc;
+}
+
+#endif // ECP_SELF_TEST

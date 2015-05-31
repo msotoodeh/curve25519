@@ -42,87 +42,87 @@ extern const U_WORD _w_maxP[K_WORDS];
 const U_WORD _w_2d[K_WORDS] = /* 2*d */
     W256(0x26B2F159,0xEBD69B94,0x8283B156,0x00E0149A,0xEEF3D130,0x198E80F2,0x56DFFCE7,0x2406D9DC);
 
-const PA_POINT pre_BaseMultiples[16] = 
+const PA_POINT _w_basepoint_perm64[16] =
 {
-  { // 0*P
+  { // P{0}
     W256(0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000),
     W256(0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000),
     W256(0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000)
   },
-  { // 1*P
+  { // P{1}
     W256(0xF58C3B85,0x2FBC93C6,0xFB8C0E19,0xCF932DC6,0x643D42C2,0x270B4898,0x33D4BA65,0x07CF9D3A),
     W256(0xD740913E,0x9D103905,0xD140BEB3,0xFD399F05,0x688F8A09,0xA5C18434,0x98F81267,0x44FD2F92),
     W256(0x877AAA68,0xABC91205,0xCCAAC49E,0x26D9E823,0xDD43598C,0x5A1B7DCB,0x9F0C65A8,0x6F117B68)
   },
-  { // 2*P
-    W256(0x933C71D7,0x9224E7FC,0x7A0FF5B5,0x9F469D96,0xE1D60702,0x5AA69A65,0xA87D2E2E,0x590C063F),
-    W256(0x42B4D5A8,0x8A99A560,0x4E60ACF6,0x8F2B810C,0xB16E37AA,0xE09E236B,0x69C92555,0x6BB595A6),
-    W256(0xA59B7A5F,0x43FAA8B3,0x5D9ACF78,0x36C16BDD,0x0B3D6A31,0x500FA084,0x3EA50B73,0x701AF5B1)
+  { // P{2}
+    W256(0x77D1F515,0xCD2A65E7,0x8FAA60F1,0x54899187,0xDABC06E5,0xB1B73BBC,0xA97CC9FB,0x654878CB),
+    W256(0x8DF6B0FE,0x51138EC7,0xE575F51B,0x5397DA89,0x717AF1B9,0x09207A1D,0x2B20D650,0x2102FDBA),
+    W256(0x055CE6A1,0x969EE405,0x1251AD29,0x36BCA768,0xAA7DA415,0x3A1AF517,0x29ECB2BA,0x0AD725DB)
   },
-  { // 3*P
-    W256(0x4CEE9730,0xAF25B0A8,0xE8864B8A,0x025A8430,0x9F016732,0xC11B5002,0x9A80F8F4,0x7A164E1B),
-    W256(0xA4FCD265,0x56611FE8,0xE5C1BA7D,0x3BD353FD,0x214BD6BD,0x8131F31A,0x555BDA62,0x2AB91587),
-    W256(0x0DD0D889,0x14AE933F,0x1C35DA62,0x58942322,0x8CF2DB4C,0xD170E545,0x12B9B4C6,0x5A2826AF)
+  { // P{3}
+    W256(0x601E59E8,0x0055C585,0x66480E60,0x8793342B,0xFE45E44C,0x3E14AAD0,0x4813CF2B,0x26EAD8E6),
+    W256(0x9C8462A4,0xCB75B8B6,0x67D31CD7,0x2DD86FC5,0x881342F6,0xCD1972EC,0x0FC12F2F,0x0975B597),
+    W256(0xDA5BA743,0x63CF2303,0x52F1BA6E,0x04BF9D81,0xAA7367DA,0x333790D0,0x9DF6C5EA,0x53467047)
   },
-  { // 4*P
-    W256(0x8EFC099F,0x287351B9,0x7DFD2538,0x6765C6F4,0xFB0A9265,0xCA348D3D,0x21E58727,0x680E9103),
-    W256(0x056818BF,0x95FE050A,0x5660FAA9,0x327E8971,0x06A05073,0xC3E8E3CD,0x7445A49A,0x27933F4C),
-    W256(0xC476FF09,0x5A13FBE9,0x7B5CC172,0x6E9E3945,0x102B4494,0x5DDBDCF9,0x63553E2B,0x7F9D0CBF)
+  { // P{4}
+    W256(0xACAD8EA2,0x583B04BF,0x148BE884,0x29B743E8,0x0810C5DB,0x2B1E583B,0x8EB3BBAA,0x2B5449E5),
+    W256(0xEB3DBE47,0x5F3A7562,0x8EBDA0B8,0xF7EA3854,0x45747299,0x00C3E531,0x1627D551,0x1304E9E7),
+    W256(0x6ADC9CFE,0x789814D2,0x8B48DD0B,0x3C1BAB3F,0xF979C60A,0xDA0FE1FF,0x7C2DD693,0x4468DE2D)
   },
-  { // 5*P
-    W256(0x08A5BB33,0xA212BC44,0xC75EED02,0x8D5048C3,0x5ABFEC44,0xDD1BEB0C,0x46E206EB,0x2945CCF1),
-    W256(0xA447D6BA,0x7F9182C3,0x4B2729B7,0xD50014D1,0xB864A087,0xE33CF11C,0xEB1B55F3,0x154A7E73),
-    W256(0x812A8285,0xBCBBDBF1,0xD0BDD1FC,0x270E0807,0x1BBDA72D,0xB41B670B,0x6B3BB69A,0x43AABE69)
+  { // P{5}
+    W256(0xE3BC6748,0x2118278D,0xD0B20EF7,0xE71FFD60,0xC67BB198,0xF551BE51,0xD0543D4D,0x26A13664),
+    W256(0x13A339EE,0x29522D3B,0x6CD89529,0x85522550,0xACF4F0F1,0xDFEA3AD4,0x7942742E,0x49D76BBA),
+    W256(0x8D56E61D,0x14FA4233,0xC351299A,0x191D3946,0xA7ADB185,0x247D576D,0xA8FCEDC2,0x4E1FAFE3)
   },
-  { // 6*P
-    W256(0x77157131,0x3A0CEEEB,0x00C8AF88,0x9B271589,0xDA59A736,0x8065B668,0xA2CC38BD,0x51E57BB6),
-    W256(0x7B7D8CA4,0x499806B6,0x27D22739,0x575BE284,0x204553B9,0xBB085CE7,0xAE417884,0x38B64C41),
-    W256(0x02EA4B71,0x85AC3267,0x41A1BB01,0xBE70E003,0x083BC144,0x53E4A24B,0x9F0D61E3,0x10B8E91A)
+  { // P{6}
+    W256(0x236A044C,0x15E7053D,0x3B8D87E3,0x3CDDBCB1,0xD321A828,0x519960D2,0x0FC5BBA4,0x4E559A0F),
+    W256(0x9C12701C,0xFE00E876,0x039C3B5F,0x95DCDC0A,0x0C02EB1B,0xC169454B,0x5F87530C,0x727021D3),
+    W256(0x27DF241E,0xA5710407,0xB2900D36,0xDF45EFAA,0x60A69ADE,0xFE6EDB5C,0x07BBC01D,0x64FCB730)
   },
-  { // 7*P
-    W256(0x944EA3BF,0x6B1A5CD0,0xB39DC0D2,0x7470353A,0x28542E49,0x71B25282,0x283C927E,0x461BEA69),
-    W256(0xAA3221B1,0xBA6F2C9A,0x3BBA23A7,0x6CA02153,0x92192C3A,0x9DEA764F,0x2E5317E0,0x1D6EDD5D),
-    W256(0x01B8B3A2,0xF1836DC8,0x053EA49A,0xB3035F47,0x5877ADF3,0x529C41BA,0x6A0F90A7,0x7A9FBB1C)
+  { // P{7}
+    W256(0x6FD390CA,0x38EF58CC,0x171A98FC,0xEF786575,0xC442D65F,0x8850B78F,0x6FD086EF,0x6F34C66D),
+    W256(0x3898DC04,0x93F3CBB4,0x4307B727,0x0791FFB2,0xCE34981D,0xD7BD8096,0x8B849F6D,0x0B598B8E),
+    W256(0x0CC2F689,0x11CFC18A,0xB529CE2A,0x81114607,0xC00B5940,0x0A9BC046,0xB1AC66C8,0x412128B0)
   },
-  { // 8*P
-    W256(0x04DD3E8F,0x59B75966,0xE288702C,0x6CB30377,0x5ED9C323,0xB1339C66,0x61BCE52F,0x0915E760),
-    W256(0xF39234D9,0xE2A75DED,0xE1B558F9,0x963D7680,0x6E3C23FB,0x2C2741AC,0x320E01C3,0x3A9024A1),
-    W256(0xC9A2911A,0xE7C1F5D9,0x8BCCA7D7,0xB8A37178,0x0EB62A32,0x63641219,0x2ECC4E95,0x26907C5C)
+  { // P{8}
+    W256(0xC80C1AC0,0xA66DCC9D,0x1B38A436,0x97A05CF4,0x95DBD7C6,0xA7EBF3BE,0x8D7E7DAB,0x7DA0B8F6),
+    W256(0x385675A6,0xEF782014,0xAAFDA9E8,0xA2649F30,0x5CDFA8CB,0x4CD1EB50,0x1D4DC0B3,0x46115ABA),
+    W256(0xC3B5DA76,0xD40F1953,0x21119E9B,0x1DAC6F73,0xFEB25960,0x03CC6021,0x83674B4B,0x5A5F887E)
   },
-  { // 9*P
-    W256(0xA6A8632F,0x9B2E678A,0x51BC46C5,0xA6509E6F,0xC686F5B5,0xCEB233C9,0x8ADD7F59,0x34B9ED33),
-    W256(0x039D8064,0xF36E217E,0xF520419B,0x98A081B6,0xE75EB044,0x96CBC608,0xFADC9C8F,0x49C05A51),
-    W256(0x9045AF1B,0x06B4E8BF,0xA719D22F,0xE2FF83E8,0x93D4CF16,0xAAF6FC29,0x1B008B06,0x73C17202)
+  { // P{9}
+    W256(0x0CA2C1F4,0x0A8D6018,0xCC68DF40,0x815EB0DB,0xB82F4E99,0xD7E67A47,0x607F15C0,0x45A02890),
+    W256(0xFD41F184,0xFEF366D1,0x01CFE11E,0x8B694A11,0x0150A74D,0x4B39E15E,0x6AD351BA,0x4013F03D),
+    W256(0x6EE065CC,0xBD0282DC,0x224AE646,0x36B994FD,0xFEBCE874,0x534E9AD8,0xD9F06E4F,0x482255C1)
   },
-  { // 10*P
-    W256(0xB360748E,0xFF1D93D2,0x1617E057,0x45F534D4,0x9B554646,0x0D550363,0xAAE591ED,0x43AC7628),
-    W256(0x227081DD,0x75F3558E,0x65A9F02F,0x04F81836,0xF5DC3958,0x84739745,0x4950B702,0x0353832C),
-    W256(0x03D0F8D8,0xD03D2AE4,0xD3F06340,0x1D0C1CCB,0x6731B509,0xFF169F0F,0x70BF4CE7,0x0EC62AF4)
+  { // P{10}
+    W256(0x71CEF800,0x3C03EACF,0xCA8AFEBB,0x90367544,0x6A29C477,0x383FEA28,0xBC655462,0x4E8593B0),
+    W256(0xA3E5638C,0x12DE114A,0x29C4F20D,0xBA2A4AA9,0x7B8B13A3,0x56B0D29D,0x7B9B7944,0x6BB91A49),
+    W256(0xC5E7D206,0x2A49E646,0x9263C445,0xB13EF9CD,0xEDAB529E,0x50AB6CE8,0xB0EBE39B,0x20CF7D79)
   },
-  { // 11*P
-    W256(0x8A802ADE,0x2FBF0084,0x02302E27,0xE5D9FECF,0x17703406,0x113E8471,0x546D8FAF,0x4275AAE2),
-    W256(0x49864348,0x315F5B02,0x77088381,0x3ED6B369,0x6A8DEB95,0xA3A07555,0x29D5C77F,0x18AB5980),
-    W256(0xFD6089E9,0xD82B2CC5,0x3282E4A4,0x031EB4A1,0xB51A8622,0x44311199,0xB53DF948,0x3DC65522)
+  { // P{11}
+    W256(0x8AE75C48,0xCBD28F4E,0x44000B60,0x3CDE0291,0x98BC2170,0x373BB9C8,0x9F570886,0x7C118853),
+    W256(0xF0FE7DCA,0x7DB4939D,0xCBA951CE,0xF50EB90F,0x357E1D1D,0x098BE61C,0x8899469D,0x02356237),
+    W256(0xE15A4C03,0x20F6EFFA,0x3C778E05,0x2F470A94,0xFC99DE67,0x79F50A03,0xD1061483,0x38D20188)
   },
-  { // 12*P
-    W256(0xA71E7539,0xE2358042,0xD834D1A9,0x88DE3DD7,0x701A6F93,0x45ECDD2E,0x8D3CDD58,0x078AAFDE),
-    W256(0xB53D54B9,0x856F8375,0xCCB25B24,0x23B2BF90,0x56D5DBDD,0x884DFB6E,0x8A6022ED,0x7956ECE2),
-    W256(0x7F944553,0xEEA594D8,0xA24E180B,0xF66CDA23,0xF4976461,0xFFCB589A,0x1C83D0C6,0x37C6A515)
+  { // P{12}
+    W256(0x0E6315DF,0x23E811AD,0xE2AEB290,0x0B650D05,0xA75D586C,0xB7BA0F59,0x5E1F4DEE,0x043EEDD4),
+    W256(0xC7073217,0xF6C147F2,0xF3AFD20C,0xC651B919,0x7041F802,0x258FDBFD,0x4F45073E,0x173C4FA9),
+    W256(0x928DF9C4,0x3D71EA60,0x3373562D,0x5B7E7806,0xA29552B2,0xD9B0514C,0x993CC472,0x1E2A7024)
   },
-  { // 13*P
-    W256(0xA2007F6D,0xBF70C222,0xB5BCDEDB,0xBF84B39A,0xFB07BA07,0x537A0E12,0xC346F241,0x234FD7EE),
-    W256(0x327FBF93,0x506F013B,0x9B776F6B,0xAEFCEBC9,0xAAAD5968,0x9D12B232,0x176024A7,0x0267882D),
-    W256(0x732EA378,0x5360A119,0xDF8DD471,0x2437E6B1,0x91A7E533,0xA2EF37F8,0xAA097863,0x497BA6FD)
+  { // P{13}
+    W256(0xD45C811F,0x601A0FBC,0x92EC0803,0x24B7BC7D,0x17D2407F,0xA0CAE62B,0x06225B26,0x5FCB43EE),
+    W256(0x3509FBA4,0x310509B9,0x05631B75,0x0D8DB376,0x52401C87,0x97DECCBA,0x11B2E773,0x044649F4),
+    W256(0x9598215F,0x0C0D24AD,0xCC36628C,0x1B7F9026,0x7016DCEA,0x338E2F55,0x5CC0E58F,0x0C8A1BFA)
   },
-  { // 14*P
-    W256(0x3F213DF2,0x26F870EC,0x57EFA987,0x80277FC0,0x2881BDD5,0x1A474C04,0x464D1630,0x6EAF60B2),
-    W256(0xD4171280,0xDFDB8A44,0xDB7CA331,0xCE69B20F,0x6EEC47A9,0x112E56F1,0x5B3C80D2,0x2DF0EA2C),
-    W256(0x7A1E1B82,0x96A1C587,0xA2A9BF54,0xF02397ED,0x3ECB1BAA,0x9C1FDF70,0xD8BA9C93,0x24BF7E3C)
+  { // P{14}
+    W256(0x681D104C,0x8DE703B5,0x1263CB45,0x3D2F7A59,0x1CE56C63,0xAE710C17,0xFCC3E6CA,0x6B857C7E),
+    W256(0x8B2801C0,0x79D256B4,0x3C400FC4,0x7E9FBEAC,0x4733BA41,0xA751AB1D,0xDD418ACA,0x09DE2BF5),
+    W256(0xEFF0687F,0x3BF10FF3,0xF1E37BA2,0x5EBAEA34,0x1D66034D,0xE49E6126,0xC3B242CA,0x5B466E2A)
   },
-  { // 15*P
-    W256(0x13CFEAA0,0x24CECC03,0x189C246D,0x8648C28D,0xC1F2D4D0,0x2DBDBDFA,0xF12DE72B,0x61E22917),
-    W256(0x468CCF0B,0x040BCD86,0x2A9910D6,0xD3829BA4,0x07B25192,0x75083008,0x18D05EBF,0x43B5CD42),
-    W256(0x9BD0B516,0x5D9A762F,0x373FDEEE,0xEB38AF4E,0x93D64270,0x032E5A7D,0x0AE4D842,0x511D6121)
+  { // P{15}
+    W256(0x47FBB842,0x137EEB67,0x60811A8B,0x79DF5C75,0x71F8C89A,0x5A2BA76F,0x3BC8FFC2,0x09952A56),
+    W256(0xDC7EF83C,0xA2A8CB4B,0x5F93C226,0x96B5C6FA,0x0664E3A5,0xD4EBEB1B,0xE5C6CF2F,0x409B4ADC),
+    W256(0x834350C4,0x44D53DB9,0xA5F505B4,0x89299305,0x5949FF2F,0xFB22FAA2,0x04657D64,0x69B968A7)
   }
 };
 
@@ -131,15 +131,15 @@ const PA_POINT pre_BaseMultiples[16] =
     Cost: 7M + 7add
     Return: R = P + BasePoint
 */
-void ed25519_AddBasePoint(Ext_POINT *p)
+void edp_AddBasePoint(Ext_POINT *p)
 {
     U_WORD a[K_WORDS], b[K_WORDS], c[K_WORDS], d[K_WORDS], e[K_WORDS];
 
     ecp_SubReduce(a, p->y, p->x);           /* A = (Y1-X1)*(Y2-X2) */
-    ecp_MulReduce(a, a, pre_BaseMultiples[1].YmX);
+    ecp_MulReduce(a, a, _w_basepoint_perm64[1].YmX);
     ecp_AddReduce(b, p->y, p->x);           /* B = (Y1+X1)*(Y2+X2) */
-    ecp_MulReduce(b, b, pre_BaseMultiples[1].YpX);
-    ecp_MulReduce(c, p->t, pre_BaseMultiples[1].T2d); /* C = T1*2d*T2 */
+    ecp_MulReduce(b, b, _w_basepoint_perm64[1].YpX);
+    ecp_MulReduce(c, p->t, _w_basepoint_perm64[1].T2d); /* C = T1*2d*T2 */
     ecp_AddReduce(d, p->z, p->z);           /* D = 2*Z1 */
     ecp_SubReduce(e, b, a);                 /* E = B-A */
     ecp_AddReduce(b, b, a);                 /* H = B+A */
@@ -157,7 +157,7 @@ void ed25519_AddBasePoint(Ext_POINT *p)
     Cost: 7M + 7add
     Return: P = P + Q
 */
-void ed25519_AddAffinePoint(Ext_POINT *p, const PA_POINT *q)
+void edp_AddAffinePoint(Ext_POINT *p, const PA_POINT *q)
 {
     U_WORD a[K_WORDS], b[K_WORDS], c[K_WORDS], d[K_WORDS], e[K_WORDS];
     ecp_SubReduce(a, p->y, p->x);           /* A = (Y1-X1)*(Y2-X2) */
@@ -182,7 +182,7 @@ void ed25519_AddAffinePoint(Ext_POINT *p, const PA_POINT *q)
     Cost: 4M + 4S + 7add
     Return: P = 2*P
 */
-void ed25519_DoublePoint(Ext_POINT *p)
+void edp_DoublePoint(Ext_POINT *p)
 {
     U_WORD a[K_WORDS], b[K_WORDS], c[K_WORDS], d[K_WORDS], e[K_WORDS];
 
@@ -205,70 +205,110 @@ void ed25519_DoublePoint(Ext_POINT *p)
     ecp_MulReduce(p->t, e, a);      /* E*H */
 }
 
-static const U_WORD _w_di[] =   // 1/d mod P
-    W256(0xCDC9F843,0x25E0F276,0x4279542E,0x0B5DD698,0xCDB9CF66,0x2B162114,0x14D5CE43,0x40907ED2);
+#define MVBIT(x,from,to) (((x >> (from)) << to) & (1<<to))
 
-// Constant-time
-#define ECP_DBLADD_C(x) ed25519_DoublePoint(&P); ed25519_DoublePoint(&P); \
-    ed25519_DoublePoint(&P); ed25519_DoublePoint(&P); \
-    ed25519_AddAffinePoint(&P,&pre_BaseMultiples[x])
+#define BMASK(x,b) \
+    MVBIT(x,b,0) | MVBIT(x,b+8,1) | MVBIT(x,b+16,2) | MVBIT(x,b+24,3)
 
-// --------------------------------------------------------------------------
-// Return Q = k*B where B is ed25519 base point
-// This is constant time implementation
-void ed25519_BasePointMultiply(OUT Affine_POINT *Q, IN const U_WORD *sk)
+#define DBLADD_P(b) edp_DoublePoint(S); \
+    edp_AddAffinePoint(S, &_w_basepoint_perm64[BMASK(x,b)])
+
+static void edp_base_mul_byte(IN OUT Ext_POINT *S, U32 x)
 {
-    int len = K_WORDS;
-    Ext_POINT P;
-    const PA_POINT *p0;
-#ifdef WORDSIZE_64
-    M64 k;
-    k.u64 = sk[--len];
-    p0 = &pre_BaseMultiples[k.u8.b7>>4];
-#else
-    M32 k;
-    k.u32 = sk[--len];
-    p0 = &pre_BaseMultiples[k.u8.b3>>4];
-#endif
-    // Convert p0 to extended coordinate
-    ecp_SubReduce(P.x, p0->YpX, p0->YmX);   // (y+x)-(y-x) = 2x
-    ecp_AddReduce(P.y, p0->YpX, p0->YmX);   // (y+x)+(y-x) = 2y
-    ecp_MulReduce(P.t, p0->T2d, _w_di);     // 2dT/d = 2t
-    ecp_SetValue(P.z, 2);
-    goto next_nibble;
+    DBLADD_P(7);
+    DBLADD_P(6);
+    DBLADD_P(5);
+    DBLADD_P(4);
+    DBLADD_P(3);
+    DBLADD_P(2);
+    DBLADD_P(1);
+    DBLADD_P(0);
+}
 
-    do
-    {
-#ifdef WORDSIZE_64
-        k.u64 = sk[--len];
-        ECP_DBLADD_C(k.u8.b7>>4); 
-        next_nibble:
-        ECP_DBLADD_C(k.u8.b7&15);
-        ECP_DBLADD_C(k.u8.b6>>4); 
-        ECP_DBLADD_C(k.u8.b6&15);
-        ECP_DBLADD_C(k.u8.b5>>4); 
-        ECP_DBLADD_C(k.u8.b5&15);
-        ECP_DBLADD_C(k.u8.b4>>4); 
-        ECP_DBLADD_C(k.u8.b4&15);
-        ECP_DBLADD_C(k.u8.b3>>4); 
-#else
-        k.u32 = sk[--len];
-        ECP_DBLADD_C(k.u8.b3>>4); 
-        next_nibble:
-#endif
-        ECP_DBLADD_C(k.u8.b3&15);
-        ECP_DBLADD_C(k.u8.b2>>4); 
-        ECP_DBLADD_C(k.u8.b2&15);
-        ECP_DBLADD_C(k.u8.b1>>4); 
-        ECP_DBLADD_C(k.u8.b1&15);
-        ECP_DBLADD_C(k.u8.b0>>4); 
-        ECP_DBLADD_C(k.u8.b0&15);
+#define PMUL_B4(n) \
+    m.u8.b0=sk[n]; m.u8.b1=sk[n+8]; m.u8.b2=sk[n+16]; m.u8.b3=sk[n+24]; \
+    edp_base_mul_byte(&S, m.u32)
 
-    } while (len > 0);
+/* -- FOLDING ---------------------------------------------------------------
+//
+//    The performance boost is achieved by a process that I call it FOLDING.
+//    Folding can be viewed as an extension of Shamir's trick but it is based
+//    on break down of the scalar multiplier of a*P into a polynomial of the
+//    form:
+//
+//        a*P = SUM(a_i*2^(i*w))*P    for i = 0,1,2,...n-1
+//
+//        a*P = SUM(a_i*P_i)
+//
+//        where P_i = (2^(i*w))*P
+//              n = number of limbs
+//              w = bit-length of limbs
+//
+//    For 64-bit limbs, n will be 4 for 256-bit multipliers. P_0 - P_3 can be 
+//    pre-calculated and their 16-different permutations can be cached or 
+//    hard-coded (in case of P=base point) directly into the code.
+//    This arrangement combined with double-and-add approach reduces the 
+//    number of EC point calculations by a factor of 4. We only need 64
+//    double & add operations.
+//
+// --------------------------------------------------------------------------
+// Return R = a*P where P is ed25519 base point
+*/
+void edp_BasePointMultiply(OUT Affine_POINT *R, IN const U8 *sk)
+{
+    M32 m;
+    Ext_POINT S;
+    
+    // Start with S = (0,1)
+    ecp_SetValue(S.x, 0);
+    ecp_SetValue(S.y, 1);
+    ecp_SetValue(S.z, 1);
+    ecp_SetValue(S.t, 0);
 
-    ecp_Inverse(P.z, P.z);
-    ecp_MulMod(Q->x, P.x, P.z);
-    ecp_MulMod(Q->y, P.y, P.z);
+    PMUL_B4(7);
+    PMUL_B4(6);
+    PMUL_B4(5);
+    PMUL_B4(4);
+    PMUL_B4(3);
+    PMUL_B4(2);
+    PMUL_B4(1);
+    PMUL_B4(0);
+
+    ecp_Inverse(S.z, S.z);
+    ecp_MulMod(R->x, S.x, S.z);
+    ecp_MulMod(R->y, S.y, S.z);
+}
+
+// Return R = a*P where P is curve25519 base point
+void x25519_BasePointMultiply(OUT U8 *r, IN const U8 *sk)
+{
+    M32 m;
+    Ext_POINT S;
+
+    // Start with S = (0,1)
+    ecp_SetValue(S.x, 0);
+    ecp_SetValue(S.y, 1);
+    ecp_SetValue(S.z, 1);
+    ecp_SetValue(S.t, 0);
+
+    PMUL_B4(7);
+    PMUL_B4(6);
+    PMUL_B4(5);
+    PMUL_B4(4);
+    PMUL_B4(3);
+    PMUL_B4(2);
+    PMUL_B4(1);
+    PMUL_B4(0);
+
+    // Convert ed25519 point to x25519 point
+    
+    // u = (1 + y)/(1 - y) = (Z + Y)/(Z - Y)
+
+    ecp_AddReduce(S.t, S.z, S.y);
+    ecp_SubReduce(S.z, S.z, S.y);
+    ecp_Inverse(S.z, S.z);
+    ecp_MulMod(S.t, S.t, S.z);
+    ecp_WordsToBytes(r, S.t);
 }
 
 // Generate public and private key pair associated with the secret key
@@ -279,7 +319,6 @@ void ed25519_CreateKeyPair(
 {
     U8 md[SHA512_DIGEST_LENGTH];
     SHA512_CTX H;
-    U_WORD a[K_WORDS];
     Affine_POINT Q;
 
     // [a:b] = H(sk)
@@ -289,8 +328,7 @@ void ed25519_CreateKeyPair(
     // 
     ecp_TrimSecretKey(md);
 
-    ecp_BytesToWords(a, md);
-    ed25519_BasePointMultiply(&Q, a);
+    edp_BasePointMultiply(&Q, md);
     ed25519_PackPoint(pubKey, Q.y, Q.x[0]);
 
     memcpy(privKey, sk, 32);
@@ -298,17 +336,8 @@ void ed25519_CreateKeyPair(
 }
 
 /*
- * Comment: The design of EdDSA signature scheme is such that it cannot
- *          handle signing of large data and files in a multi-phase fashion 
- *          (init, update(s), finish). This is due to dependecy of 
- *          H(encoded(R) + pk + m) on R which is dependent on m again.
- *          This was not an issue if H(pk + m + encoded(R)) was used instead.
- *          To overcome the limitation of current scheme, following workarounds
- *          can be considered:
- *              a. Sign hash of the file instead of the file itself.
- *              b. Read the file twice
+ * Generate message signature
  */
-// Generate message signature
 void ed25519_SignMessage(
     unsigned char *signature,           // OUT: [64 bytes] signature (R,S)
     const unsigned char *privKey,       //  IN: [64 bytes] private key (sk,pk)
@@ -336,7 +365,8 @@ void ed25519_SignMessage(
     eco_Mod(r);                         // r mod BPO
 
     // R = r*P
-    ed25519_BasePointMultiply(&R, r);
+    ecp_WordsToBytes(md, r);
+    edp_BasePointMultiply(&R, md);
     ed25519_PackPoint(signature, R.y, R.x[0]); // R part of signature
 
     // S = r + H(encoded(R) + pk + m) * a  mod BPO
