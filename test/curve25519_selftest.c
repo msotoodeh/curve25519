@@ -221,7 +221,7 @@ void edp_DualPointMultiply(
             {
             case 0x0080: edp_AddBasePoint(&S); break;
             case 0x8000: edp_AddAffinePoint(&S, &U); break;
-            case 0x8080: edp_AddPoint(&S, &V); break;
+            case 0x8080: edp_AddPoint(&S, &S, &V); break;
             }
             k.u32 <<= 1;
         }

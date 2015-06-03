@@ -134,7 +134,7 @@ void ecp_ModExp2523(U_WORD *Y, const U_WORD *X)
     Cost: 8M + 6add
     Return: P = P + Q
 */
-void edp_AddPoint(Ext_POINT *p, const PE_POINT *q)
+void edp_AddPoint(Ext_POINT *r, const Ext_POINT *p, const PE_POINT *q)
 {
     U_WORD a[K_WORDS], b[K_WORDS], c[K_WORDS], d[K_WORDS], e[K_WORDS];
 
@@ -149,10 +149,10 @@ void edp_AddPoint(Ext_POINT *p, const PE_POINT *q)
     ecp_SubReduce(a, d, c);                 /* F = D-C */
     ecp_AddReduce(d, d, c);                 /* G = D+C */
 
-    ecp_MulReduce(p->x, e, a);              /* E*F */
-    ecp_MulReduce(p->y, b, d);              /* H*G */
-    ecp_MulReduce(p->t, e, b);              /* E*H */
-    ecp_MulReduce(p->z, d, a);              /* G*F */
+    ecp_MulReduce(r->x, e, a);              /* E*F */
+    ecp_MulReduce(r->y, b, d);              /* H*G */
+    ecp_MulReduce(r->t, e, b);              /* E*H */
+    ecp_MulReduce(r->z, d, a);              /* G*F */
 }
 
 #if 0   // Use this version if optimizing for memory usage
@@ -210,13 +210,16 @@ static void ExtPoint2PE(PE_POINT *r, const Ext_POINT *p)
     ecp_AddReduce(r->Z2, p->z, p->z);
 }
 
+#define QTABLE_SET(d,s) \
+    edp_AddPoint(&T, &Q, &ctx->q_table[s]); \
+    ExtPoint2PE(&ctx->q_table[d], &T)
+
 void * ed25519_Verify_Init(
-    void *context,                      // IN: null or context buffer to use
+    void *context,                      // IO: null or context buffer to use
     const unsigned char *publicKey)     // IN: [32 bytes] public key
 {
     int i;
-    PE_POINT Q0, Q1, Q2, Q3;
-    Ext_POINT Q;
+    Ext_POINT Q, T;
     EDP_SIGV_CTX *ctx = (EDP_SIGV_CTX*)context;
 
     if (ctx == 0) ctx = (EDP_SIGV_CTX*)malloc(sizeof(EDP_SIGV_CTX));
@@ -230,28 +233,37 @@ void * ed25519_Verify_Init(
     // pre-compute q-table
 
     // Calculate: Q0=Q, Q1=(2^64)*Q, Q2=(2^128)*Q, Q3=(2^192)*Q
-    ExtPoint2PE(&Q0, &Q);
+
+    ecp_SetValue(ctx->q_table[0].YpX, 1);           /* -- -- -- -- */
+    ecp_SetValue(ctx->q_table[0].YmX, 1);
+    ecp_SetValue(ctx->q_table[0].T2d, 0);
+    ecp_SetValue(ctx->q_table[0].Z2, 2);
+
+    ExtPoint2PE(&ctx->q_table[1], &Q);              /* -- -- -- q0 */
+
     for (i = 0; i < 64; i++) edp_DoublePoint(&Q);
-    ExtPoint2PE(&Q1, &Q);
+
+    ExtPoint2PE(&ctx->q_table[2], &Q);              /* -- -- q1 -- */
+    QTABLE_SET(3,1);                                /* -- -- q1 q0 */
+
     do edp_DoublePoint(&Q); while (++i < 128);
-    ExtPoint2PE(&Q2, &Q);
+
+    ExtPoint2PE(&ctx->q_table[4], &Q);              /* -- q2 -- -- */
+    QTABLE_SET(5, 1);                               /* -- q2 -- q0 */
+    QTABLE_SET(6, 2);                               /* -- q2 q1 -- */
+    QTABLE_SET(7, 3);                               /* -- q2 q1 q0 */
+
     do edp_DoublePoint(&Q); while (++i < 192);
-    ExtPoint2PE(&Q3, &Q);
 
-    // TODO: optimize this
-    for (i = 0; i < 16; i++)
-    {
-        ecp_SetValue(Q.x, 0);
-        ecp_SetValue(Q.y, 1);
-        ecp_SetValue(Q.z, 1);
-        ecp_SetValue(Q.t, 0);
+    ExtPoint2PE(&ctx->q_table[8], &Q);              /* q3 -- -- -- */
+    QTABLE_SET(9, 1);                               /* q3 -- -- q0 */
+    QTABLE_SET(10, 2);                              /* q3 -- q1 -- */
+    QTABLE_SET(11, 3);                              /* q3 -- q1 q0 */
+    QTABLE_SET(12, 4);                              /* q3 q2 -- -- */
+    QTABLE_SET(13, 5);                              /* q3 q2 -- q0 */
+    QTABLE_SET(14, 6);                              /* q3 q2 q1 -- */
+    QTABLE_SET(15, 7);                              /* q3 q2 q1 q0 */
 
-        if (i & 1) edp_AddPoint(&Q, &Q0);
-        if (i & 2) edp_AddPoint(&Q, &Q1);
-        if (i & 4) edp_AddPoint(&Q, &Q2);
-        if (i & 8) edp_AddPoint(&Q, &Q3);
-        ExtPoint2PE(&ctx->q_table[i], &Q);
-    }
     return ctx;
 }
 
@@ -267,7 +279,7 @@ void ed25519_Verify_Finish(void *ctx)
 
 #define DBLADD_PQ(S,x,y,b) edp_DoublePoint(S); \
     edp_AddAffinePoint(S, &_w_basepoint_perm64[BMASK(x,b)]); \
-    edp_AddPoint(S, &qtable[BMASK(y,b)])
+    edp_AddPoint(S, S, &qtable[BMASK(y,b)])
 
 static void edp_dual_mul_byte(
     IN OUT Ext_POINT *S, 
