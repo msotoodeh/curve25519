@@ -120,7 +120,7 @@ void eco_MulMod(OUT U_WORD *Z, IN const U_WORD *X, IN const U_WORD *Y);
 // Return Y = D mod BPO where D is 512-bit big-endian byte array (i.e SHA512 digest)
 void eco_DigestToWords( OUT U_WORD *Y, IN const U8 *D);
 // Z = X + Y mod BPO
-void eco_AddReduce(OUT U32 *Z, IN const U32 *X, IN const U32 *Y);
+void eco_AddReduce(OUT U_WORD *Z, IN const U_WORD *X, IN const U_WORD *Y);
 // Z = X + Y mod BPO
 void eco_AddMod(OUT U_WORD *Z, IN const U_WORD *X, IN const U_WORD *Y);
 // X mod BPO
@@ -142,15 +142,18 @@ void ecp_ModExp2523(U_WORD *Y, const U_WORD *X);
 void ecp_Inverse(U_WORD *out, const U_WORD *z);
 void ecp_MulMod(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
 void ecp_ExpMod(U_WORD* Y, const U_WORD* X, const U8* E, int bytes);
-void ecp_Mul(U32* Z, const U32* X, const U32* Y);
+void ecp_Mul(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
 
 // -- ed25519 ---------------------------------------------------------------
 void ed25519_UnpackPoint(Affine_POINT *r, const unsigned char *p);
-void edp_BasePointMultiply(OUT Affine_POINT *Q, IN const U8 *sk);
 void edp_AddAffinePoint(Ext_POINT *p, const PA_POINT *q);
 void edp_AddBasePoint(Ext_POINT *p);
 void edp_AddPoint(Ext_POINT *r, const Ext_POINT *p, const PE_POINT *q);
 void edp_DoublePoint(Ext_POINT *p);
+void edp_ComputePermTable(PE_POINT *qtable, Ext_POINT *Q);
+void edp_ExtPoint2PE(PE_POINT *r, const Ext_POINT *p);
+void edp_BasePointMultiply(OUT Affine_POINT *Q, IN const U8 *sk, 
+    IN const void *blinding);
 
 #ifdef __cplusplus
 }

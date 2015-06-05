@@ -34,7 +34,7 @@
   This library is used for implementation of ECDSA sign/verify.
 */
 
-static const U64 _w_BPO[4] = { // BPO as words
+const U64 _w_BPO[4] = { // BPO as words
     0x5812631A5CF5D3ED,0x14DEF9DEA2F79CD6,0x0000000000000000,0x1000000000000000 };
 
 static const U64 _w_maxBPO[4] = { // 15*BPO fits into 8 words

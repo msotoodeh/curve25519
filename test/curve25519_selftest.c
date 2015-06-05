@@ -29,10 +29,8 @@
 #include "curve25519_SelfTest.h"
 #include "sha512.h"
 
-extern void eco_InvModBPO(OUT U32 *Y, IN const U32 *X);
-
-extern void ecp_PrintHexBytes(IN const char *name, IN const U8 *data, IN U32 size);
-extern void ecp_PrintHexWords(IN const char *name, IN const U32 *data, IN U32 size);
+void ecp_PrintHexBytes(IN const char *name, IN const U8 *data, IN U32 size);
+void ecp_PrintHexWords(IN const char *name, IN const U32 *data, IN U32 size);
 void ecp_PrintWords(IN const char *name, IN const U_WORD *data, IN U32 size);
 
 extern const U_WORD _w_P[K_WORDS];
@@ -517,16 +515,16 @@ int ed25519_selftest()
     }
 
     // a = 7*B
-    edp_BasePointMultiply(&a, m_7);
+    edp_BasePointMultiply(&a, m_7, 0);
 
     // b = 11*B
-    edp_BasePointMultiply(&b, m_11);
+    edp_BasePointMultiply(&b, m_11, 0);
 
     // c = 50*B + 7*b = 127*B
     edp_DualPointMultiply(&c, m_50, m_7, &b);
 
     // d = 127*B
-    edp_BasePointMultiply(&d, m_127);
+    edp_BasePointMultiply(&d, m_127, 0);
 
     // check c == d
     if (ecp_Cmp(c.y, d.y) != 0 || ecp_Cmp(c.x, d.x) != 0)
@@ -554,7 +552,7 @@ int ed25519_selftest()
 
     ecp_SetValue(u, 0x11223344);
     ecp_WordsToBytes(m1, u);
-    edp_BasePointMultiply(&a, m1);      // a = u*B
+    edp_BasePointMultiply(&a, m1, 0);   // a = u*B
     eco_MulMod(v, u, u);
     ecp_Sub(v, _w_BPO, v);          // v = -u^2
     ecp_WordsToBytes(m2, v);

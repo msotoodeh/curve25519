@@ -36,14 +36,23 @@ extern "C" {
 void ed25519_CreateKeyPair(
     unsigned char *pubKey,              // OUT: public key
     unsigned char *privKey,             // OUT: private key
+    const void *blinding,               // IN: [optional] null or blinding context
     const unsigned char *sk);           // IN: secret key (32 bytes)
 
 // Generate message signature
 void ed25519_SignMessage(
     unsigned char *signature,           // OUT:[64 bytes] signature (R,S)
     const unsigned char *privKey,       // IN: [64 bytes] private key (sk,pk)
+    const void *blinding,               // IN: [optional] null or blinding context
     const unsigned char *msg,           // IN: [msg_size bytes] message to sign
     size_t msg_size);                   // IN: size of message
+
+void *ed25519_Blinding_Init(
+    void *context,                      // IO: null or ptr blinding context
+    const unsigned char *blinder);      // IN: [32 bytes] random blind
+
+void ed25519_Blinding_Finish(
+    void *context);                     // IN: blinding context
 
 // -- ed25519-verify -----------------------------------------------------------
 
@@ -54,7 +63,7 @@ int ed25519_VerifySignature(
     size_t msg_size);                   // IN: size of message
 
 void * ed25519_Verify_Init(
-    void *context,                      // IN: null or context to use
+    void *context,                      // IO: null or verify context to use
     const unsigned char *publicKey);    // IN: [32 bytes] public key
 
 int ed25519_Verify_Check(

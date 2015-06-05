@@ -202,17 +202,9 @@ int ed25519_VerifySignature(
     return ed25519_Verify_Check(&ctx, signature, msg, msg_size);
 }
 
-static void ExtPoint2PE(PE_POINT *r, const Ext_POINT *p)
-{
-    ecp_AddReduce(r->YpX, p->y, p->x);
-    ecp_SubReduce(r->YmX, p->y, p->x);
-    ecp_MulReduce(r->T2d, p->t, _w_2d);
-    ecp_AddReduce(r->Z2, p->z, p->z);
-}
-
 #define QTABLE_SET(d,s) \
     edp_AddPoint(&T, &Q, &ctx->q_table[s]); \
-    ExtPoint2PE(&ctx->q_table[d], &T)
+    edp_ExtPoint2PE(&ctx->q_table[d], &T)
 
 void * ed25519_Verify_Init(
     void *context,                      // IO: null or context buffer to use
@@ -239,23 +231,23 @@ void * ed25519_Verify_Init(
     ecp_SetValue(ctx->q_table[0].T2d, 0);
     ecp_SetValue(ctx->q_table[0].Z2, 2);
 
-    ExtPoint2PE(&ctx->q_table[1], &Q);              /* -- -- -- q0 */
+    edp_ExtPoint2PE(&ctx->q_table[1], &Q);          /* -- -- -- q0 */
 
     for (i = 0; i < 64; i++) edp_DoublePoint(&Q);
 
-    ExtPoint2PE(&ctx->q_table[2], &Q);              /* -- -- q1 -- */
+    edp_ExtPoint2PE(&ctx->q_table[2], &Q);          /* -- -- q1 -- */
     QTABLE_SET(3,1);                                /* -- -- q1 q0 */
 
     do edp_DoublePoint(&Q); while (++i < 128);
 
-    ExtPoint2PE(&ctx->q_table[4], &Q);              /* -- q2 -- -- */
+    edp_ExtPoint2PE(&ctx->q_table[4], &Q);          /* -- q2 -- -- */
     QTABLE_SET(5, 1);                               /* -- q2 -- q0 */
     QTABLE_SET(6, 2);                               /* -- q2 q1 -- */
     QTABLE_SET(7, 3);                               /* -- q2 q1 q0 */
 
     do edp_DoublePoint(&Q); while (++i < 192);
 
-    ExtPoint2PE(&ctx->q_table[8], &Q);              /* q3 -- -- -- */
+    edp_ExtPoint2PE(&ctx->q_table[8], &Q);          /* q3 -- -- -- */
     QTABLE_SET(9, 1);                               /* q3 -- -- q0 */
     QTABLE_SET(10, 2);                              /* q3 -- q1 -- */
     QTABLE_SET(11, 3);                              /* q3 -- q1 q0 */

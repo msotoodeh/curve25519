@@ -19,6 +19,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <memory.h>
+#include <malloc.h>
 #include "curve25519_mehdi.h"
 #include "ed25519_signature.h"
 #include "sha512.h"
@@ -37,7 +38,13 @@
  *      l = 0x1000000000000000000000000000000014DEF9DEA2F79CD65812631A5CF5D3ED
  */
 
+typedef struct {
+    U_WORD bl[K_WORDS];
+    PE_POINT BP;
+} EDP_BLINDING_CTX;
+
 extern const U_WORD _w_maxP[K_WORDS];
+extern const U_WORD _w_BPO[K_WORDS];
 
 const U_WORD _w_2d[K_WORDS] = /* 2*d */
     W256(0x26B2F159,0xEBD69B94,0x8283B156,0x00E0149A,0xEEF3D130,0x198E80F2,0x56DFFCE7,0x2406D9DC);
@@ -227,7 +234,7 @@ static void edp_base_mul_byte(IN OUT Ext_POINT *S, U32 x)
 
 #define PMUL_B4(n) \
     m.u8.b0=sk[n]; m.u8.b1=sk[n+8]; m.u8.b2=sk[n+16]; m.u8.b3=sk[n+24]; \
-    edp_base_mul_byte(&S, m.u32)
+    edp_base_mul_byte(S, m.u32)
 
 /* -- FOLDING ---------------------------------------------------------------
 //
@@ -254,16 +261,15 @@ static void edp_base_mul_byte(IN OUT Ext_POINT *S, U32 x)
 // --------------------------------------------------------------------------
 // Return R = a*P where P is ed25519 base point
 */
-void edp_BasePointMultiply(OUT Affine_POINT *R, IN const U8 *sk)
+void edp_BasePointMult(OUT Ext_POINT *S, IN const U8 *sk)
 {
     M32 m;
-    Ext_POINT S;
     
     // Start with S = (0,1)
-    ecp_SetValue(S.x, 0);
-    ecp_SetValue(S.y, 1);
-    ecp_SetValue(S.z, 1);
-    ecp_SetValue(S.t, 0);
+    ecp_SetValue(S->x, 0);
+    ecp_SetValue(S->y, 1);
+    ecp_SetValue(S->z, 1);
+    ecp_SetValue(S->t, 0);
 
     PMUL_B4(7);
     PMUL_B4(6);
@@ -273,6 +279,30 @@ void edp_BasePointMultiply(OUT Affine_POINT *R, IN const U8 *sk)
     PMUL_B4(2);
     PMUL_B4(1);
     PMUL_B4(0);
+}
+
+void edp_BasePointMultiply(
+    OUT Affine_POINT *R, 
+    IN const U8 *sk, 
+    IN const void *blinding)
+{
+    Ext_POINT S;
+
+    if (blinding)
+    {
+        U8 a[K_BYTES];
+        U_WORD t[K_WORDS];
+
+        ecp_BytesToWords(t, sk);
+        eco_AddReduce(t, t, ((EDP_BLINDING_CTX*)blinding)->bl);
+        ecp_WordsToBytes(a, t);
+        edp_BasePointMult(&S, a);
+        edp_AddPoint(&S, &S, &((EDP_BLINDING_CTX*)blinding)->BP);
+    }
+    else
+    {
+        edp_BasePointMult(&S, sk);
+    }
 
     ecp_Inverse(S.z, S.z);
     ecp_MulMod(R->x, S.x, S.z);
@@ -282,23 +312,9 @@ void edp_BasePointMultiply(OUT Affine_POINT *R, IN const U8 *sk)
 // Return R = a*P where P is curve25519 base point
 void x25519_BasePointMultiply(OUT U8 *r, IN const U8 *sk)
 {
-    M32 m;
     Ext_POINT S;
 
-    // Start with S = (0,1)
-    ecp_SetValue(S.x, 0);
-    ecp_SetValue(S.y, 1);
-    ecp_SetValue(S.z, 1);
-    ecp_SetValue(S.t, 0);
-
-    PMUL_B4(7);
-    PMUL_B4(6);
-    PMUL_B4(5);
-    PMUL_B4(4);
-    PMUL_B4(3);
-    PMUL_B4(2);
-    PMUL_B4(1);
-    PMUL_B4(0);
+    edp_BasePointMult(&S, sk);
 
     // Convert ed25519 point to x25519 point
     
@@ -311,10 +327,56 @@ void x25519_BasePointMultiply(OUT U8 *r, IN const U8 *sk)
     ecp_WordsToBytes(r, S.t);
 }
 
+void edp_ExtPoint2PE(PE_POINT *r, const Ext_POINT *p)
+{
+    ecp_AddReduce(r->YpX, p->y, p->x);
+    ecp_SubReduce(r->YmX, p->y, p->x);
+    ecp_MulReduce(r->T2d, p->t, _w_2d);
+    ecp_AddReduce(r->Z2, p->z, p->z);
+}
+
+/*
+    Blinding randomizes the scalar multiplier:
+    Instead of calculating  a*P
+    Calculate (a-b)*P and then add b*P
+
+    Where b = random blinding
+    Note that a-b calculated mod BPO
+*/
+void *ed25519_Blinding_Init(
+    void *context,                      // IO: null or ptr blinding context
+    const unsigned char *blinder)       // IN: [32 bytes] random blind
+{
+    Ext_POINT T;
+    EDP_BLINDING_CTX *ctx = (EDP_BLINDING_CTX*)context;
+
+    if (ctx == 0) ctx = (EDP_BLINDING_CTX*)malloc(sizeof(EDP_BLINDING_CTX));
+
+    edp_BasePointMult(&T, blinder);
+    edp_ExtPoint2PE(&ctx->BP, &T);
+
+    ecp_BytesToWords(ctx->bl, blinder);
+    eco_Mod(ctx->bl);
+    ecp_Sub(ctx->bl, _w_BPO, ctx->bl);
+
+    return ctx;
+}
+
+void ed25519_Blinding_Finish(
+    void *context)                      // IN: blinding context
+{
+    if (context)
+    {
+        memset(context, 0, sizeof(EDP_BLINDING_CTX));
+        free (context);
+    }
+}
+
 // Generate public and private key pair associated with the secret key
 void ed25519_CreateKeyPair(
     unsigned char *pubKey,              // OUT: public key
     unsigned char *privKey,             // OUT: private key
+    const void *blinding,               // IN: [optional] null or blinding context
     const unsigned char *sk)            // IN: secret key (32 bytes)
 {
     U8 md[SHA512_DIGEST_LENGTH];
@@ -328,7 +390,7 @@ void ed25519_CreateKeyPair(
     // 
     ecp_TrimSecretKey(md);
 
-    edp_BasePointMultiply(&Q, md);
+    edp_BasePointMultiply(&Q, md, blinding);
     ed25519_PackPoint(pubKey, Q.y, Q.x[0]);
 
     memcpy(privKey, sk, 32);
@@ -341,6 +403,7 @@ void ed25519_CreateKeyPair(
 void ed25519_SignMessage(
     unsigned char *signature,           // OUT: [64 bytes] signature (R,S)
     const unsigned char *privKey,       //  IN: [64 bytes] private key (sk,pk)
+    const void *blinding,               //  IN: [optional] null or blinding context
     const unsigned char *msg,           //  IN: [msg_size bytes] message to sign
     size_t msg_size)
 {
@@ -366,7 +429,7 @@ void ed25519_SignMessage(
 
     // R = r*P
     ecp_WordsToBytes(md, r);
-    edp_BasePointMultiply(&R, md);
+    edp_BasePointMultiply(&R, md, blinding);
     ed25519_PackPoint(signature, R.y, R.x[0]); // R part of signature
 
     // S = r + H(encoded(R) + pk + m) * a  mod BPO
