@@ -18,108 +18,65 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/* ---------------------------------------------------------------------
-    A high resolution timer/counter accumulates all sort of system 
-    entropies because of time shift due to interrupts, exceptions, task 
-    switching, cache hit/miss and other event processing.
-    Using TSC (Time Stamp Counter) in an accumulative fashion is used 
-    here. Accumulation is achieved by using SHA512 hash of the state 
-    information and storing it back in to the state again (cascaded 
-    hash).
-    No need for seeding. Applications normally do a poor job for 
-    providing seed. With this RNG, every call to get new random number, 
-    adds more entropy. However, it is a good practice to call the 
-    RNG_AddEntropy() interface in places that physical or external 
-    events are handled like network and user activities and other 
-    similar events.
-    It is a good practice to save/restore the RNG context across power 
-    cycles
- */
-
 #if defined(_MSC_VER)
 #include <windows.h>
-#if _MSC_VER > 1400
-#include <intrin.h>
-#endif
-#pragma intrinsic(__rdtsc)
 #else
-#include <sys/time.h>
+#include <stdio.h>
+#include <stdlib.h>
 #endif
+#include <memory.h>
 #include "sha512.h"
 
-
-static struct
+// Customize this with your own random key
+static const unsigned char my_secret_key[] =
 {
-    U64     _tsc;
-    U64     _entropy;
+    0x1c,0xf2,0x42,0x5f,0x89,0x0f,0x68,0xd3,0x85,0x99,0xba,0x26,0xbb,0x8e,0x57,0x3f,
+    0x4b,0x58,0x51,0x5a,0x04,0x3c,0x3f,0x26,0x94,0xa0,0xee,0x3a,0x8f,0xf9,0xd1,0x9f,
+    0x22,0xa1,0x23,0xfc,0xe3,0xef,0x59,0x1f,0xca,0x7e,0x51,0x67,0x24,0x3b,0x06,0xce,
+    0x57,0x71,0xca,0xc2,0x19,0xdb,0x07,0xc2,0x82,0xaf,0x41,0x9f,0x57,0xb5,0x7b,0x21
+};
+
+void GetRandomBytes(unsigned char *buffer, int size)
+{
 #if defined(_MSC_VER)
-    SYSTEMTIME _SystemTime;
-    LARGE_INTEGER _PerfCounter;
+    HCRYPTPROV hcp;
+    CryptAcquireContext(&hcp, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+    CryptGenRandom(hcp, size, buffer);
+    CryptReleaseContext(hcp, 0);
 #else
-    struct timeval _TimeVal;
-    time_t  _SystemTime;
+    FILE *fp = fopen("/dev/urandom", "r");
+    fread(buffer, sizeof(unsigned char), size, fp);
+    fclose(fp);
 #endif
-    U8      _digest[SHA512_DIGEST_LENGTH];
 
-} g_RNG_Context;
-
-void RNG_Reset ()
-{
-    // Force collection of additional entropy
-    g_RNG_Context._entropy = 0;
-}
-
-void RNG_AddEntropy (const void *entropy, SZ size)
-{
-    SHA512_CTX hash;
-    SHA512_Init (&hash);
-
-#if defined(_MSC_VER)
-    g_RNG_Context._tsc += __rdtsc();
-    GetSystemTime( &g_RNG_Context._SystemTime);
-    QueryPerformanceCounter( &g_RNG_Context._PerfCounter );
-#else
-    __asm__ volatile("rdtsc" : "=A" (g_RNG_Context._tsc));
-    time( &g_RNG_Context._SystemTime);
-    gettimeofday(&g_RNG_Context._TimeVal, 0);
-#endif
-    g_RNG_Context._entropy += size + 8;
-
-    if (size) SHA512_Update (&hash, entropy, size);
-
-    SHA512_Update (&hash, &g_RNG_Context, sizeof(g_RNG_Context));
-    SHA512_Final (g_RNG_Context._digest, &hash);
-}
-
-void RNG_Bytes (void *data, SZ size)
-{
-    int i;
-    U8 *p = (U8*)data;
-
-    // Add more entropy for every call
-    RNG_AddEntropy (data, size);    // TSC and uninitialized memory
-
-    // Make sure enough entropy collected
-    while (g_RNG_Context._entropy < 500) RNG_AddEntropy (0, 0);
+    // -- paranoia ----------------------------------------------------------
+    //
+    // System level RNG's could be compromized, monitored, hacked, hooked,...
+    // 
+    // We are putting a custom layer of transformation on top which includes 
+    // a secret key
+    //
+    // ----------------------------------------------------------------------
 
     while (size > 0)
     {
-        RNG_AddEntropy (&p, sizeof(data)); // heap memory fragmentation
+        SHA512_CTX hash;
 
-        // Expose only helf of the digest
-        for (i = 0; i < (SHA512_DIGEST_LENGTH/2); i++)
+        SHA512_Init(&hash);
+        SHA512_Update(&hash, my_secret_key, sizeof(my_secret_key));
+        SHA512_Update(&hash, buffer, size);
+
+        if (size <= SHA512_DIGEST_LENGTH)
         {
-            *p++ = g_RNG_Context._digest[i];
-            if (--size == 0)
-                break;
+            unsigned char digest[SHA512_DIGEST_LENGTH];
+            SHA512_Final(digest, &hash);
+            memcpy(buffer, digest, size);
+            break;
         }
+
+        SHA512_Final(buffer, &hash);
+        buffer += SHA512_DIGEST_LENGTH;
+        size -= SHA512_DIGEST_LENGTH;
     }
 }
 
-U32 RNG_Int32 ()
-{
-    U32 r;
-    RNG_Bytes (&r, sizeof(r));
-    return r;
-}

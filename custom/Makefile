@@ -38,8 +38,8 @@ build/%.o: %.c
 $(LIB_TARGET): init $(LIB_OBJS)
 	$(MAKE_STATIC_LIB) $(LIB_TARGET) $(LIB_OBJS) $(LDFLAGS)
 
-$(TARGET): $(LIB_TARGET) main.c
-	$(CC) $(CFLAGS) -o $@ main.c $(LDFLAGS) $(LIB_TARGET)
+$(TARGET): $(LIB_TARGET) main.c random.c
+	$(CC) $(CFLAGS) -o $@ main.c random.c $(LDFLAGS) $(LIB_TARGET)
 	./$(TARGET) b edp_custom_blinding > ../source/custom_blind.c
 
 clean: 

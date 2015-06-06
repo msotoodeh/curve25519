@@ -20,9 +20,10 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <malloc.h>
+#include "random.h"
 #include "curve25519_mehdi.h"
 #include "ed25519_signature.h"
-#include "random.h"
 
 EDP_BLINDING_CTX edp_custom_blinding =
 {
@@ -35,12 +36,27 @@ EDP_BLINDING_CTX edp_custom_blinding =
   }
 };
 
-void PrintWords(IN const char *txt, IN const U32 *data, IN U32 size)
+void PrintWords(IN const char *txt, IN const U32 *data, IN int size)
 {
-    U32 i;
+    int i;
     printf("%s0x%08X", txt, *data++);
     for (i = 1; i < size; i++) printf(",0x%08X", *data++);
 }
+
+void PrintBytes(IN const char *name, IN const unsigned char *data, IN int size)
+{
+    int i;
+    printf("static const unsigned char %s[%d] =\n  { 0x%02X", name, size, *data++);
+    for (i = 1; i < size; i++)
+    {
+        if ((i & 15) == 0)
+            printf(",\n    0x%02X", *data++);
+        else
+            printf(",0x%02X", *data++);
+    }
+    printf(" };\n");
+}
+
 
 int CreateBlindingContext(IN const char *name)
 {
@@ -48,13 +64,7 @@ int CreateBlindingContext(IN const char *name)
     unsigned char blind[32];
     EDP_BLINDING_CTX B;
     
-#if defined(_MSC_VER)
-    RNG_Bytes(blind, 32);
-#else
-    FILE *fp = fopen("/dev/urandom", "r");
-    fread(&blind[0], 1, 32, fp);
-    fclose(fp);
-#endif    
+    GetRandomBytes(blind, 32);
     ed25519_Blinding_Init((void *)&B, blind);
     
     printf(
@@ -69,8 +79,31 @@ int CreateBlindingContext(IN const char *name)
     return 0;
 }
 
+int CreateRandomBytes(char *name, int size)
+{
+    unsigned char *buff = (unsigned char*)malloc(size);
+    if (buff)
+    {
+        GetRandomBytes(buff, size);
+        PrintBytes(name, buff, size);
+        free(buff);
+        return 0;
+    }
+
+    fprintf(stderr, "Insufficient memory error.\n");
+    return 1;
+}
+
 int main(int argc, char**argv)
 {
     if (argc == 3 && argv[1][0] == 'b') return CreateBlindingContext(argv[2]);
+    if (argc == 3 && argv[1][0] == 'r') return CreateRandomBytes(argv[2], 32);
+    if (argc == 4 && argv[1][0] == 'r') return CreateRandomBytes(argv[2], atol(argv[3]));
+
+    fprintf(stderr, "Command line error.\n"
+        "\nUsage:"
+        "\n   b <name>            Create a random blinding context"
+        "\n   r <name> [<size>]   Create random bytes"
+        "\n");
     return 1;
 }
