@@ -1,0 +1,12 @@
+build/
+Debug/
+Release/
+x64/
+ipch/
+*.a
+*.o
+*.sdf
+*.suo
+*.user
+*.opensdf
+custom_blind.c

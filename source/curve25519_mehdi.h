@@ -77,6 +77,11 @@ typedef struct
     U_WORD T2d[K_WORDS];        // 2d*T
 } PA_POINT;
 
+typedef struct {
+    U_WORD bl[K_WORDS];
+    PE_POINT BP;
+} EDP_BLINDING_CTX;
+
 extern const U8 ecp_BasePoint[K_BYTES];
 
 // Return point Q = k*P

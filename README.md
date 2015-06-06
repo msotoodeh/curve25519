@@ -127,3 +127,6 @@ NASM can be downloaded from: http://www.nasm.us/pub/nasm/releasebuilds/2.11.08/
   assembly support you need to install nasm first and then run: 'make asm' from 
   project root. Output files will be created in asm64/build/test64.
 
+A custom tool creates a random blinder on every new build. This blinder is static
+and will be part of the library. This blinder is only used for blinding the point 
+multiplication when creating blinding context via ed25519_Blinding_Init() API.

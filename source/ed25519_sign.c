@@ -38,13 +38,16 @@
  *      l = 0x1000000000000000000000000000000014DEF9DEA2F79CD65812631A5CF5D3ED
  */
 
-typedef struct {
-    U_WORD bl[K_WORDS];
-    PE_POINT BP;
-} EDP_BLINDING_CTX;
-
 extern const U_WORD _w_maxP[K_WORDS];
 extern const U_WORD _w_BPO[K_WORDS];
+
+// -- custom blind ---------------------------------------------------------
+//
+// edp_custom_blinding is defined in source/custom_blind.c
+// source/custom_blind is created randomly on every new build
+//
+// -------------------------------------------------------------------------
+extern const EDP_BLINDING_CTX edp_custom_blinding;
 
 const U_WORD _w_2d[K_WORDS] = /* 2*d */
     W256(0x26B2F159,0xEBD69B94,0x8283B156,0x00E0149A,0xEEF3D130,0x198E80F2,0x56DFFCE7,0x2406D9DC);
@@ -335,24 +338,37 @@ void edp_ExtPoint2PE(PE_POINT *r, const Ext_POINT *p)
     ecp_AddReduce(r->Z2, p->z, p->z);
 }
 
-/*
-    Blinding randomizes the scalar multiplier:
-    Instead of calculating  a*P
-    Calculate (a-b)*P and then add b*P
-
-    Where b = random blinding
-    Note that a-b calculated mod BPO
+/* -- Blinding -------------------------------------------------------------
+//
+//  Blinding is a measure to protect against side channel attacks. 
+//  Blinding andomizes the scalar multiplier.
+//
+//  Instead of calculating a*P, calculate (a-b mod BPO)*P followed by adding
+//  point B.
+//
+//  Where b = random blinding and B = b*P
+//
+// -------------------------------------------------------------------------
 */
 void *ed25519_Blinding_Init(
     void *context,                      // IO: null or ptr blinding context
     const unsigned char *blinder)       // IN: [32 bytes] random blind
 {
     Ext_POINT T;
+    U8 a[K_BYTES];
+    U_WORD t[K_WORDS];
     EDP_BLINDING_CTX *ctx = (EDP_BLINDING_CTX*)context;
 
     if (ctx == 0) ctx = (EDP_BLINDING_CTX*)malloc(sizeof(EDP_BLINDING_CTX));
 
-    edp_BasePointMult(&T, blinder);
+    // Use edp_custom_blinding to protect generation of the new blinder
+
+    ecp_BytesToWords(t, blinder);
+    eco_AddReduce(t, t, edp_custom_blinding.bl);
+    ecp_WordsToBytes(a, t);
+    edp_BasePointMult(&T, a);
+    edp_AddPoint(&T, &T, &edp_custom_blinding.BP);
+
     edp_ExtPoint2PE(&ctx->BP, &T);
 
     ecp_BytesToWords(ctx->bl, blinder);

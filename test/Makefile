@@ -22,7 +22,8 @@ LIB_SRCS = \
     curve25519_utils.c \
     ed25519_sign.c \
     ed25519_verify.c \
-    sha512.c
+    sha512.c \
+    custom_blind.c
 
 TEST_SRCS = curve25519_donna.c curve25519_selftest.c curve25519_test.c
     

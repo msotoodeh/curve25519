@@ -53,6 +53,9 @@
     <ClCompile Include="..\..\source\sha512.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\custom_blind.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="..\..\asm64\amd64.masm\Add.asm">

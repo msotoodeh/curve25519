@@ -8,7 +8,7 @@ CFLAGS = -c -O2 -m64 -Wall -Wno-format
 
 A_SRCS = $(wildcard amd64.nasm/*.asm)
 C_SRCS = curve25519_mehdi_x64.c curve25519_order_x64.c curve25519_utils_x64.c \
-    ed25519_sign.c ed25519_verify.c sha512.c
+    ed25519_sign.c ed25519_verify.c sha512.c custom_blind.c
 T_SRCS = curve25519_donna.c selftest.c test64.c
 
 LIB_OBJS = $(patsubst amd64.nasm/%.asm,build/s_%.o,$(A_SRCS)) $(C_SRCS:%.c=build/%.o)
