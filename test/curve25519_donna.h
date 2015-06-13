@@ -15,4 +15,4 @@ void curve25519_donna(u8 *donna_publickey, const u8 *secret, const u8 *basepoint
 #ifdef __cplusplus
 }
 #endif
-#endif  // __ecc25519_donna_h__
+#endif  /* __ecc25519_donna_h__ */

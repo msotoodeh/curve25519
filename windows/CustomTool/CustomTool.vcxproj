@@ -81,7 +81,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\source;$(SolutionDir)../test</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../include;$(SolutionDir)../source;$(SolutionDir)../test</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -99,7 +99,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\source;$(SolutionDir)../test</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../include;$(SolutionDir)../source;$(SolutionDir)../test</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -119,7 +119,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\source;$(SolutionDir)../test</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../include;$(SolutionDir)../source;$(SolutionDir)../test</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -141,7 +141,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\source;$(SolutionDir)../test</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../include;$(SolutionDir)../source;$(SolutionDir)../test</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -167,6 +167,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\custom\random.h" />
     <ClInclude Include="..\..\source\BaseTypes.h" />
+    <ClInclude Include="..\..\source\base_perm_p32.h" />
     <ClInclude Include="..\..\source\curve25519_mehdi.h" />
     <ClInclude Include="..\..\source\ed25519_signature.h" />
     <ClInclude Include="..\..\source\sha512.h" />

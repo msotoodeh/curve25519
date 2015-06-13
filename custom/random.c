@@ -1,23 +1,27 @@
-/* 
- * Copyright Mehdi Sotoodeh.  All rights reserved. 
- * <mehdisotoodeh@gmail.com>
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that source code retains the 
- * above copyright notice and following disclaimer.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/* The MIT License (MIT)
+ * 
+ * Copyright (c) 2015 mehdi sotoodeh
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining 
+ * a copy of this software and associated documentation files (the 
+ * "Software"), to deal in the Software without restriction, including 
+ * without limitation the rights to use, copy, modify, merge, publish, 
+ * distribute, sublicense, and/or sell copies of the Software, and to 
+ * permit persons to whom the Software is furnished to do so, subject to 
+ * the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included 
+ * in all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS 
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY 
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 #if defined(_MSC_VER)
 #include <windows.h>
 #else
@@ -27,7 +31,7 @@
 #include <memory.h>
 #include "sha512.h"
 
-// Customize this with your own random key
+/* Customize this with your own random key */
 static const unsigned char my_secret_key[] =
 {
     0x1c,0xf2,0x42,0x5f,0x89,0x0f,0x68,0xd3,0x85,0x99,0xba,0x26,0xbb,0x8e,0x57,0x3f,
@@ -49,7 +53,7 @@ void GetRandomBytes(unsigned char *buffer, int size)
     fclose(fp);
 #endif
 
-    // -- paranoia ----------------------------------------------------------
+    /* -- paranoia ----------------------------------------------------------
     //
     // System level RNG's could be compromized, monitored, hacked, hooked,...
     // 
@@ -57,7 +61,7 @@ void GetRandomBytes(unsigned char *buffer, int size)
     // a secret key
     //
     // ----------------------------------------------------------------------
-
+    */
     while (size > 0)
     {
         SHA512_CTX hash;

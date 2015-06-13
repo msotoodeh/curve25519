@@ -20,11 +20,14 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <malloc.h>
 #include "random.h"
 #include "curve25519_mehdi.h"
 #include "ed25519_signature.h"
+#include "sha512.h"
 
+/* Linker expects this */
 EDP_BLINDING_CTX edp_custom_blinding =
 {
   W256(0x8869B072,0x58B262BC,0xE32D3A61,0x39608B4F,0x9D89ECB9,0xC9CE3304,0x48F0B76F,0x0871ADF4),
@@ -60,7 +63,7 @@ void PrintBytes(IN const char *name, IN const unsigned char *data, IN int size)
 
 int CreateBlindingContext(IN const char *name)
 {
-    // Create a random blind
+    /* Create a random blind */
     unsigned char blind[32];
     EDP_BLINDING_CTX B;
     
@@ -79,7 +82,7 @@ int CreateBlindingContext(IN const char *name)
     return 0;
 }
 
-int CreateRandomBytes(char *name, int size)
+int CreateRandomBytes(const char *name, int size)
 {
     unsigned char *buff = (unsigned char*)malloc(size);
     if (buff)
@@ -94,16 +97,61 @@ int CreateRandomBytes(char *name, int size)
     return 1;
 }
 
+int CreateSignTestVector(const char *seed, const char *msg)
+{
+    unsigned char md[SHA512_DIGEST_LENGTH];
+    unsigned char Kpub[ed25519_public_key_size];
+    unsigned char Kprv[ed25519_private_key_size];
+    unsigned char sig[ed25519_signature_size];
+    int len = (int)strlen(msg);
+
+    if (seed)
+    {
+        SHA512_CTX H;
+        SHA512_Init(&H);
+        SHA512_Update(&H, seed, strlen(seed));
+        SHA512_Final(md, &H);
+    }
+    else
+    {
+        GetRandomBytes(md, 32);
+    }
+
+    PrintBytes("sk", md, 32);
+    ed25519_CreateKeyPair(Kpub, Kprv, 0, md);
+
+    PrintBytes("Kpub", Kpub, ed25519_public_key_size);
+    PrintBytes("Kprv", Kprv, ed25519_private_key_size);
+
+    PrintBytes("m", (const unsigned char*)msg, len);
+    ed25519_SignMessage(sig, Kprv, 0, (const unsigned char*)msg, len);
+    PrintBytes("sig", sig, ed25519_signature_size);
+
+    if (ed25519_VerifySignature(sig, Kpub, (const unsigned char*)msg, len))
+        return 0;
+
+    fprintf(stderr, "Signature verification failed.\n");
+    return 1;
+}
+
 int main(int argc, char**argv)
 {
-    if (argc == 3 && argv[1][0] == 'b') return CreateBlindingContext(argv[2]);
-    if (argc == 3 && argv[1][0] == 'r') return CreateRandomBytes(argv[2], 32);
-    if (argc == 4 && argv[1][0] == 'r') return CreateRandomBytes(argv[2], atol(argv[3]));
+    if (argc == 3 && argv[1][0] == 'b') 
+        return CreateBlindingContext(argv[2]);
+    if (argc == 3 && argv[1][0] == 'r') 
+        return CreateRandomBytes(argv[2], 32);
+    if (argc == 4 && argv[1][0] == 'r') 
+        return CreateRandomBytes(argv[2], atol(argv[3]));
+    if (argc == 3 && argv[1][0] == 't') 
+        return CreateSignTestVector(0, argv[2]);
+    if (argc == 4 && argv[1][0] == 't') 
+        return CreateSignTestVector(argv[2], argv[3]);
 
     fprintf(stderr, "Command line error.\n"
-        "\nUsage:"
-        "\n   b <name>            Create a random blinding context"
-        "\n   r <name> [<size>]   Create random bytes"
+        "\nCommand line arguments are:"
+        "\n  b <name>            Create a random blinding context"
+        "\n  r <name> [<size>]   Create random bytes"
+        "\n  t [<seed>] <msg>    Create key(seed) and sign(msg) with it"
         "\n");
     return 1;
 }

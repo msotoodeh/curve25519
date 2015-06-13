@@ -1,24 +1,27 @@
-
-/* 
- * Copyright Mehdi Sotoodeh.  All rights reserved. 
- * <mehdisotoodeh@gmail.com>
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that source code retains the 
- * above copyright notice and following disclaimer.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/* The MIT License (MIT)
+ * 
+ * Copyright (c) 2015 mehdi sotoodeh
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining 
+ * a copy of this software and associated documentation files (the 
+ * "Software"), to deal in the Software without restriction, including 
+ * without limitation the rights to use, copy, modify, merge, publish, 
+ * distribute, sublicense, and/or sell copies of the Software, and to 
+ * permit persons to whom the Software is furnished to do so, subject to 
+ * the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included 
+ * in all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS 
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY 
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 #include <memory.h>
 #include <malloc.h>
 #include "curve25519_mehdi.h"
@@ -45,8 +48,6 @@ typedef struct {
 } EDP_SIGV_CTX;
 
 extern const U_WORD _w_P[K_WORDS];
-extern const U_WORD _w_maxP[K_WORDS];
-extern const U_WORD _w_I[K_WORDS];
 extern const U_WORD _w_BPO[K_WORDS];
 extern const U_WORD _w_2d[K_WORDS];
 
@@ -55,6 +56,9 @@ extern const PA_POINT _w_basepoint_perm64[16];
 #define _w_Zero     _w_basepoint_perm64[0].T2d
 #define _w_One      _w_basepoint_perm64[0].YpX
 
+const U_WORD _w_I[K_WORDS] = /* sqrt(-1) */
+    W256(0x4A0EA0B0,0xC4EE1B27,0xAD2FE478,0x2F431806,0x3DFBD7A7,0x2B4D0099,0x4FC1DF0B,0x2B832480);
+
 static const U_WORD _w_d[K_WORDS] =
     W256(0x135978A3,0x75EB4DCA,0x4141D8AB,0x00700A4D,0x7779E898,0x8CC74079,0x2B6FFE73,0x52036CEE);
 
@@ -62,24 +66,24 @@ void ed25519_CalculateX(OUT U_WORD *X, IN const U_WORD *Y, U_WORD parity)
 {
     U_WORD u[K_WORDS], v[K_WORDS], a[K_WORDS], b[K_WORDS];
 
-    // Calculate sqrt((y^2 - 1)/(d*y^2 + 1))
+    /* Calculate sqrt((y^2 - 1)/(d*y^2 + 1)) */
 
-    ecp_SqrReduce(u, Y);            // u = y^2
-    ecp_MulReduce(v, u, _w_d);      // v = dy^2
-    ecp_SubReduce(u, u, _w_One);    // u = y^2-1
-    ecp_AddReduce(v, v, _w_One);    // v = dy^2+1
+    ecp_SqrReduce(u, Y);            /* u = y^2 */
+    ecp_MulReduce(v, u, _w_d);      /* v = dy^2 */
+    ecp_SubReduce(u, u, _w_One);    /* u = y^2-1 */
+    ecp_AddReduce(v, v, _w_One);    /* v = dy^2+1 */
 
-    // Calculate:  sqrt(u/v) = u*v^3 * (u*v^7)^((p-5)/8)
+    /* Calculate:  sqrt(u/v) = u*v^3 * (u*v^7)^((p-5)/8) */
 
     ecp_SqrReduce(b, v);
     ecp_MulReduce(a, u, b);
-    ecp_MulReduce(a, a, v);         // a = u*v^3
-    ecp_SqrReduce(b, b);            // b = v^4
-    ecp_MulReduce(b, a, b);         // b = u*v^7
+    ecp_MulReduce(a, a, v);         /* a = u*v^3 */
+    ecp_SqrReduce(b, b);            /* b = v^4 */
+    ecp_MulReduce(b, a, b);         /* b = u*v^7 */
     ecp_ModExp2523(b, b);
     ecp_MulReduce(X, b, a);
 
-    // Check if we have correct sqrt, else, multiply by sqrt(-1)
+    /* Check if we have correct sqrt, else, multiply by sqrt(-1) */
 
     ecp_SqrReduce(b, X);
     ecp_MulReduce(b, b, v);
@@ -89,7 +93,7 @@ void ed25519_CalculateX(OUT U_WORD *X, IN const U_WORD *Y, U_WORD parity)
 
     while (ecp_Cmp(X, _w_P) >= 0) ecp_Sub(X, X, _w_P);
 
-    // match parity
+    /* match parity */
     if (((X[0] ^ parity) & 1) != 0)
         ecp_Sub(X, _w_P, X);
 }
@@ -113,20 +117,20 @@ void ecp_ModExp2523(U_WORD *Y, const U_WORD *X)
     U_WORD x2[K_WORDS], x9[K_WORDS], x11[K_WORDS], x5[K_WORDS], x10[K_WORDS];
     U_WORD x20[K_WORDS], x50[K_WORDS], x100[K_WORDS], t[K_WORDS];
 
-    ecp_SqrReduce(x2, X);                       // 2
-    ecp_SrqMulReduce(x9, x2, 2, X);             // 9
-    ecp_MulReduce(x11, x9, x2);                 // 11
-    ecp_SqrReduce(t, x11);                      // 22
-    ecp_MulReduce(x5, t, x9);                   // 31 = 2^5 - 2^0
-    ecp_SrqMulReduce(x10, x5, 5, x5);           // 2^10 - 2^0
-    ecp_SrqMulReduce(x20, x10, 10, x10);        // 2^20 - 2^0
-    ecp_SrqMulReduce(t, x20, 20, x20);          // 2^40 - 2^0
-    ecp_SrqMulReduce(x50, t, 10, x10);          // 2^50 - 2^0
-    ecp_SrqMulReduce(x100, x50, 50, x50);       // 2^100 - 2^0
-    ecp_SrqMulReduce(t, x100, 100, x100);       // 2^200 - 2^0
-    ecp_SrqMulReduce(t, t, 50, x50);            // 2^250 - 2^0
-    ecp_SqrReduce(t, t); ecp_SqrReduce(t, t);   // 2^252 - 2^2
-    ecp_MulReduce(Y, t, X);                     // 2^252 - 3
+    ecp_SqrReduce(x2, X);                       /* 2 */
+    ecp_SrqMulReduce(x9, x2, 2, X);             /* 9 */
+    ecp_MulReduce(x11, x9, x2);                 /* 11 */
+    ecp_SqrReduce(t, x11);                      /* 22 */
+    ecp_MulReduce(x5, t, x9);                   /* 31 = 2^5 - 2^0 */
+    ecp_SrqMulReduce(x10, x5, 5, x5);           /* 2^10 - 2^0 */
+    ecp_SrqMulReduce(x20, x10, 10, x10);        /* 2^20 - 2^0 */
+    ecp_SrqMulReduce(t, x20, 20, x20);          /* 2^40 - 2^0 */
+    ecp_SrqMulReduce(x50, t, 10, x10);          /* 2^50 - 2^0 */
+    ecp_SrqMulReduce(x100, x50, 50, x50);       /* 2^100 - 2^0 */
+    ecp_SrqMulReduce(t, x100, 100, x100);       /* 2^200 - 2^0 */
+    ecp_SrqMulReduce(t, t, 50, x50);            /* 2^250 - 2^0 */
+    ecp_SqrReduce(t, t); ecp_SqrReduce(t, t);   /* 2^252 - 2^2 */
+    ecp_MulReduce(Y, t, X);                     /* 2^252 - 3 */
 }
 
 /*
@@ -155,11 +159,11 @@ void edp_AddPoint(Ext_POINT *r, const Ext_POINT *p, const PE_POINT *q)
     ecp_MulReduce(r->z, d, a);              /* G*F */
 }
 
-#if 0   // Use this version if optimizing for memory usage
+#if 0   /* Use this version if optimizing for memory usage */
 int ed25519_VerifySignature(
-    const unsigned char *signature,             // IN: signature (R,S)
-    const unsigned char *publicKey,             // IN: public key
-    const unsigned char *msg, size_t msg_size)  // IN: message to sign
+    const unsigned char *signature,             /* IN: signature (R,S) */
+    const unsigned char *publicKey,             /* IN: public key */
+    const unsigned char *msg, size_t msg_size)  /* IN: message to sign */
 {
     SHA512_CTX H;
     Affine_POINT Q, T;
@@ -167,11 +171,11 @@ int ed25519_VerifySignature(
     U8 md[SHA512_DIGEST_LENGTH];
 
     md[0] = ecp_DecodeInt(Q.y, publicKey);
-    ed25519_CalculateX(Q.x, Q.y, ~md[0]);       // Invert parity for -Q
+    ed25519_CalculateX(Q.x, Q.y, ~md[0]);       /* Invert parity for -Q */
 
-    // TODO: Validate Q is a point on the curve
+    /* TODO: Validate Q is a point on the curve */
 
-    // h = H(enc(R) + pk + m)  mod BPO
+    /* h = H(enc(R) + pk + m)  mod BPO */
     SHA512_Init(&H);
     SHA512_Update(&H, signature, 32);
     SHA512_Update(&H, publicKey, 32);
@@ -180,7 +184,7 @@ int ed25519_VerifySignature(
     eco_DigestToWords(h, md);
     eco_Mod(h);
 
-    // T = s*P + h*(-Q) = (s - h*a)*P = r*P = R
+    /* T = s*P + h*(-Q) = (s - h*a)*P = r*P = R */
 
     ecp_WordsToBytes(md, h);
     edp_DualPointMultiply(&T, signature+32, md, &Q);
@@ -191,9 +195,9 @@ int ed25519_VerifySignature(
 #endif
 
 int ed25519_VerifySignature(
-    const unsigned char *signature,             // IN: signature (R,S)
-    const unsigned char *publicKey,             // IN: public key
-    const unsigned char *msg, size_t msg_size)  // IN: message to sign
+    const unsigned char *signature,             /* IN: signature (R,S) */
+    const unsigned char *publicKey,             /* IN: public key */
+    const unsigned char *msg, size_t msg_size)  /* IN: message to sign */
 {
     EDP_SIGV_CTX ctx;
 
@@ -207,8 +211,8 @@ int ed25519_VerifySignature(
     edp_ExtPoint2PE(&ctx->q_table[d], &T)
 
 void * ed25519_Verify_Init(
-    void *context,                      // IO: null or context buffer to use
-    const unsigned char *publicKey)     // IN: [32 bytes] public key
+    void *context,                      /* IO: null or context buffer to use */
+    const unsigned char *publicKey)     /* IN: [32 bytes] public key */
 {
     int i;
     Ext_POINT Q, T;
@@ -218,13 +222,13 @@ void * ed25519_Verify_Init(
 
     memcpy(ctx->pk, publicKey, 32);
     i = ecp_DecodeInt(Q.y, publicKey);
-    ed25519_CalculateX(Q.x, Q.y, ~i);       // Invert parity for -Q
+    ed25519_CalculateX(Q.x, Q.y, ~i);       /* Invert parity for -Q */
     ecp_MulMod(Q.t, Q.x, Q.y);
     ecp_SetValue(Q.z, 1);
 
-    // pre-compute q-table
+    /* pre-compute q-table */
 
-    // Calculate: Q0=Q, Q1=(2^64)*Q, Q2=(2^128)*Q, Q3=(2^192)*Q
+    /* Calculate: Q0=Q, Q1=(2^64)*Q, Q2=(2^128)*Q, Q3=(2^192)*Q */
 
     ecp_SetValue(ctx->q_table[0].YpX, 1);           /* -- -- -- -- */
     ecp_SetValue(ctx->q_table[0].YmX, 1);
@@ -306,7 +310,7 @@ static void edp_PolyPointMultiply(
     M32 x, y;
     Ext_POINT S;
 
-    // Set S = (0,1)
+    /* Set S = (0,1) */
     ecp_SetValue(S.x, 0);
     ecp_SetValue(S.y, 1);
     ecp_SetValue(S.z, 1);
@@ -332,25 +336,25 @@ static void edp_PolyPointMultiply(
 
 */
 int ed25519_Verify_Check(
-    const void  *context,                       // IN: precomputes
-    const unsigned char *signature,             // IN: signature (R,S)
-    const unsigned char *msg, size_t msg_size)  // IN: message to sign
+    const void  *context,                       /* IN: precomputes */
+    const unsigned char *signature,             /* IN: signature (R,S) */
+    const unsigned char *msg, size_t msg_size)  /* IN: message to sign */
 {
     SHA512_CTX H;
     Affine_POINT T;
     U_WORD h[K_WORDS];
     U8 md[SHA512_DIGEST_LENGTH];
 
-    // h = H(enc(R) + pk + m)  mod BPO
+    /* h = H(enc(R) + pk + m)  mod BPO */
     SHA512_Init(&H);
-    SHA512_Update(&H, signature, 32);       // enc(R)
+    SHA512_Update(&H, signature, 32);       /* enc(R) */
     SHA512_Update(&H, ((EDP_SIGV_CTX*)context)->pk, 32);
     SHA512_Update(&H, msg, msg_size);
     SHA512_Final(md, &H);
     eco_DigestToWords(h, md);
     eco_Mod(h);
 
-    // T = s*P + h*(-Q) = (s - h*a)*P = r*P = R
+    /* T = s*P + h*(-Q) = (s - h*a)*P = r*P = R */
 
     ecp_WordsToBytes(md, h);
     edp_PolyPointMultiply(&T, signature+32, md, ((EDP_SIGV_CTX*)context)->q_table);

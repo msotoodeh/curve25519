@@ -18,32 +18,26 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\asm64\curve25519_mehdi_x64.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\asm64\BaseTypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\sha512.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\ed25519_signature.h">
+    <ClInclude Include="..\..\source\base_perm_p32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\curve25519_dh.h">
+    <ClInclude Include="..\..\source\BaseTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\asm64\curve25519_mehdi_x64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\curve25519_dh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\ed25519_signature.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\asm64\curve25519_mehdi_x64.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\asm64\curve25519_order_x64.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\asm64\curve25519_utils_x64.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\ed25519_sign.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -56,28 +50,43 @@
     <ClCompile Include="..\..\source\custom_blind.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\curve25519_dh.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\asm64\curve25519_mehdi_x64.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\asm64\curve25519_order_x64.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\asm64\curve25519_utils_x64.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="..\..\asm64\amd64.masm\Add.asm">
+    <MASM Include="..\..\source\asm64\amd64.masm\Add.asm">
       <Filter>Asm Files</Filter>
     </MASM>
-    <MASM Include="..\..\asm64\amd64.masm\Mult.asm">
+    <MASM Include="..\..\source\asm64\amd64.masm\Fold.asm">
       <Filter>Asm Files</Filter>
     </MASM>
-    <MASM Include="..\..\asm64\amd64.masm\Square.asm">
+    <MASM Include="..\..\source\asm64\amd64.masm\Mult.asm">
       <Filter>Asm Files</Filter>
     </MASM>
-    <MASM Include="..\..\asm64\amd64.masm\Sub.asm">
+    <MASM Include="..\..\source\asm64\amd64.masm\Square.asm">
       <Filter>Asm Files</Filter>
     </MASM>
-    <MASM Include="..\..\asm64\amd64.masm\Tsc.asm">
+    <MASM Include="..\..\source\asm64\amd64.masm\Sub.asm">
       <Filter>Asm Files</Filter>
     </MASM>
-    <MASM Include="..\..\asm64\amd64.masm\WordMulAdd.asm">
+    <MASM Include="..\..\source\asm64\amd64.masm\Tsc.asm">
+      <Filter>Asm Files</Filter>
+    </MASM>
+    <MASM Include="..\..\source\asm64\amd64.masm\WordMulAdd.asm">
       <Filter>Asm Files</Filter>
     </MASM>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\asm64\amd64.masm\defines.inc" />
+    <None Include="..\..\source\asm64\amd64.masm\defines.inc" />
   </ItemGroup>
 </Project>

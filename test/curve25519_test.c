@@ -1,49 +1,49 @@
-/* 
- * Copyright Mehdi Sotoodeh.  All rights reserved. 
- * <mehdisotoodeh@gmail.com>
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that source code retains the 
- * above copyright notice and following disclaimer.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+/* The MIT License (MIT)
+ * 
+ * Copyright (c) 2015 mehdi sotoodeh
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining 
+ * a copy of this software and associated documentation files (the 
+ * "Software"), to deal in the Software without restriction, including 
+ * without limitation the rights to use, copy, modify, merge, publish, 
+ * distribute, sublicense, and/or sell copies of the Software, and to 
+ * permit persons to whom the Software is furnished to do so, subject to 
+ * the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included 
+ * in all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS 
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY 
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
+#include "curve25519_mehdi.h"
 #include "curve25519_donna.h"
-#include "curve25519_SelfTest.h"
 #include "curve25519_dh.h"
 #include "ed25519_signature.h"
 
-#ifdef ECP_NO_TSC
-#include <sys/time.h>
+#ifdef USE_ASM_LIB
 
-U64 TimeNow()
-{
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec * 1000000 + tv.tv_usec;
-}
+/* Defined in ASM library */
+U64 readTSC();
+
 #else
 #if defined(_MSC_VER)
 #include <intrin.h>
-U64 TimeNow() 
+U64 readTSC() 
 { 
     return __rdtsc();
 }
 #else
-U64 TimeNow()
+U64 readTSC()
 {
     U64 tsc;
     __asm__ volatile(".byte 0x0f,0x31" : "=A" (tsc));
@@ -55,27 +55,13 @@ U64 TimeNow()
 void ecp_PrintBytes(IN const char *name, IN const U8 *data, IN U32 size)
 {
     U32 i;
-    printf("\nstatic const unsigned char %s[%d] = {\n    0x%02X", name, size, *data++);
+    printf("\nstatic const unsigned char %s[%d] =\n  { 0x%02X", name, size, *data++);
     for (i = 1; i < size; i++)
     {
         if ((i & 15) == 0)
             printf(",\n    0x%02X", *data++);
         else
             printf(",0x%02X", *data++);
-    }
-    printf(" };\n");
-}
-
-void ecp_PrintWords(IN const char *name, IN const U32 *data, IN U32 size)
-{
-    U32 i;
-    printf("\nstatic const U32 %s[%d] = {\n    0x%08X", name, size, *data++);
-    for (i = 1; i < size; i++)
-    {
-        if ((i & 3) == 0)
-            printf(",\n    0x%08X", *data++);
-        else
-            printf(",0x%08X", *data++);
     }
     printf(" };\n");
 }
@@ -87,14 +73,51 @@ void ecp_PrintHexBytes(IN const char *name, IN const U8 *data, IN U32 size)
     printf("\n");
 }
 
+#ifdef WORDSIZE_64
+void ecp_PrintWords(IN const char *name, IN const U64 *data, IN U32 size)
+{
+    U32 i;
+    printf("\nstatic const U64 %s[%d] =\n  { 0x%016llX", name, size, *data++);
+    for (i = 1; i < size; i++)
+    {
+        if ((i & 3) == 0)
+            printf(",\n    0x%016llX", *data++);
+        else
+            printf(",0x%016llX", *data++);
+    }
+    printf(" };\n");
+}
+
+void ecp_PrintHexWords(IN const char *name, IN const U64 *data, IN U32 size)
+{
+    printf("%s = 0x", name);
+    while (size > 0) printf("%16llX", data[--size]);
+    printf("\n");
+}
+#else
+void ecp_PrintWords(IN const char *name, IN const U32 *data, IN U32 size)
+{
+    U32 i;
+    printf("\nstatic const U32 %s[%d] = \n  { 0x%08X", name, size, *data++);
+    for (i = 1; i < size; i++)
+    {
+        if ((i & 3) == 0)
+            printf(",\n    0x%08X", *data++);
+        else
+            printf(",0x%08X", *data++);
+    }
+    printf(" };\n");
+}
+
 void ecp_PrintHexWords(IN const char *name, IN const U32 *data, IN U32 size)
 {
     printf("%s = 0x", name);
     while (size > 0) printf("%08X", data[--size]);
     printf("\n");
 }
+#endif
 
-// Needed for donna
+/* Needed for donna */
 extern void ecp_TrimSecretKey(U8 *X);
 const unsigned char BasePoint[32] = {9};
 
@@ -113,11 +136,11 @@ int speed_test(int loops)
     void *blinding = 0;
     int i;
 
-    // generate key
+    /* generate key */
     memset(secret_key, 0x42, 32);
     ecp_TrimSecretKey(secret_key);
 
-    // Make sure both generate identical public key
+    /* Make sure both generate identical public key */
     curve25519_donna(donna_publickey, secret_key, BasePoint);
     curve25519_dh_CalculatePublicKey(mehdi_publickey, secret_key);
 
@@ -130,71 +153,38 @@ int speed_test(int loops)
         return 1;
     }
 
-#ifdef ECP_NO_TSC
-    // ---------------------------------------------------------------------
-    // Go Donna, go 
-    // ---------------------------------------------------------------------
-    // To take into account timer update resolution, we measure time for 100
-    // calls
-    for (i = 0; i < 10; ++i) 
-    {
-        int j;
-        t1 = TimeNow();
-        for (j = 0; j < 100; j++)
-            curve25519_donna(donna_publickey, secret_key, ecp_BasePoint);
-        t2 = TimeNow() - t1;
-        if (t2 < td) td = t2;
-    }
+    /* Timing values that we measure includes some random CPU activity overhead */
+    /* We try to get the minimum time as the more accurate time */
 
-    // ---------------------------------------------------------------------
-    // Ready, set, go 
-    // ---------------------------------------------------------------------
-    for (i = 0; i < 10; i++)
-    {
-        int j;
-        t1 = TimeNow();
-        for (j = 0; j < 100; j++)
-            curve25519_dh_CalculatePublicKey(mehdi_publickey, secret_key);
-        t2 = TimeNow() - t1;
-        if (t2 < tm) tm = t2;
-    }
-    printf ("\n    Donna: %lld usec -- ratio: %.3f\n", 
-        td/100, (double)td/(double)tm);
-    printf ("    Mehdi: %lld usec -- delta: %.2f%%\n", 
-        tm/100, (100.0*(td-tm))/(double)td);
-#else
-    // Timing values that we measure includes some random CPU activity overhead
-    // We try to get the minimum time as the more accurate time
-
-    t1 = TimeNow();
-    tovr = TimeNow() - t1; // t2-t1 = TimeNow() overhead
+    t1 = readTSC();
+    tovr = readTSC() - t1; /* t2-t1 = readTSC() overhead */
     for (i = 0; i < 100; i++)
     {
-        t1 = TimeNow();
-        t2 = TimeNow() - t1; // t2-t1 = TimeNow() overhead
+        t1 = readTSC();
+        t2 = readTSC() - t1; /* t2-t1 = readTSC() overhead */
         if (t2 < tovr) tovr = t2;
     }
 
-    // ---------------------------------------------------------------------
-    // Go Donna, go 
-    // ---------------------------------------------------------------------
+    /* --------------------------------------------------------------------- */
+    /* Go Donna, go  */
+    /* --------------------------------------------------------------------- */
     for (i = 0; i < loops; ++i) 
     {
-        t1 = TimeNow();
+        t1 = readTSC();
         curve25519_donna(donna_publickey, secret_key, BasePoint);
-        t2 = TimeNow() - t1;
+        t2 = readTSC() - t1;
         if (t2 < td) td = t2;
     }
     td -= tovr;
 
-    // ---------------------------------------------------------------------
-    // Ready, set, go 
-    // ---------------------------------------------------------------------
+    /* --------------------------------------------------------------------- */
+    /* Ready, set, go  */
+    /* --------------------------------------------------------------------- */
     for (i = 0; i < loops; i++)
     {
-        t1 = TimeNow();
+        t1 = readTSC();
         curve25519_dh_CalculatePublicKey(mehdi_publickey, secret_key);
-        t2 = TimeNow() - t1;
+        t2 = readTSC() - t1;
         if (t2 < tm) tm = t2;
     }
     tm -= tovr;
@@ -205,15 +195,15 @@ int speed_test(int loops)
     printf ("    Mehdi: %lld cycles = %.3f usec @3.4GHz -- delta: %.2f%%\n", 
         tm, (double)tm/3400.0, (100.0*(td-tm))/(double)td);
 
-    // ---------------------------------------------------------------------
-    // Speed measurement for ed25519 keygen, sign and verify
-    // ---------------------------------------------------------------------
+    /* --------------------------------------------------------------------- */
+    /* Speed measurement for ed25519 keygen, sign and verify */
+    /* --------------------------------------------------------------------- */
     tm = (U64)(-1);
     for (i = 0; i < loops; i++)
     {
-        t1 = TimeNow();
+        t1 = readTSC();
         ed25519_CreateKeyPair(pubkey, privkey, 0, secret_key);
-        t2 = TimeNow() - t1;
+        t2 = readTSC() - t1;
         if (t2 < tm) tm = t2;
     }
     tm -= tovr;
@@ -221,30 +211,30 @@ int speed_test(int loops)
     printf ("\n-- ed25519 --\n"
             "    KeyGen: %lld cycles = %.3f usec @3.4GHz\n", tm, (double)tm/3400.0);
 
-    // ---------------------------------------------------------------------
+    /* --------------------------------------------------------------------- */
     tm = (U64)(-1);
     for (i = 0; i < loops; i++)
     {
-        t1 = TimeNow();
+        t1 = readTSC();
         ed25519_SignMessage(sig, privkey, 0, (const unsigned char*)"abc", 3);
-        t2 = TimeNow() - t1;
+        t2 = readTSC() - t1;
         if (t2 < tm) tm = t2;
     }
     tm -= tovr;
 
     printf ("      Sign: %lld cycles = %.3f usec @3.4GHz\n", tm, (double)tm/3400.0);
 
-    // ---------------------------------------------------------------------
-    // Speed measurement for ed25519 keygen, sign using blinding
-    // ---------------------------------------------------------------------
+    /* --------------------------------------------------------------------- */
+    /* Speed measurement for ed25519 keygen, sign using blinding */
+    /* --------------------------------------------------------------------- */
     blinding = ed25519_Blinding_Init(blinding, secret_blind);
 
     tm = (U64)(-1);
     for (i = 0; i < loops; i++)
     {
-        t1 = TimeNow();
+        t1 = readTSC();
         ed25519_CreateKeyPair(pubkey, privkey, blinding, secret_key);
-        t2 = TimeNow() - t1;
+        t2 = readTSC() - t1;
         if (t2 < tm) tm = t2;
     }
     tm -= tovr;
@@ -252,13 +242,13 @@ int speed_test(int loops)
     printf ("    KeyGen: %lld cycles = %.3f usec @3.4GHz (Blinded)\n", 
         tm, (double)tm/3400.0);
 
-    // ---------------------------------------------------------------------
+    /* --------------------------------------------------------------------- */
     tm = (U64)(-1);
     for (i = 0; i < loops; i++)
     {
-        t1 = TimeNow();
+        t1 = readTSC();
         ed25519_SignMessage(sig, privkey, blinding, (const unsigned char*)"abc", 3);
-        t2 = TimeNow() - t1;
+        t2 = readTSC() - t1;
         if (t2 < tm) tm = t2;
     }
     tm -= tovr;
@@ -268,38 +258,38 @@ int speed_test(int loops)
 
     ed25519_Blinding_Finish(blinding);
 
-    // ---------------------------------------------------------------------
+    /* --------------------------------------------------------------------- */
     tm = (U64)(-1);
     for (i = 0; i < loops; i++)
     {
-        t1 = TimeNow();
+        t1 = readTSC();
         ed25519_VerifySignature(sig, pubkey, (const unsigned char*)"abc", 3);
-        t2 = TimeNow() - t1;
+        t2 = readTSC() - t1;
         if (t2 < tm) tm = t2;
     }
     tm -= tovr;
 
     printf ("    Verify: %lld cycles = %.3f usec @3.4GHz\n", tm, (double)tm/3400.0);
-    // ---------------------------------------------------------------------
+    /* --------------------------------------------------------------------- */
     tm = (U64)(-1);
     for (i = 0; i < loops; i++)
     {
-        t1 = TimeNow();
+        t1 = readTSC();
         ver_context = ed25519_Verify_Init(ver_context, pubkey);
-        t2 = TimeNow() - t1;
+        t2 = readTSC() - t1;
         if (t2 < tm) tm = t2;
     }
     tm -= tovr;
 
     printf ("    Verify: %lld cycles = %.3f usec @3.4GHz (Init)\n", 
         tm, (double)tm/3400.0);
-    // ---------------------------------------------------------------------
+    /* --------------------------------------------------------------------- */
     tm = (U64)(-1);
     for (i = 0; i < loops; i++)
     {
-        t1 = TimeNow();
+        t1 = readTSC();
         ed25519_Verify_Check(ver_context, sig, (const unsigned char*)"abc", 3);
-        t2 = TimeNow() - t1;
+        t2 = readTSC() - t1;
         if (t2 < tm) tm = t2;
     }
     tm -= tovr;
@@ -309,7 +299,6 @@ int speed_test(int loops)
 
     ed25519_Verify_Finish(ver_context);
 
-#endif
     return 0;
 }
 
@@ -416,6 +405,7 @@ unsigned char msg1_sig[ed25519_signature_size] = {
     0x38,0x7b,0x2e,0xae,0xb4,0x30,0x2a,0xee,0xb0,0x0d,0x29,0x16,0x12,0xbb,0x0c,0x00
 };
 
+int curve25519_SelfTest(int level);
 int ed25519_selftest();
 
 int dh_test()
@@ -424,40 +414,40 @@ int dh_test()
     unsigned char alice_public_key[32], alice_shared_key[32];
     unsigned char bruce_public_key[32], bruce_shared_key[32];
 
-    unsigned char alice_secret_key[32] = { // #1234
+    unsigned char alice_secret_key[32] = { /* #1234 */
         0x03,0xac,0x67,0x42,0x16,0xf3,0xe1,0x5c,
         0x76,0x1e,0xe1,0xa5,0xe2,0x55,0xf0,0x67,
         0x95,0x36,0x23,0xc8,0xb3,0x88,0xb4,0x45,
         0x9e,0x13,0xf9,0x78,0xd7,0xc8,0x46,0xf4 };
 
-    unsigned char bruce_secret_key[32] = { // #abcd
+    unsigned char bruce_secret_key[32] = { /* #abcd */
         0x88,0xd4,0x26,0x6f,0xd4,0xe6,0x33,0x8d,
         0x13,0xb8,0x45,0xfc,0xf2,0x89,0x57,0x9d,
         0x20,0x9c,0x89,0x78,0x23,0xb9,0x21,0x7d,
         0xa3,0xe1,0x61,0x93,0x6f,0x03,0x15,0x89 };
 
     printf("\n-- curve25519 -- key exchange test -----------------------------\n");
-    // Step 1. Alice and Bruce generate their own random secret keys
+    /* Step 1. Alice and Bruce generate their own random secret keys */
 
     ecp_PrintHexBytes("Alice_secret_key", alice_secret_key, 32);
     ecp_PrintHexBytes("Bruce_secret_key", bruce_secret_key, 32);
 
-    // Step 2. Alice and Bruce create public keys associated with their secret keys
-    //         and exchange their public keys
+    /* Step 2. Alice and Bruce create public keys associated with their secret keys */
+    /*         and exchange their public keys */
 
     curve25519_dh_CalculatePublicKey(alice_public_key, alice_secret_key);
     curve25519_dh_CalculatePublicKey(bruce_public_key, bruce_secret_key);
     ecp_PrintHexBytes("Alice_public_key", alice_public_key, 32);
     ecp_PrintHexBytes("Bruce_public_key", bruce_public_key, 32);
 
-    // Step 3. Alice and Bruce create their shared key
+    /* Step 3. Alice and Bruce create their shared key */
 
     curve25519_dh_CreateSharedKey(alice_shared_key, bruce_public_key, alice_secret_key);
     curve25519_dh_CreateSharedKey(bruce_shared_key, alice_public_key, bruce_secret_key);
     ecp_PrintHexBytes("Alice_shared", alice_shared_key, 32);
-    ecp_PrintHexBytes("Bruce_shared", alice_shared_key, 32);
+    ecp_PrintHexBytes("Bruce_shared", bruce_shared_key, 32);
 
-    // Alice and Bruce should end up with idetntical keys
+    /* Alice and Bruce should end up with idetntical keys */
     if (memcmp(alice_shared_key, bruce_shared_key, 32) != 0)
     {
         rc++;

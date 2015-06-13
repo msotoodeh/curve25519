@@ -3,7 +3,7 @@
 ROOT = ..
 include $(ROOT)/Rules.mk
 
-CFLAGS += -I. -I../source -static-libgcc -Wall
+CFLAGS += -I. -I$(ROOT)/include -I$(ROOT)/source -static-libgcc -Wall
 
 # Uncomment next line for big-endian target CPUs
 #CFLAGS += -DECP_CONFIG_BIG_ENDIAN
@@ -29,7 +29,7 @@ all: init $(LIB_TARGET) $(TARGET)
 init:
 	@[ -d build ] || mkdir build; true
 
-build/%.o: ../source/%.c
+build/%.o: $(ROOT)/source/%.c
 	$(CC) -O2 -o $@ -c $(CFLAGS) $<
 
 build/%.o: %.c

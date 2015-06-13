@@ -21,17 +21,17 @@ test:
 
 asm: 
 	$(MAKE) -C custom
-	$(MAKE) -C asm64
+	$(MAKE) -C source/asm64
 
 clean: 
 	$(MAKE) -C custom clean
 	$(MAKE) -C test clean
-	$(MAKE) -C asm64 clean
+	$(MAKE) -C source/asm64 clean
 
-distclean: clean
+distclean:
 	$(MAKE) -C custom distclean
 	$(MAKE) -C test distclean
-	$(MAKE) -C asm64 distclean
+	$(MAKE) -C source/asm64 distclean
 	@rm -rf windows/Debug/ windows/Release/ windows/ipch/ windows/x64/ windows/*.sdf windows/*.suo
 	@rm -rf windows/Asm64Lib/x64/ windows/Asm64Test/x64/
 	@rm -rf windows/Curve25519Lib/x64/ windows/Curve25519Lib/Debug/ windows/Curve25519Lib/Release/

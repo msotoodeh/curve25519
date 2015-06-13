@@ -18,9 +18,6 @@
     <ClCompile Include="..\..\custom\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\curve25519_mehdi.c">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\curve25519_utils.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -39,6 +36,9 @@
     <ClCompile Include="..\..\custom\random.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\curve25519_mehdi.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\BaseTypes.h">
@@ -54,6 +54,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\custom\random.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\base_perm_p32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

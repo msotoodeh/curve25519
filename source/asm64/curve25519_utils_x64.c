@@ -18,16 +18,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "curve25519_mehdi_x64.h"
+#include "curve25519_mehdi.h"
 
-// Trim private key  
+/* Trim private key   */
 void ecp_TrimSecretKey(U8 *X)
 {
     X[0] &= 0xf8;
     X[31] = (X[31] | 0x40) & 0x7f;
 }
 
-// Convert big-endian byte array to little-endian byte array and vice versa
+/* Convert big-endian byte array to little-endian byte array and vice versa */
 U8* ecp_ReverseByteOrder(OUT U8 *Y, IN const U8 *X)
 {
     int i;
@@ -35,7 +35,7 @@ U8* ecp_ReverseByteOrder(OUT U8 *Y, IN const U8 *X)
     return Y;
 }
 
-// Convert little-endian byte array to little-endian word array
+/* Convert little-endian byte array to little-endian word array */
 U64* ecp_BytesToWords(OUT U64 *Y, IN const U8 *X)
 {
     int i;
@@ -57,7 +57,7 @@ U64* ecp_BytesToWords(OUT U64 *Y, IN const U8 *X)
     return Y;
 }
 
-// Convert little-endian word array to little-endian byte array
+/* Convert little-endian word array to little-endian byte array */
 U8* ecp_WordsToBytes(OUT U8 *Y, IN const U64 *X)
 {
     int i;

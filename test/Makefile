@@ -3,16 +3,9 @@
 ROOT = ..
 include $(ROOT)/Rules.mk
 
-CFLAGS += -I. -I../source -static-libgcc -Wall
+.PHONY: all init clean distclean test
 
-# For constant time support uncomment next line 
-#CFLAGS += -DECP_CONSTANT_TIME
-
-# Uncomment next line for big-endian target CPUs
-#CFLAGS += -DECP_CONFIG_BIG_ENDIAN
-
-# Uncomment next line if TSC not supported
-#CFLAGS += -DECP_NO_TSC
+CFLAGS += -I. -I../include -I../source -static-libgcc -Wall
 
 test: CFLAGS += -DECP_SELF_TEST
 
@@ -20,6 +13,7 @@ LIB_SRCS = \
     curve25519_mehdi.c \
     curve25519_order.c \
     curve25519_utils.c \
+    curve25519_dh.c \
     ed25519_sign.c \
     ed25519_verify.c \
     sha512.c \
@@ -33,14 +27,12 @@ TEST_OBJS = $(TEST_SRCS:%.c=build/%.o)
 LIB_TARGET = build/libcurve25519.a
 TEST_TARGET = build/curve25519_test
 
-.PHONY: all init clean distclean test
-
 all: init $(LIB_TARGET) $(TEST_TARGET)
 
 init:
 	@[ -d build ] || mkdir build; true
 
-# Optimization flag -O2 does not work with	__asm__
+# Optimization flag -O2 does not work correctly with __asm__
 build/curve25519_test.o: curve25519_test.c
 	$(CC) -o $@ -c $(CFLAGS) $<
 

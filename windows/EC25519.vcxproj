@@ -81,7 +81,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;ECP_SELF_TEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../source;../test</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../source;../test</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -95,7 +95,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;ECP_SELF_TEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../source;../test</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../source;../test</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -111,7 +111,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../source;../test</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../source;../test</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,7 +129,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../source;../test</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../source;../test</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\custom\random.c" />
     <ClCompile Include="..\test\curve25519_donna.c" />
     <ClCompile Include="..\test\curve25519_selftest.c" />
     <ClCompile Include="..\test\curve25519_test.c" />
@@ -147,7 +148,6 @@
     <ClInclude Include="..\source\curve25519_dh.h" />
     <ClInclude Include="..\source\ed25519_signature.h" />
     <ClInclude Include="..\test\curve25519_donna.h" />
-    <ClInclude Include="..\test\curve25519_SelfTest.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Curve25519Lib\Curve25519Lib.vcxproj">

@@ -53,6 +53,9 @@ ifeq ($(PLATFORM),X86_64)
 CFLAGS += -m64 -fno-asm -Wno-format -D_LINUX_
 endif
 
+# Uncomment next line for big-endian target CPUs
+#CFLAGS += -DECP_CONFIG_BIG_ENDIAN
+
 # programs we use
 CC    = gcc
 GPP   = g++

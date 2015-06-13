@@ -30,6 +30,9 @@
     <ClInclude Include="..\..\source\ed25519_signature.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\base_perm_p32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\curve25519_mehdi.c">
@@ -51,6 +54,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\custom_blind.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\curve25519_dh.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

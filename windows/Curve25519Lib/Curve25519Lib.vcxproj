@@ -70,7 +70,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../source</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)../../include;$(ProjectDir)../../source</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -84,7 +84,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../source</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)../../include;$(ProjectDir)../../source</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -100,7 +100,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../source</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)../../include;$(ProjectDir)../../source</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -118,7 +118,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../source</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)../../include;$(ProjectDir)../../source</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -129,12 +129,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\BaseTypes.h" />
+    <ClInclude Include="..\..\source\base_perm_p32.h" />
     <ClInclude Include="..\..\source\curve25519_dh.h" />
     <ClInclude Include="..\..\source\curve25519_mehdi.h" />
     <ClInclude Include="..\..\source\ed25519_signature.h" />
     <ClInclude Include="..\..\source\sha512.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\source\curve25519_dh.c" />
     <ClCompile Include="..\..\source\curve25519_mehdi.c" />
     <ClCompile Include="..\..\source\curve25519_order.c" />
     <ClCompile Include="..\..\source\curve25519_utils.c" />
