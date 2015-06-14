@@ -2,8 +2,8 @@
 High performance implementation of elliptic curve 25519
 =======================================================
 
-Copyright Mehdi Sotoodeh.  All rights reserved.
-<mehdisotoodeh@gmail.com>
+Copyright (c) 2015 mehdi sotoodeh.          mehdisotoodeh@gmail.com
+MIT license.
 
 This library delivers high performance and high security while having a small
 footprint with minimum resource requirements.
