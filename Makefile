@@ -21,17 +21,19 @@ libs:
 	$(MAKE) -C source/asm64
 
 test: 
+	$(MAKE) -C custom
 	$(MAKE) -C source
 	$(MAKE) -C test test
 
 asm: 
+	$(MAKE) -C custom
 	$(MAKE) -C source/asm64
 	$(MAKE) -C test test_asm
 
 clean: 
 	$(MAKE) -C custom clean
 	$(MAKE) -C source clean
-	$(MAKE) -C source/asm64 clean
+	$(MAKE) -C source/asm64 clean || true
 	$(MAKE) -C test clean
 
 distclean:
