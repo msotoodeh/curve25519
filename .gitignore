@@ -1,4 +1,6 @@
 build/
+build32/
+build64/
 Debug/
 Release/
 x64/

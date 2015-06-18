@@ -1,7 +1,7 @@
 # 
 #   env RELEASE=1 make clean test asm
 #
-#   make -C custom          creates source/custom_blind.c
+#   make -C custom          build customization tool
 #                           should be called first
 #
 #   make test               create library and test file
@@ -11,26 +11,33 @@
 #                           uses ASM code
 #
 
-.PHONY: all clean distclean test asm archive
+.PHONY: all clean distclean libs test asm archive
 
 all: test
 
-test: 
+libs: 
 	$(MAKE) -C custom
+	$(MAKE) -C source
+	$(MAKE) -C source/asm64
+
+test: 
+	$(MAKE) -C source
 	$(MAKE) -C test test
 
 asm: 
-	$(MAKE) -C custom
 	$(MAKE) -C source/asm64
+	$(MAKE) -C test test_asm
 
 clean: 
 	$(MAKE) -C custom clean
-	$(MAKE) -C test clean
+	$(MAKE) -C source clean
 	$(MAKE) -C source/asm64 clean
+	$(MAKE) -C test clean
 
 distclean:
 	$(MAKE) -C custom distclean
 	$(MAKE) -C test distclean
+	$(MAKE) -C source distclean
 	$(MAKE) -C source/asm64 distclean
 	@rm -rf windows/Debug/ windows/Release/ windows/ipch/ windows/x64/ windows/*.sdf windows/*.suo
 	@rm -rf windows/Asm64Lib/x64/ windows/Asm64Test/x64/

@@ -3,44 +3,37 @@
 ROOT = ..
 include $(ROOT)/Rules.mk
 
-CFLAGS += -I. -I$(ROOT)/include -I$(ROOT)/source -static-libgcc -Wall
+CFLAGS += -I. -I$(ROOT)/include -I$(ROOT)/source -static-libgcc -Wall -O2
 
-# Uncomment next line for big-endian target CPUs
-#CFLAGS += -DECP_CONFIG_BIG_ENDIAN
-
-LIB_SRCS = \
+SRCS = \
     curve25519_mehdi.c \
     curve25519_order.c \
     curve25519_utils.c \
     ed25519_sign.c \
     ed25519_verify.c \
-    sha512.c
+    sha512.c \
+    random.c \
+    main.c 
 
-LIB_OBJS = $(LIB_SRCS:%.c=build/%.o)
-
-LIB_TARGET = build/libcurve25519.a
+OBJS = $(SRCS:%.c=build/%.o)
 
 TARGET = build/custom_tool
 
 .PHONY: all init clean distclean
 
-all: init $(LIB_TARGET) $(TARGET)
+all: $(TARGET)
 
 init:
-	@[ -d build ] || mkdir build; true
-
-build/%.o: $(ROOT)/source/%.c
-	$(CC) -O2 -o $@ -c $(CFLAGS) $<
+	@[ -d build ] || mkdir build
 
 build/%.o: %.c
-	$(CC) -O2 -o $@ -c $(CFLAGS) $<
+	$(CC) -o $@ -c $(CFLAGS) $<
 
-$(LIB_TARGET): init $(LIB_OBJS)
-	$(MAKE_STATIC_LIB) $(LIB_TARGET) $(LIB_OBJS) $(LDFLAGS)
+build/%.o: $(ROOT)/source/%.c
+	$(CC) -o $@ -c $(CFLAGS) $<
 
-$(TARGET): $(LIB_TARGET) main.c random.c
-	$(CC) $(CFLAGS) -o $@ main.c random.c $(LDFLAGS) $(LIB_TARGET)
-	./$(TARGET) b edp_custom_blinding > ../source/custom_blind.c
+$(TARGET): init $(OBJS)
+	$(MAKE_STATIC_COMMAND) $(TARGET) $(OBJS) $(LDFLAGS)
 
 clean: 
 	@rm -rf build/*

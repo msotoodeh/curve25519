@@ -68,13 +68,13 @@ Timing for ed25519 sign/verify (short messages):
         Verify: 1430160 cycles = 420.635 usec @3.4GHz (Init)
                 1307354 cycles = 384.516 usec @3.4GHz (Check)
 
-    x86_64-w64-mingw32: gcc 4.9.2 + NASM 2.11.08, Intel(R) Core(TM) i7-2670QM CPU
-        KeyGen: 45120 cycles = 13.271 usec @3.4GHz
-          Sign: 49040 cycles = 14.424 usec @3.4GHz
-        KeyGen: 45728 cycles = 13.449 usec @3.4GHz (Blinded)
-          Sign: 49526 cycles = 14.566 usec @3.4GHz (Blinded)
-        Verify: 115046 cycles = 33.837 usec @3.4GHz (Init)
-                111474 cycles = 32.786 usec @3.4GHz (Check)
+    x86_64-w64-mingw32: GNU assembler 2.25, Intel(R) Core(TM) i7-2670QM CPU
+        KeyGen: 44954 cycles = 13.222 usec @3.4GHz
+          Sign: 49008 cycles = 14.414 usec @3.4GHz
+        KeyGen: 45628 cycles = 13.420 usec @3.4GHz (Blinded)
+          Sign: 49510 cycles = 14.562 usec @3.4GHz (Blinded)
+        Verify: 114642 cycles = 33.718 usec @3.4GHz (Init)
+                111156 cycles = 32.693 usec @3.4GHz (Check)
                 
     cygwin-32: gcc 4.5.3, Portable-C, 32-bit, Intel(R) Core(TM) i7-2670QM CPU
         KeyGen: 393512 cycles = 115.739 usec @3.4GHz
@@ -91,9 +91,9 @@ Timing for DH point multiplication:
         Donna: 779653 cycles = 229.310 usec @3.4GHz -- ratio: 18.035
         Mehdi: 43229 cycles = 12.714 usec @3.4GHz -- delta: 94.46%      ** MSASM **
 
-    Mingw-x86_64: gcc 9.9.2, nasm 2.11.08
-        Donna: 851542 cycles = 250.454 usec @3.4GHz -- ratio: 19.589
-        Mehdi: 43470 cycles = 12.785 usec @3.4GHz -- delta: 94.90%      ** NASM **
+    Mingw-x86_64: GNU assembler (GNU Binutils) 2.25
+        Donna: 851314 cycles = 250.386 usec @3.4GHz -- ratio: 19.590
+        Mehdi: 43456 cycles = 12.781 usec @3.4GHz -- delta: 94.90%      ** GNU ASM **
     
     windows7:  VS2010, Portable-C, 64-bit
         Donna: 779753 cycles = 229.339 usec @3.4GHz -- ratio: 6.200
@@ -118,15 +118,13 @@ switch (see Rules.mk file on project root).
 Define USE_ASM_LIB configuration when building to utilize ASM version of the library.
 
 For building the library using the assembly sources, two assemblers are currently
-supported: Microsoft Assembler (Windows) and Netwide Assembler NASM (Windows/Linux). 
-NASM can be downloaded from: http://www.nasm.us/pub/nasm/releasebuilds/2.11.08/
+supported: Microsoft Assembler (Windows) and GNU Assembler (Windows/Linux). 
 
 - For Windows platforms, open windows/EC25519.sln using Visual Studio 2010
   and build Asm64Test project for x64 configuration.
-  You also have the option of using Mingw and nasm on windows platforms,
-- For Linux platforms, Debian and Ubuntu have been tested so far. For X86 
-  assembly support you need to install nasm first and then run: 'make asm' from 
-  project root. Output files will be created in asm64/build/test64.
+  You also have the option of using Mingw and GNU assembler on windows.
+- For Linux platforms, Debian and Ubuntu have been tested so far. For X86_64 
+  assembly run: 'make clean asm' from project root. 
 
 A custom tool creates a random blinder on every new build. This blinder is static
 and will be part of the library. This blinder is only used for blinding the point 

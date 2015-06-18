@@ -29,8 +29,7 @@ else ifneq ($(findstring mingw,$(TARGET_SYS)),)
 TARGET_OS = Mingw
 TARGET_ABI = MSVC
 else
-echo "Target OS not supported ($(TARGET_SYS))"
-exit 1
+$(error Target OS not supported ($(TARGET_SYS)))
 endif
 
 ifeq ($(RELEASE),)
@@ -50,7 +49,7 @@ ifeq ($(PLATFORM),X86_32)
 CFLAGS += -m32 -march=i386 -D__i386__ -D_LINUX_
 endif
 ifeq ($(PLATFORM),X86_64)
-CFLAGS += -m64 -fno-asm -Wno-format -D_LINUX_
+CFLAGS += -m64 -Wno-format -D_LINUX_
 endif
 
 # Uncomment next line for big-endian target CPUs
@@ -70,7 +69,7 @@ SHELL = /bin/sh
 INSTALL = install
 NM      = nm
 
-MAKE_STATIC_LIB         = $(AR) r
+MAKE_STATIC_LIB         = $(AR) cr
 MAKE_SHARED_LIB         = $(GPP) -shared -o
 MAKE_DEBUG_LIB          = $(MAKE_STATIC_LIB)
 MAKE_STATIC_COMMAND     = $(GPP) -static -o

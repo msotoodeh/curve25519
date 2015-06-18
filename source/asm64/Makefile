@@ -3,12 +3,26 @@
 ROOT = ../..
 include $(ROOT)/Rules.mk
 
-CFLAGS = -c -O2 -m64 -Wall -Wno-format
+ifneq ($(PLATFORM),X86_64)
+$(error Platform X86_64 expected (platform is: $(PLATFORM)))
+endif
+
+BUILD_DIR = build$(TARGET_ARCH)
+
+CUSTOM_TOOL = $(ROOT)/custom/build/custom_tool
+ASM = as --64 --defsym $(TARGET_ABI)=1 -I amd64.gnu
+
+CFLAGS = -c -O2 -m64 -static-libgcc -Wall -Wno-format
 
 # This flag should be set for x86_64 support
 CFLAGS += -DUSE_ASM_LIB
 
-A_SRCS = $(wildcard amd64.nasm/*.asm)
+CFLAGS += -I. -I.. -I$(ROOT)/include
+
+TARGET = $(BUILD_DIR)/libcurve25519x64.a
+
+A_SRCS = $(wildcard amd64.gnu/*.s)
+
 C_SRCS = \
     curve25519_mehdi_x64.c \
     curve25519_order_x64.c \
@@ -19,56 +33,32 @@ C_SRCS = \
     sha512.c \
     custom_blind.c
     
-T_SRCS = curve25519_donna.c curve25519_selftest.c curve25519_test.c
-
-LIB_OBJS = $(patsubst amd64.nasm/%.asm,build/s_%.o,$(A_SRCS)) $(C_SRCS:%.c=build/%.o)
-TEST_OBJS = $(T_SRCS:%.c=build/%.o)
-
-LIB_TARGET = build/libcurve25519x64.a
-TEST_TARGET = build/test64
-
-LD = ld -static --architecture=x86_64 -EL -Lbuild -lcurve25519x64
-NASM = nasm -felf64 -D$(TARGET_ABI) -I amd64.nasm/ -s
-CFLAGS += -I . -I amd64.nasm -I$(ROOT)/include -I .. -I $(ROOT)/test
+OBJS = $(patsubst amd64.gnu/%.s,$(BUILD_DIR)/s_%.o,$(A_SRCS)) \
+    $(C_SRCS:%.c=$(BUILD_DIR)/%.o)
 
 .PHONY: all init clean distclean test
 
-all: test
+all: $(TARGET)
 
 init:
-	@[ -d build ] || mkdir build
+	@[ -d $(BUILD_DIR) ] || mkdir $(BUILD_DIR)
+	$(CUSTOM_TOOL) b edp_custom_blinding > custom_blind.c
 
-build/s_%.o: amd64.nasm/%.asm
-	$(NASM) -o $@ $<
+$(BUILD_DIR)/s_%.o: amd64.gnu/%.s
+	$(ASM) -o $@ $<
 
-build/s_%.pp: amd64.nasm/%.asm
-	$(NASM) -E $< > $@
+$(BUILD_DIR)/%.o: %.c
+	$(CC) -o $@ $(CFLAGS) $<
 
-build/%.o: %.c
-	$(CC) $(CFLAGS) -o $@ $<
+$(BUILD_DIR)/%.o: ../%.c
+	$(CC) -o $@ $(CFLAGS) $<
 
-build/%.o: $(ROOT)/test/%.c
-	$(CC) $(CFLAGS) -o $@ $<
-
-build/%.o: ../%.c
-	$(CC) $(CFLAGS) -o $@ $<
-
-$(LIB_TARGET): init $(LIB_OBJS)
-	ar r $(LIB_TARGET) $(LIB_OBJS) $(LDFLAGS) --target=elf64-little
-
-$(TEST_TARGET): $(LIB_TARGET) $(TEST_OBJS)
-	$(MAKE_STATIC_COMMAND) $@ $(TEST_OBJS) $(LIB_OBJS)
-	#$(LD) -e main -o $@ $(TEST_OBJS) $(LIB_OBJS)
-
-test: $(TEST_TARGET)
-	./$(TEST_TARGET) || exit 1
-
-debug: $(TEST_TARGET)
-	gdb ./$(TEST_TARGET)
-	#gdb -tui ./$(TEST_TARGET)
+$(TARGET): init $(OBJS)
+	ar cr $@ $(OBJS)
 
 clean: 
-	@rm -rf build/*
+	@rm -rf $(BUILD_DIR)/* custom_blind.c
 
 distclean:
-	@rm -rf build/
+	@rm -rf $(BUILD_DIR)/ custom_blind.c
+
