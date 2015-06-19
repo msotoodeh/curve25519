@@ -22,13 +22,11 @@ SRCS = \
     curve25519_selftest.c \
     curve25519_test.c
     
-OBJS = $(SRCS:%.c=$(BUILD_DIR)/%.o)
+C_OBJS = $(SRCS:%.c=$(BUILD_DIR)/c_%.o)
+A_OBJS = $(SRCS:%.c=$(BUILD_DIR)/a_%.o)
 
 C_TARGET = $(BUILD_DIR)/curve25519_test
 ASM_TARGET = $(BUILD_DIR)/curve25519_test_x64
-
-test_asm: CFLAGS += -DUSE_ASM_LIB
-#test_asm: LDFLAGS = --target=elf64-little
 
 ifeq ($(PLATFORM),X86_64)
 all: $(C_TARGET) $(ASM_TARGET)
@@ -40,21 +38,20 @@ init:
 	@[ -d $(BUILD_DIR) ] || mkdir $(BUILD_DIR); true
 
 # Optimization flag -O2 does not work correctly with __asm__
-$(BUILD_DIR)/curve25519_test.o: curve25519_test.c
+$(BUILD_DIR)/c_curve25519_test.o: curve25519_test.c
 	$(CC) -o $@ -c $(CFLAGS) $<
 
-$(BUILD_DIR)/%.o: $(ROOT)/source/%.c
+$(BUILD_DIR)/c_%.o: %.c
 	$(CC) -o $@ -O2 -c $(CFLAGS) $<
 
-$(BUILD_DIR)/%.o: %.c
-	$(CC) -o $@ -O2 -c $(CFLAGS) $<
+$(BUILD_DIR)/a_%.o: %.c
+	$(CC) -o $@ -O2 -c $(CFLAGS) -DUSE_ASM_LIB $<
 
-$(C_TARGET): init $(OBJS)
-	$(MAKE_STATIC_COMMAND) $@ $(OBJS) $(LDFLAGS) $(C_LIB)
+$(C_TARGET): init $(C_OBJS)
+	$(MAKE_STATIC_COMMAND) $@ $(C_OBJS) $(LDFLAGS) $(C_LIB)
 
-$(ASM_TARGET): init $(OBJS)
-	$(MAKE_STATIC_COMMAND) $@ $(OBJS) $(LDFLAGS) $(ASM_LIB)
-	#ld -static -o $@ $(OBJS) --architecture=x86_64 -EL -L$(ASMLIB_DIR) -lcurve25519x64
+$(ASM_TARGET): init $(A_OBJS)
+	$(MAKE_STATIC_COMMAND) $@ $(A_OBJS) $(LDFLAGS) $(ASM_LIB)
 
 test: $(C_TARGET)
 	./$(C_TARGET) || exit 1
@@ -66,4 +63,4 @@ clean:
 	@rm -rf $(BUILD_DIR)/*
 
 distclean: clean
-	@rm -rf Debug/ Release/ ipch/ x64/ *.sdf *.suo $(BUILD_DIR)/
+	@rm -rf Debug/ Release/ ipch/ x64/ *.sdf *.suo build32/ build64/
