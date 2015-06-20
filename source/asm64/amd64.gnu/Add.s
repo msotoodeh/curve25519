@@ -31,17 +31,15 @@
 /* _______________________________________________________________________ */
 .equ  Z,  ARG1
 .equ  X,  ARG2
-.equ  Y,  ARG3M
+.equ  Y,  ARG3
 
     PUBPROC ecp_Add
-    SaveArg3
     
-    LOADA   X
+    LOADA   Y
     xor     ACL,ACL
-    ADDA    24(Y),16(Y),8(Y),(Y)
+    ADDA    24(X),16(X),8(X),(X)
     adc     ACL,ACL
     STOREA  Z
-    RestoreArg3
     ret
     
 /* _______________________________________________________________________
@@ -51,15 +49,14 @@
 /* _______________________________________________________________________ */
 
     PUBPROC ecp_AddReduce
-    SaveArg3
-    LOADA   X
-    ADDA    24(Y),16(Y),8(Y),(Y)
+    
+    LOADA   Y
+    ADDA    24(X),16(X),8(X),(X)
     jnc.s   ar_2
 ar_1:
     ADDA    $0,$0,$0,$38
     jc.s    ar_1
 ar_2:
     STOREA  Z
-    RestoreArg3
     ret
 

@@ -2,16 +2,36 @@
 High performance implementation of elliptic curve 25519
 =======================================================
 
-Copyright (c) 2015 mehdi sotoodeh.          mehdisotoodeh@gmail.com
+Copyright (c) 2015 mehdi sotoodeh.
+mehdisotoodeh@gmail.com
+
 MIT license.
+
 
 This library delivers high performance and high security while having a small
 footprint with minimum resource requirements.
 This library supports DH key exchange using curve25519 as well as sign/verify
 operations based on twisted Edwards curve 25519.
 
-This library supports random blinding when dealing with private keys. Blinding 
-adds an effective layer of security against side channel attacks.
+
+Side Channel Security:
+----------------------
+This library uses multiple measures with the gaol of eliminating leakage of secret 
+keys during cryptographic operations. Constant-time is one of these measures and 
+is implemented for private keys when they are directly operated on (no conditional 
+operation based on key values). 
+The second and more effective measure that this library uses is blinding. Blinding
+hides the private keys by combining them with a random value.
+
+This is a fact that constant-time implementation does not necessarily translate to
+constant-power-consumption, constant-electro-magnetic-radiation and so on. It also
+depends on how the underlying hardware manipulates different circuitry for each
+operation. For example, a hardware multiplier may use the primitive technique of
+shift-and-conditional-add or it may use barrel shifter when multiplying a power of 
+2 number.
+
+Blinding is the more effective measure with less performance penalty.
+Constant-time alone, pushes attackers to dig deeper for clues.
 
 
 Performance:

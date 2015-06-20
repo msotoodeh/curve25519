@@ -67,10 +67,6 @@ sr_2:
 
 ENDPROC ecp_SubReduce
 
-;undef X
-;undef Y
-;undef Z
-
 ; _______________________________________________________________________
 ;
 ;   compare X and Y, return -1,0,+1

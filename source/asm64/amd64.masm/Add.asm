@@ -31,16 +31,14 @@ include defines.inc
 ; _______________________________________________________________________
 Z   equ ARG1
 X   equ ARG2
-Y   equ ARG3M
+Y   equ ARG3
 
 PUBPROC ecp_Add
-    SaveArg3
-    LOADA   X
+    LOADA   Y
     xor     ACL,ACL
-    ADDA    [Y+24],[Y+16],[Y+8],[Y]
+    ADDA    [X+24],[X+16],[X+8],[X]
     adc     ACL,ACL
     STOREA  Z
-    RestoreArg3
     ret
 ENDPROC ecp_Add
    
@@ -51,16 +49,14 @@ ENDPROC ecp_Add
 ; _______________________________________________________________________
 
 PUBPROC ecp_AddReduce
-    SaveArg3
-    LOADA   X
-    ADDA    [Y+24],[Y+16],[Y+8],[Y]
+    LOADA   Y
+    ADDA    [X+24],[X+16],[X+8],[X]
     jnc     short ar_2
 ar_1:
     ADDA    0,0,0,38
     jc      short ar_1
 ar_2:
     STOREA  Z
-    RestoreArg3
     ret
 ENDPROC ecp_AddReduce
 END

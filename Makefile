@@ -40,7 +40,7 @@ distclean:
 	$(MAKE) -C custom distclean
 	$(MAKE) -C test distclean
 	$(MAKE) -C source distclean
-	$(MAKE) -C source/asm64 distclean
+	$(MAKE) -C source/asm64 distclean || true
 	@rm -rf windows/Debug/ windows/Release/ windows/ipch/ windows/x64/ windows/*.sdf windows/*.suo
 	@rm -rf windows/Asm64Lib/x64/ windows/Asm64Test/x64/
 	@rm -rf windows/Curve25519Lib/x64/ windows/Curve25519Lib/Debug/ windows/Curve25519Lib/Release/
