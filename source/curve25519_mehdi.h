@@ -83,6 +83,7 @@ typedef struct
 
 typedef struct {
     U_WORD bl[K_WORDS];
+    U_WORD zr[K_WORDS];
     PE_POINT BP;
 } EDP_BLINDING_CTX;
 
@@ -161,7 +162,7 @@ void edp_AddPoint(Ext_POINT *r, const Ext_POINT *p, const PE_POINT *q);
 void edp_DoublePoint(Ext_POINT *p);
 void edp_ComputePermTable(PE_POINT *qtable, Ext_POINT *Q);
 void edp_ExtPoint2PE(PE_POINT *r, const Ext_POINT *p);
-void edp_BasePointMult(OUT Ext_POINT *S, IN const U_WORD *sk);
+void edp_BasePointMult(OUT Ext_POINT *S, IN const U_WORD *sk, IN const U_WORD *R);
 void edp_BasePointMultiply(OUT Affine_POINT *Q, IN const U8 *sk, 
     IN const void *blinding);
 void ecp_8Folds(U8* Y, const U_WORD* X);

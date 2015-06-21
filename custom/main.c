@@ -34,12 +34,13 @@
 /* Linker expects this */
 EDP_BLINDING_CTX edp_custom_blinding =
 {
-  W256(0x8869B072,0x58B262BC,0xE32D3A61,0x39608B4F,0x9D89ECB9,0xC9CE3304,0x48F0B76F,0x0871ADF4),
+  W256(0xD1DFA242,0xAB91A857,0xE9F62749,0xE314C485,0x48FE8FD3,0xF00E7295,0xD29CF9EF,0x06A83629),
+  W256(0xC724BEF6,0x59D19EB7,0x1A7ECF15,0x5C439216,0xFCBB0F20,0xA02E4E62,0xA41D8396,0x2D8FD635),
   {
-    W256(0x0AA28C78,0x7E925BF0,0xEA304262,0xC5BCA23A,0xD0AE1AD1,0xA5B282D3,0x0B63B8F7,0x12D645C5),
-    W256(0x036F96C2,0xB4C60821,0x11AA73FC,0x54D922F1,0x01CB7AD7,0x944898BB,0xC1B70616,0xF3CB170F),
-    W256(0x6ED30222,0x5BBA27EC,0x1012744C,0xE8828782,0xB1224A21,0x762F4EB9,0xC0A604F9,0x3798991C),
-    W256(0x189C6DA2,0xCBC9AE70,0xED9B1B36,0x7270BB46,0x620CA91F,0x8BB3E371,0xDC5E859A,0x67DA9D45)
+    W256(0xDA38075E,0x33285265,0x7C4AF98A,0x1329C8E1,0xA1D64651,0x05761C7A,0x22D98600,0x0028E8FE),
+    W256(0x333BA706,0x842E7E42,0x50F16F1D,0x11FC488E,0x28BCF020,0x078534D6,0x1A0870D7,0xB9CD265C),
+    W256(0x1D6F86C0,0xA6D7476F,0xC3BD3FF6,0xF18C0B79,0x512BF0EA,0x6823C74C,0xEA0B036A,0x26708E65),
+    W256(0x860B528A,0x5C7CD5E5,0xBFBDA927,0x9834D9F4,0xF696EA66,0xED15167A,0x375453BC,0x5DA1B958)
   }
 };
 
@@ -68,16 +69,17 @@ void PrintBytes(IN const char *name, IN const unsigned char *data, IN int size)
 int CreateBlindingContext(IN const char *name)
 {
     /* Create a random blind */
-    unsigned char blind[32];
+    unsigned char seed[64];
     EDP_BLINDING_CTX B;
     
-    GetRandomBytes(blind, 32);
-    ed25519_Blinding_Init((void *)&B, blind);
+    GetRandomBytes(seed, (int)sizeof(seed));
+    ed25519_Blinding_Init((void *)&B, seed, sizeof(seed));
     
     printf(
         "#include \"curve25519_mehdi.h\"\n\n"
-        "const EDP_BLINDING_CTX %s = \n", name);
+        "EDP_BLINDING_CTX %s = \n", name);
     PrintWords("{\n  W256(",B.bl, K_WORDS);
+    PrintWords("),\n  W256(",B.zr, K_WORDS);
     PrintWords("),\n  {\n    W256(",B.BP.YpX, K_WORDS);
     PrintWords("),\n    W256(",B.BP.YmX, K_WORDS);
     PrintWords("),\n    W256(",B.BP.T2d, K_WORDS);

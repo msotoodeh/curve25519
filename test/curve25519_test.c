@@ -227,7 +227,7 @@ int speed_test(int loops)
     /* --------------------------------------------------------------------- */
     /* Speed measurement for ed25519 keygen, sign using blinding */
     /* --------------------------------------------------------------------- */
-    blinding = ed25519_Blinding_Init(blinding, secret_blind);
+    blinding = ed25519_Blinding_Init(blinding, secret_blind, sizeof(secret_blind));
 
     tm = (U64)(-1);
     for (i = 0; i < loops; i++)
@@ -312,7 +312,7 @@ int signature_test(
     unsigned char sig[ed25519_signature_size];
     unsigned char pubKey[ed25519_public_key_size];
     unsigned char privKey[ed25519_private_key_size];
-    void *blinding = ed25519_Blinding_Init(0, secret_blind);
+    void *blinding = ed25519_Blinding_Init(0, secret_blind, sizeof(secret_blind));
 
     printf("\n-- ed25519 -- sign/verify test ---------------------------------\n");
     printf("\n-- CreateKeyPair --\n");

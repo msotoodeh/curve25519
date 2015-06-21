@@ -53,7 +53,7 @@ extern const U_WORD _w_BPO[K_WORDS];
 //
 // -------------------------------------------------------------------------
 */
-extern const EDP_BLINDING_CTX edp_custom_blinding;
+extern EDP_BLINDING_CTX edp_custom_blinding;
 
 const U_WORD _w_2d[K_WORDS] = /* 2*d */
     W256(0x26B2F159,0xEBD69B94,0x8283B156,0x00E0149A,0xEEF3D130,0x198E80F2,0x56DFFCE7,0x2406D9DC);
@@ -248,9 +248,9 @@ void edp_DoublePoint(Ext_POINT *p)
 //    double & add operations.
 //
 // --------------------------------------------------------------------------
-// Return R = a*P where P is ed25519 base point
+// Return S = a*P where P is ed25519 base point and R is random
 */
-void edp_BasePointMult(OUT Ext_POINT *S, IN const U_WORD *sk)
+void edp_BasePointMult(OUT Ext_POINT *S, IN const U_WORD *sk, IN const U_WORD *R)
 {
     int i = 1;
     U8 cut[32];
@@ -263,7 +263,13 @@ void edp_BasePointMult(OUT Ext_POINT *S, IN const U_WORD *sk)
     ecp_SubReduce(S->x, p0->YpX, p0->YmX);  /* 2x */
     ecp_AddReduce(S->y, p0->YpX, p0->YmX);  /* 2y */
     ecp_MulReduce(S->t, p0->T2d, _w_di);    /* 2xy */
-    ecp_SetValue(S->z, 2);
+
+    /* Randomize starting point */
+
+    ecp_AddReduce(S->z, R, R);              /* Z = 2R */
+    ecp_MulReduce(S->x, S->x, R);           /* X = 2xR */
+    ecp_MulReduce(S->t, S->t, R);           /* T = 2xyR */
+    ecp_MulReduce(S->y, S->y, R);           /* Y = 2yR */
 
     do 
     {
@@ -285,12 +291,12 @@ void edp_BasePointMultiply(
     if (blinding)
     {
         eco_AddReduce(t, t, ((EDP_BLINDING_CTX*)blinding)->bl);
-        edp_BasePointMult(&S, t);
+        edp_BasePointMult(&S, t, ((EDP_BLINDING_CTX*)blinding)->zr);
         edp_AddPoint(&S, &S, &((EDP_BLINDING_CTX*)blinding)->BP);
     }
     else
     {
-        edp_BasePointMult(&S, t);
+        edp_BasePointMult(&S, t, edp_custom_blinding.zr);
     }
 
     ecp_Inverse(S.z, S.z);
@@ -320,26 +326,42 @@ void edp_ExtPoint2PE(PE_POINT *r, const Ext_POINT *p)
 */
 void *ed25519_Blinding_Init(
     void *context,                      /* IO: null or ptr blinding context */
-    const unsigned char *blinder)       /* IN: [32 bytes] random blind */
+    const unsigned char *seed,          /* IN: [size bytes] random blinding seed */
+    size_t size)                        /* IN: size of blinding seed */
 {
-    Ext_POINT T;
-    U_WORD t[K_WORDS];
+    struct {
+        Ext_POINT T;
+        U_WORD t[K_WORDS];
+        SHA512_CTX H;
+        U8 digest[SHA512_DIGEST_LENGTH];
+    } d;
+
     EDP_BLINDING_CTX *ctx = (EDP_BLINDING_CTX*)context;
 
     if (ctx == 0) ctx = (EDP_BLINDING_CTX*)malloc(sizeof(EDP_BLINDING_CTX));
+    if (ctx)
+    {
+        /* Use edp_custom_blinding to protect generation of the new blinder */
 
-    /* Use edp_custom_blinding to protect generation of the new blinder */
+        SHA512_Init(&d.H);
+        SHA512_Update(&d.H, edp_custom_blinding.zr, 32);
+        SHA512_Update(&d.H, seed, size);
+        SHA512_Final(d.digest, &d.H);
 
-    ecp_BytesToWords(t, blinder);
-    eco_AddReduce(t, t, edp_custom_blinding.bl);
-    edp_BasePointMult(&T, t);
-    edp_AddPoint(&T, &T, &edp_custom_blinding.BP);
+        ecp_BytesToWords(ctx->zr, d.digest+32);
+        ecp_BytesToWords(d.t, d.digest);
+        eco_Mod(d.t);
+        ecp_Sub(ctx->bl, _w_BPO, d.t);
 
-    edp_ExtPoint2PE(&ctx->BP, &T);
+        eco_AddReduce(d.t, d.t, edp_custom_blinding.bl);
+        edp_BasePointMult(&d.T, d.t, edp_custom_blinding.zr);
+        edp_AddPoint(&d.T, &d.T, &edp_custom_blinding.BP);
 
-    ecp_BytesToWords(ctx->bl, blinder);
-    eco_Mod(ctx->bl);
-    ecp_Sub(ctx->bl, _w_BPO, ctx->bl);
+        edp_ExtPoint2PE(&ctx->BP, &d.T);
+
+        /* clear potentially sensitive data */
+        memset (&d, 0, sizeof(d));
+    }
 
     return ctx;
 }

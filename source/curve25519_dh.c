@@ -31,6 +31,7 @@ typedef struct
 } XZ_POINT;
 
 extern const U_WORD _w_P[K_WORDS];
+extern EDP_BLINDING_CTX edp_custom_blinding;
 
 /* x coordinate of base point */
 const U8 ecp_BasePoint[32] = { 
@@ -114,18 +115,24 @@ void ecp_PointMultiply(
             /* P = kG, Q = (k+1)G */
             if (k & 0x80)
             {
-                /* We have first non-zero bit */
-                ecp_Copy(P.X, X);
-                ecp_SetValue(P.Z, 1);
+                /* We have first non-zero bit 
+                /* This is always bit 254 for keys created according to the spec.
+                /* Start with randomized base point */
+
+                ecp_Add(P.Z, X, edp_custom_blinding.zr);    /* P.Z = random */
+                ecp_MulReduce(P.X, X, P.Z);
                 ecp_MontDouble(&Q, &P);
 
                 PP[1] = &P; PP[0] = &Q;
                 QP[1] = &Q; QP[0] = &P;
 
+                /* Everything we reference in the below loop are on the stack
+                /* and already touched (cached) */
+
                 while (++i < 8) { k <<= 1; ECP_MONT(7); }
-                while (len-- > 0)
+                while (len > 0)
                 {
-                    k = SecretKey[len];
+                    k = SecretKey[--len];
                     ECP_MONT(7);
                     ECP_MONT(6);
                     ECP_MONT(5);
@@ -156,7 +163,7 @@ void x25519_BasePointMultiply(OUT U8 *r, IN const U8 *sk)
     U_WORD t[K_WORDS];
 
     ecp_BytesToWords(t, sk);
-    edp_BasePointMult(&S, t);
+    edp_BasePointMult(&S, t, edp_custom_blinding.zr);
 
     /* Convert ed25519 point to x25519 point */
     

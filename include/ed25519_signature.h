@@ -53,7 +53,8 @@ void ed25519_SignMessage(
 
 void *ed25519_Blinding_Init(
     void *context,                      /* IO: null or ptr blinding context */
-    const unsigned char *blinder);      /* IN: [32 bytes] random blind */
+    const unsigned char *seed,          /* IN: [size bytes] random blinding seed */
+    size_t size);                       /* IN: size of blinding seed */
 
 void ed25519_Blinding_Finish(
     void *context);                     /* IN: blinding context */
