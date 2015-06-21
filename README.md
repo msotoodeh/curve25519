@@ -14,38 +14,18 @@ This library supports DH key exchange using curve25519 as well as sign/verify
 operations based on twisted Edwards curve 25519.
 
 
-Side Channel Security:
-----------------------
-This library uses multiple measures with the gaol of eliminating leakage of secret 
-keys during cryptographic operations. Constant-time is one of these measures and 
-is implemented for private keys when they are directly operated on (no conditional 
-operation based on key values). 
-The second and more effective measure that this library uses is blinding. Blinding
-hides the private keys by combining them with a random value.
-
-This is a fact that constant-time implementation does not necessarily translate to
-constant-power-consumption, constant-electro-magnetic-radiation and so on. It also
-depends on how the underlying hardware manipulates different circuitry for each
-operation. For example, a hardware multiplier may use the primitive technique of
-shift-and-conditional-add or it may use barrel shifter when multiplying a power of 
-2 number.
-
-Blinding is the more effective measure with less performance penalty.
-Constant-time alone, pushes attackers to dig deeper for clues.
-
-
 Performance:
 ------------
-The new version of this library sets NEW SPEED RECORDS. This is achieved 
+Current version of this library sets NEW SPEED RECORDS. This is achieved 
 without taking advantage of special CPU instructions or parallel processing.
 
 The library implements a new technique (I call it FOLDING) that effectively 
 reduces the number of EC point operations by a factor of 2, 4 or even more. 
-The trade off is the pre computation and cost of cached memory.
+The trade off is the pre-computation and cost of cached memory.
 Currently 8-fold is implemented for KeyGen, Sign and DH(base point) operations 
 and 4-fold for signature verification.
-The 8-fold performance smashes previous records by a big margin. It takes only 
-43K cycles on an Intel(tm) Core(tm) i7 CPU to do a base point scalar multiplication.
+With 8-fold, it takes only 43K cycles on an Intel(tm) Core(tm) i7 CPU to do a 
+base point scalar multiplication.
 
 Google's implementation (http://code.google.com/p/curve25519-donna/) is used
 here for performance comparison only. This library outperforms Google's code 
@@ -56,7 +36,7 @@ architectures. The portable C code can be used for 32-bit OS's and other CPU
 types.
 
 Note that the assembly implementation is approximately 3 times faster than C 
-implementation on 64-bit platforms (C != PortableAssembly).
+implementation on 64-bit platforms.
 On 32-bit platforms, the biggest hit is due to usage of standard C library for
 64-bit arithmetic operations. Numbers below indicate that GCC and glibc does a 
 much better job than MSVC.
@@ -127,6 +107,27 @@ Timing for DH point multiplication:
         Donna: 2551492 cycles = 750.439 usec @3.4GHz -- ratio: 6.602
         Mehdi: 386498 cycles = 113.676 usec @3.4GHz -- delta: 84.85%
 ```
+
+
+Side Channel Security:
+----------------------
+This library uses multiple measures with the gaol of eliminating leakage of secret 
+keys during cryptographic operations. Constant-time is one of these measures and 
+is implemented for private keys when they are directly operated on (no conditional 
+operation based on key values). 
+The second and more effective measure that this library uses is blinding. Blinding
+hides the private keys by combining them with a random value.
+
+This is a fact that constant-time implementation does not necessarily translate to
+constant-power-consumption, constant-electro-magnetic-radiation and so on. It also
+depends on how the underlying hardware manipulates different circuitry for each
+operation. For example, a hardware multiplier may use the primitive technique of
+shift-and-conditional-add or it may use barrel shifter when multiplying a power of 
+2 number.
+
+Blinding is the more effective measure with less performance penalty.
+Constant-time alone, pushes attackers to dig deeper for clues.
+
 
 Building:
 ---------
