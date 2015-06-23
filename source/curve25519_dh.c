@@ -116,8 +116,9 @@ void ecp_PointMultiply(
             if (k & 0x80)
             {
                 /* We have first non-zero bit 
-                /* This is always bit 254 for keys created according to the spec.
-                /* Start with randomized base point */
+                // This is always bit 254 for keys created according to the spec.
+                // Start with randomized base point 
+                */
 
                 ecp_Add(P.Z, X, edp_custom_blinding.zr);    /* P.Z = random */
                 ecp_MulReduce(P.X, X, P.Z);
@@ -127,7 +128,8 @@ void ecp_PointMultiply(
                 QP[1] = &Q; QP[0] = &P;
 
                 /* Everything we reference in the below loop are on the stack
-                /* and already touched (cached) */
+                // and already touched (cached) 
+                */
 
                 while (++i < 8) { k <<= 1; ECP_MONT(7); }
                 while (len > 0)
