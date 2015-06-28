@@ -41,7 +41,7 @@ On 32-bit platforms, the biggest hit is due to usage of standard C library for
 64-bit arithmetic operations. Numbers below indicate that GCC and glibc does a 
 much better job than MSVC.
 
-
+```
 **V1.1:** 
 Cycle count for ed25519 sign/verify (short messages):
 | Platform       | KeyGen    | Sign     | Verify(init) | Verify(check) |
@@ -101,7 +101,7 @@ Platforms:
 | W7-32/MSC  | windows7: VS2010, Portable-C, 32-bit, Intel(R) Core(TM) i7-2670QM CPU
 | M64/GAS    | x86_64-w64-mingw32: GNU assembler 2.25, Intel(R) Core(TM) i7-2670QM CPU
 | C32/GCC    | Cygwin-32: gcc 4.5.3, Portable-C, 32-bit, Intel(R) Core(TM) i7-2670QM CPU
-
+```
 
 Side Channel Security:
 ----------------------
