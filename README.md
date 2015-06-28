@@ -41,9 +41,9 @@ On 32-bit platforms, the biggest hit is due to usage of standard C library for
 64-bit arithmetic operations. Numbers below indicate that GCC and glibc does a 
 much better job than MSVC.
 
-```
 **V1.1:** 
 Cycle count for ed25519 sign/verify (short messages):
+```
 | Platform       | KeyGen    | Sign     | Verify(init) | Verify(check) |
 | -------------- | ---------:| --------:| ------------:| -------------:|
 | W7-64/MASM     | 44647     | 48639    | 114325       | 110371        |
@@ -59,41 +59,44 @@ Cycle count for ed25519 sign/verify (short messages):
 | C32/GCC        | 393512    | 411468   | 1046166      | 954980        |
 | C32/GCC (B)    | 400014    | 414946   |              |               |
 (B) = With blinding option.
-
+```
 
 New version with **Constant-Time:** 
 Cycle count for ed25519 sign/verify (short messages):
+```
 | Platform       | KeyGen    | Sign     | Verify(init) | Verify(check) |
 | -------------- | ---------:| --------:| ------------:| -------------:|
-| W7-64/MASM     | 51610     | 53448    | 131552       | 121114        |
-| W7-64/MASM (B) | 52204     | 55780    |              |               |
-| W7-64/MSC      | 129253    | 138645   | 339967       | 306505        |
-| W7-64/MSC (B)  | 134761    | 136167   |              |               |
-| W7-32/MSC      | 543234    | 555152   | 1422500      | 1300098       | 
-| W7-32/MSC (B)  | 550052    | 561096   |              |               | 
-| M64/GAS        | 49071     | 52749    | 126047       | 119145        |
-| M64/GAS (B)    | 49763     | 53309    |              |               |
-| C32/GCC        | 397763    | 408731   | 1043925      | 953553        | 
-| C32/GCC (B)    | 401889    | 414559   |              |               | 
+| W7-64/MASM     | 49881     | 53785    | 127355       | 121101        |
+| W7-64/MASM (B) | 52123     | 55741    |              |               |
+| W7-64/MSC      | 149033    | 154407   | 394341       | 356793        |
+| W7-64/MSC (B)  | 150827    | 156295   |              |               |
+| W7-32/MSC      | 552812    | 564216   | 1449110      | 1321186       | 
+| W7-32/MSC (B)  | 559108    | 570324   |              |               | 
+| M64/GAS        | 49782     | 53370    | 126882       | 121204        |
+| M64/GAS (B)    | 50358     | 53920    |              |               |
+| C32/GCC        | 440652    | 454156   | 1172936      | 1067160       | 
+| C32/GCC (B)    | 445872    | 459012   |              |               | 
+```
 
-
-Cycle count for X25519 DH point multiplication:
+Cycle count for X25519 DH base point multiplication:
+```
 | Platform   | Ver. | Donna-C  | Mehdi   | Ratio  |
 | ---------- |:----:| --------:| -------:| ------:|
 | W7-64/MASM | V1.1 | 779653   | 43229   | 18.035 |
-| W7-64/MASM | CT   | 780584   | 48552   | 16.077 |
+| W7-64/MASM | CT   | 780207   | 48435   | 16.108 |
 | W7-64/MSC  | V1.1 | 779753   | 125761  |  6.200 |
-| W7-64/MSC  | CT   | 780969   | 127781  |  6.112 |
+| W7-64/MSC  | CT   | 779941   | 146343  |  5.330 |
 | W7-32/MSC  | V1.1 | 7289134  | 538846  | 13.527 | 
-| W7-32/MSC  | CT   | 7400350  | 538356  | 13.746 | 
+| W7-32/MSC  | CT   | 7387272  | 548398  | 13.471 | 
 | M64/GAS    | V1.1 | 851314   | 43456   | 19.590 |
-| M64/GAS    | CT   | 851933   | 47793   | 17.825 |
+| M64/GAS    | CT   | 851564   | 48268   | 17.642 |
 | C32/GCC    | V1.1 | 2551492  | 386498  |  6.602 | 
-| C32/GCC    | CT   | 2589687  | 388741  |  6.662 | 
+| C32/GCC    | CT   | 2549964  | 436616  |  5.840 | 
 CT = Constant-Time
-        
+```
 
 Platforms:
+```
 | ID         | Configuration
 |:----------:| --------------------------------------------------------------------
 | W7-64/MASM | windows7-64: VS2010 + MS Assembler, Intel(R) Core(TM) i7-2670QM CPU

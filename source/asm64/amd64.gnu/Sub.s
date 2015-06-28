@@ -53,12 +53,15 @@
     SaveArg3
     LOADA   X
     SUBA    24(Y),16(Y),8(Y),(Y)
-    jnc.s   sr_2
-sr_1:
-    /* add maxP = 2*P */
-    ADDA    $-1,$-1,$-1,$-38
-    jnc.s   sr_1
-sr_2:
+
+    sbb     ACL,ACL
+    and     $38,ACL
+    SUBA    $0,$0,$0,ACL
+
+    sbb     ACL,ACL
+    and     $38,ACL
+    SUBA    $0,$0,$0,ACL
+
     STOREA  Z
     RestoreArg3
     ret

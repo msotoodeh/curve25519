@@ -54,7 +54,7 @@ void PrintWords(IN const char *txt, IN const U32 *data, IN int size)
 void PrintBytes(IN const char *name, IN const unsigned char *data, IN int size)
 {
     int i;
-    printf("static const unsigned char %s[%d] =\n  { 0x%02X", name, size, *data++);
+    printf("const unsigned char %s[%d] =\n  { 0x%02X", name, size, *data++);
     for (i = 1; i < size; i++)
     {
         if ((i & 15) == 0)

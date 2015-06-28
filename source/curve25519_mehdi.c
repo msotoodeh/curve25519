@@ -37,6 +37,8 @@
     b = 256
     p = 2**255 - 19
     l = 2**252 + 27742317777372353535851937790883648493
+
+    This library is a constant-time implementation of field operations
 */
 
 typedef struct
@@ -55,8 +57,6 @@ const U32 _w_maxP[8] = {   /* 2*P < 2**256 */
     0xFFFFFFDA,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,
     0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF
 };
-
-static const U32 _w_V38[8] = { 38,0,0,0,0,0,0,0 };
 
 void ecp_SetValue(U32* X, U32 value)
 {
@@ -81,8 +81,22 @@ int ecp_CmpLT(const U32* X, const U32* Y)
     return ecp_Sub(T, X, Y);
 }
 
+#define ECP_ADD_C0(Y,X,V) c.u64 = (U64)(X) + (V); Y = c.u32.lo;
+#define ECP_ADD_C1(Y,X) c.u64 = (U64)(X) + c.u32.hi; Y = c.u32.lo;
+
+#define ECP_SUB_C0(Y,X,V) c.s64 = (U64)(X) - (V); Y = c.u32.lo;
+#define ECP_SUB_C1(Y,X) c.s64 = (U64)(X) + (S64)c.s32.hi; Y = c.u32.lo;
+
+#define ECP_MULSET_W0(Y,b,X) c.u64 = (U64)(b)*(X); Y = c.u32.lo;
+#define ECP_MULSET_W1(Y,b,X) c.u64 = (U64)(b)*(X) + c.u32.hi; Y = c.u32.lo;
+
+#define ECP_MULADD_W0(Z,Y,b,X) c.u64 = (U64)(b)*(X) + (Y); Z = c.u32.lo;
+#define ECP_MULADD_W1(Z,Y,b,X) c.u64 = (U64)(b)*(X) + (U64)(Y) + c.u32.hi; Z = c.u32.lo;
+
 #define ECP_ADD32(Z,X,Y) c.u64 = (U64)(X) + (Y); Z = c.u32.lo;
 #define ECP_ADC32(Z,X,Y) c.u64 = (U64)(X) + (U64)(Y) + c.u32.hi; Z = c.u32.lo;
+#define ECP_SUB32(Z,X,Y) b.s64 = (S64)(X) - (Y); Z = b.s32.lo;
+#define ECP_SBC32(Z,X,Y) b.s64 = (S64)(X) - (U64)(Y) + b.s32.hi; Z = b.s32.lo;
 
 /* Computes Z = X+Y */
 U32 ecp_Add(U32* Z, const U32* X, const U32* Y) 
@@ -99,9 +113,6 @@ U32 ecp_Add(U32* Z, const U32* X, const U32* Y)
     ECP_ADC32(Z[7], X[7], Y[7]);
     return c.u32.hi;
 }
-
-#define ECP_SUB32(Z,X,Y) b.s64 = (S64)(X) - (Y); Z = b.s32.lo;
-#define ECP_SBC32(Z,X,Y) b.s64 = (S64)(X) - (U64)(Y) + b.s32.hi; Z = b.s32.lo;
 
 /* Computes Z = X-Y */
 S32 ecp_Sub(U32* Z, const U32* X, const U32* Y) 
@@ -121,25 +132,80 @@ S32 ecp_Sub(U32* Z, const U32* X, const U32* Y)
 /* Computes Z = X+Y mod P */
 void ecp_AddReduce(U32* Z, const U32* X, const U32* Y) 
 {
-    U32 c = ecp_Add(Z, X, Y);
-    while (c != 0) c = ecp_Add(Z, Z, _w_V38);
+    M64 c;
+    c.u32.hi = ecp_Add(Z, X, Y) * 38;
+
+    /* Z += c.u32.hi * 38 */
+    ECP_ADD_C0(Z[0], Z[0], c.u32.hi);
+    ECP_ADD_C1(Z[1], Z[1]);
+    ECP_ADD_C1(Z[2], Z[2]);
+    ECP_ADD_C1(Z[3], Z[3]);
+    ECP_ADD_C1(Z[4], Z[4]);
+    ECP_ADD_C1(Z[5], Z[5]);
+    ECP_ADD_C1(Z[6], Z[6]);
+    ECP_ADD_C1(Z[7], Z[7]);
+
+    /* One more carry at most */
+    ECP_ADD_C0(Z[0], Z[0], c.u32.hi*38);
+    ECP_ADD_C1(Z[1], Z[1]);
+    ECP_ADD_C1(Z[2], Z[2]);
+    ECP_ADD_C1(Z[3], Z[3]);
+    ECP_ADD_C1(Z[4], Z[4]);
+    ECP_ADD_C1(Z[5], Z[5]);
+    ECP_ADD_C1(Z[6], Z[6]);
+    ECP_ADD_C1(Z[7], Z[7]);
 }
 
 /* Computes Z = X-Y mod P */
 void ecp_SubReduce(U32* Z, const U32* X, const U32* Y) 
 {
-    S32 b = ecp_Sub(Z, X, Y);
-    while (b != 0) { b += ecp_Add(Z, Z, _w_maxP); }
+    M64 c;
+    c.u32.hi = ecp_Sub(Z, X, Y) & 38;
+
+    ECP_SUB_C0(Z[0], Z[0], c.u32.hi);
+    ECP_SUB_C1(Z[1], Z[1]);
+    ECP_SUB_C1(Z[2], Z[2]);
+    ECP_SUB_C1(Z[3], Z[3]);
+    ECP_SUB_C1(Z[4], Z[4]);
+    ECP_SUB_C1(Z[5], Z[5]);
+    ECP_SUB_C1(Z[6], Z[6]);
+    ECP_SUB_C1(Z[7], Z[7]);
+
+    ECP_SUB_C0(Z[0], Z[0], c.u32.hi & 38);
+    ECP_SUB_C1(Z[1], Z[1]);
+    ECP_SUB_C1(Z[2], Z[2]);
+    ECP_SUB_C1(Z[3], Z[3]);
+    ECP_SUB_C1(Z[4], Z[4]);
+    ECP_SUB_C1(Z[5], Z[5]);
+    ECP_SUB_C1(Z[6], Z[6]);
+    ECP_SUB_C1(Z[7], Z[7]);
 }
 
 void ecp_Mod(U32 *X)
 {
-    //S32 c = ecp_Sub(X, X, _w_P);
-    while (ecp_CmpLT(X, _w_P) == 0) ecp_Sub(X, X, _w_P);
-}
+    U32 T[8];
+    U32 c = ecp_Sub(X, X, _w_P);
 
-#define ECP_MULSET_W0(Y,b,X) c.u64 = (U64)(b)*(X); Y = c.u32.lo;
-#define ECP_MULSET_W1(Y,b,X) c.u64 = (U64)(b)*(X) + c.u32.hi; Y = c.u32.lo;
+    /* set T = 0 if c=0, else T = P */
+
+    T[0] = c & 0xFFFFFFED;
+    T[1] = T[2] = T[3] = T[4] = T[5] = T[6] = c;
+    T[7] = c & 0x7FFFFFFF;
+
+    ecp_Add(X, X, T);   /* X += 0 or P */
+
+    /* In case there is another P there */
+
+    c = ecp_Sub(X, X, _w_P);
+
+    /* set T = 0 if c=0, else T = P */
+
+    T[0] = c & 0xFFFFFFED;
+    T[1] = T[2] = T[3] = T[4] = T[5] = T[6] = c;
+    T[7] = c & 0x7FFFFFFF;
+
+    ecp_Add(X, X, T);   /* X += 0 or P */
+}
 
 /* Computes Y = b*X */
 static void ecp_mul_set(U32* Y, U32 b, const U32* X) 
@@ -155,9 +221,6 @@ static void ecp_mul_set(U32* Y, U32 b, const U32* X)
     ECP_MULSET_W1(Y[7], b, X[7]);
     Y[8] = c.u32.hi;
 }
-
-#define ECP_MULADD_W0(Z,Y,b,X) c.u64 = (U64)(b)*(X) + (Y); Z = c.u32.lo;
-#define ECP_MULADD_W1(Z,Y,b,X) c.u64 = (U64)(b)*(X) + (U64)(Y) + c.u32.hi; Z = c.u32.lo;
 
 /* Computes Y += b*X */
 /* Addition is performed on lower 8-words of Y */
@@ -175,8 +238,6 @@ static void ecp_mul_add(U32* Y, U32 b, const U32* X)
     Y[8] = c.u32.hi;
 }
 
-#define ECP_ADD_C1(Y,X) c.u64 = (U64)(X) + c.u32.hi; Y = c.u32.lo;
-
 /* Computes Z = Y + b*X and return carry */
 void ecp_WordMulAddReduce(U32 *Z, const U32* Y, U32 b, const U32* X) 
 {
@@ -190,17 +251,25 @@ void ecp_WordMulAddReduce(U32 *Z, const U32* Y, U32 b, const U32* X)
     ECP_MULADD_W1(Z[6], Y[6], b, X[6]);
     ECP_MULADD_W1(Z[7], Y[7], b, X[7]);
 
-    while (c.u32.hi != 0)
-    {
-        ECP_MULADD_W0(Z[0], Z[0], c.u32.hi, 38);
-        ECP_ADD_C1(Z[1], Z[1]);
-        ECP_ADD_C1(Z[2], Z[2]);
-        ECP_ADD_C1(Z[3], Z[3]);
-        ECP_ADD_C1(Z[4], Z[4]);
-        ECP_ADD_C1(Z[5], Z[5]);
-        ECP_ADD_C1(Z[6], Z[6]);
-        ECP_ADD_C1(Z[7], Z[7]);
-    }
+    /* Z += c.u32.hi * 38 */
+    ECP_MULADD_W0(Z[0], Z[0], c.u32.hi, 38);
+    ECP_ADD_C1(Z[1], Z[1]);
+    ECP_ADD_C1(Z[2], Z[2]);
+    ECP_ADD_C1(Z[3], Z[3]);
+    ECP_ADD_C1(Z[4], Z[4]);
+    ECP_ADD_C1(Z[5], Z[5]);
+    ECP_ADD_C1(Z[6], Z[6]);
+    ECP_ADD_C1(Z[7], Z[7]);
+
+    /* One more time at most */
+    ECP_MULADD_W0(Z[0], Z[0], c.u32.hi, 38);
+    ECP_ADD_C1(Z[1], Z[1]);
+    ECP_ADD_C1(Z[2], Z[2]);
+    ECP_ADD_C1(Z[3], Z[3]);
+    ECP_ADD_C1(Z[4], Z[4]);
+    ECP_ADD_C1(Z[5], Z[5]);
+    ECP_ADD_C1(Z[6], Z[6]);
+    ECP_ADD_C1(Z[7], Z[7]);
 }
 
 /* Computes Z = X*Y mod P. */
