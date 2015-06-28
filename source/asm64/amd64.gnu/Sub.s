@@ -65,30 +65,80 @@ sr_2:
 
 /* _______________________________________________________________________
 /*
-/*   compare X and Y, return -1,0,+1
-/*   int ecp_Cmp(const U64* X, const U64* Y)
+/*   void ecp_Mod(U64* X)
+/*   Constant-time
 /* _______________________________________________________________________ */
-    PUBPROC ecp_Cmp
+    PUBPROC ecp_Mod
+.equ  X,  ARG1
+
+    push    C1
+    or      $-1,C1
+    LOADA   X
+    mov     C1,ACH
+    mov     $-19,ACL
+    shr     $1,ACH
+    SUBA    ACH,C1,C1,ACL
+
+    /* Undo SUB if CF=1 */
+
+    sbb     C1,C1               # 0 or -1
+    and     C1,ACH              # 0 or 07fffffffffffffffh
+    and     C1,ACL              # 0 or -19
+    ADDA    ACH,C1,C1,ACL
+
+    /* There could be second P there */
+    or      $-1,C1
+    mov     C1,ACH
+    mov     $-19,ACL
+    shr     $1,ACH
+    SUBA    ACH,C1,C1,ACL
+
+    /* Undo SUB if CF=1 */
+
+    sbb     C1,C1               # 0 or -1
+    and     C1,ACH              # 0 or 07fffffffffffffffh
+    and     C1,ACL              # 0 or -19
+    ADDA    ACH,C1,C1,ACL
+
+    STOREA  X
+    pop     C1
+    ret
+
+/* _______________________________________________________________________
+/*
+/*   compare X and Y, return non-zero if X<Y, else 0
+/*   int ecp_CmpLT(const U64* X, const U64* Y)
+/* _______________________________________________________________________ */
+    PUBPROC ecp_CmpLT
+    
+.equ  X,  ARG1
+.equ  Y,  ARG2
+
+    LOADA   X
+    SUBA    24(Y),16(Y),8(Y),(Y)
+    SBB     ACL,ACL
+    ret
+    
+/* _______________________________________________________________________
+/*
+/*   compare X and Y, return non-zero if X != Y, else 0
+/*   int ecp_CmpNE(const U64* X, const U64* Y)
+/* _______________________________________________________________________ */
+    PUBPROC ecp_CmpNE
     
 .equ  X,  ARG1
 .equ  Y,  ARG2
 
     mov     24(X),ACL
-    sub     24(Y),ACL
-    jnz.s   cmp_1
-    mov     16(X),ACL
-    sub     16(Y),ACL
-    jnz.s   cmp_1
-    mov     8(X),ACL
-    sub     8(Y),ACL
-    jnz.s   cmp_1
-    mov     (X),ACL
-    sub     (Y),ACL
-    jz.s    cmp_2
-cmp_1:
-    sbb     ACL,ACL
-    lea     1(ACL,ACL),ACL
-cmp_2:
+    mov     16(X),A2
+    xor     24(Y),ACL
+    xor     16(Y),A2
+    mov     8(X),A1
+    or      A2,ACL
+    xor     8(Y),A1
+    mov     (X),A0
+    or      A1,ACL
+    xor     (Y),A0
+    or      A0,ACL
     ret
-    
     

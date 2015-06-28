@@ -46,8 +46,6 @@ const U_WORD _w_P[K_WORDS] =
 const U_WORD _w_maxP[K_WORDS] = /* 2*P < 2**256 */
     W256(0xFFFFFFDA,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF);
 
-#define ECP_MOD(X) while (ecp_Cmp(X, _w_P) >= 0) ecp_Sub(X, X, _w_P)
-
 void ecp_SetValue(U64* X, U64 value)
 {
     X[0] = value;
@@ -64,7 +62,7 @@ void ecp_Copy(U64* Y, const U64* X)
 void ecp_MulMod(U64* Z, const U64* X, const U64* Y) 
 {
     ecp_MulReduce(Z, X, Y);
-    ECP_MOD(Z);
+    ecp_Mod(Z);
 }
 
 /* Courtesy of DJB */

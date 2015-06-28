@@ -46,17 +46,22 @@
 /*
 /*   Z = X + Y
 /*   void ecp_AddReduce(U64* Z, const U64* X, const U64* Y)
+/*   Constant-time
 /* _______________________________________________________________________ */
 
     PUBPROC ecp_AddReduce
     
     LOADA   Y
     ADDA    24(X),16(X),8(X),(X)
-    jnc.s   ar_2
-ar_1:
-    ADDA    $0,$0,$0,$38
-    jc.s    ar_1
-ar_2:
+    
+    sbb     ACL,ACL
+    and     $38,ACL
+    ADDA    $0,$0,$0,ACL
+    
+    sbb     ACL,ACL
+    and     $38,ACL
+    ADDA    $0,$0,$0,ACL
+    
     STOREA  Z
     ret
 

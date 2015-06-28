@@ -16,7 +16,7 @@ operations based on twisted Edwards curve 25519.
 
 Performance:
 ------------
-Current version of this library sets NEW SPEED RECORDS. This is achieved 
+Current version of this library sets **NEW SPEED RECORDS**. This is achieved 
 without taking advantage of special CPU instructions or parallel processing.
 
 The library implements a new technique (I call it FOLDING) that effectively 
@@ -42,81 +42,77 @@ On 32-bit platforms, the biggest hit is due to usage of standard C library for
 much better job than MSVC.
 
 
-Timing for ed25519 sign/verify (short messages):
-```
-    windows7-64: VS2010 + MS Assembler, Intel(R) Core(TM) i7-2670QM CPU
-        KeyGen: 44647 cycles = 13.131 usec @3.4GHz
-          Sign: 48639 cycles = 14.306 usec @3.4GHz
-        KeyGen: 45227 cycles = 13.302 usec @3.4GHz (Blinded)
-          Sign: 49035 cycles = 14.422 usec @3.4GHz (Blinded)
-        Verify: 114325 cycles = 33.625 usec @3.4GHz (Init)
-                110371 cycles = 32.462 usec @3.4GHz (Check)
-            
-    windows7:  VS2010, Portable-C, 64-bit, Intel(R) Core(TM) i7-2670QM CPU
-        KeyGen: 128777 cycles = 37.876 usec @3.4GHz
-          Sign: 133823 cycles = 39.360 usec @3.4GHz
-        KeyGen: 130269 cycles = 38.314 usec @3.4GHz (Blinded)
-          Sign: 135011 cycles = 39.709 usec @3.4GHz (Blinded)
-        Verify: 341097 cycles = 100.323 usec @3.4GHz (Init)
-                307533 cycles = 90.451 usec @3.4GHz (Check)
+**V1.1:** 
+Cycle count for ed25519 sign/verify (short messages):
+| Platform       | KeyGen    | Sign     | Verify(init) | Verify(check) |
+| -------------- | ---------:| --------:| ------------:| -------------:|
+| W7-64/MASM     | 44647     | 48639    | 114325       | 110371        |
+| W7-64/MASM (B) | 45227     | 49035    |              |               |
+| W7-64/MSC      | 128777    | 133823   | 341097       | 307533        |
+| W7-64/MSC (B)  | 130269    | 135011   |              |               |
+| W7-32/MSC      | 542914    | 556878   | 1430160      | 1307354       |
+| W7-32/MSC (B)  | 550024    | 563302   |              |               |
+| W7-32/MSC      | 542914    | 556878   | 1430160      | 1307354       |
+| W7-32/MSC (B)  | 550024    | 563302   |              |               |
+| M64/GAS        | 44954     | 49008    | 114642       | 111156        |
+| M64/GAS (B)    | 45628     | 49510    |              |               |
+| C32/GCC        | 393512    | 411468   | 1046166      | 954980        |
+| C32/GCC (B)    | 400014    | 414946   |              |               |
+(B) = With blinding option.
 
-    windows7:  VS2010, Portable-C, 32-bit, Intel(R) Core(TM) i7-2670QM CPU
-        KeyGen: 542914 cycles = 159.681 usec @3.4GHz
-          Sign: 556878 cycles = 163.788 usec @3.4GHz
-        KeyGen: 550024 cycles = 161.772 usec @3.4GHz (Blinded)
-          Sign: 563302 cycles = 165.677 usec @3.4GHz (Blinded)
-        Verify: 1430160 cycles = 420.635 usec @3.4GHz (Init)
-                1307354 cycles = 384.516 usec @3.4GHz (Check)
 
-    x86_64-w64-mingw32: GNU assembler 2.25, Intel(R) Core(TM) i7-2670QM CPU
-        KeyGen: 44954 cycles = 13.222 usec @3.4GHz
-          Sign: 49008 cycles = 14.414 usec @3.4GHz
-        KeyGen: 45628 cycles = 13.420 usec @3.4GHz (Blinded)
-          Sign: 49510 cycles = 14.562 usec @3.4GHz (Blinded)
-        Verify: 114642 cycles = 33.718 usec @3.4GHz (Init)
-                111156 cycles = 32.693 usec @3.4GHz (Check)
-                
-    cygwin-32: gcc 4.5.3, Portable-C, 32-bit, Intel(R) Core(TM) i7-2670QM CPU
-        KeyGen: 393512 cycles = 115.739 usec @3.4GHz
-          Sign: 411468 cycles = 121.020 usec @3.4GHz
-        KeyGen: 400014 cycles = 117.651 usec @3.4GHz (Blinded)
-          Sign: 414946 cycles = 122.043 usec @3.4GHz (Blinded)
-        Verify: 1046166 cycles = 307.696 usec @3.4GHz (Init)
-                954980 cycles = 280.876 usec @3.4GHz (Check)
-```
+New version with **Constant-Time:** 
+Cycle count for ed25519 sign/verify (short messages):
+| Platform       | KeyGen    | Sign     | Verify(init) | Verify(check) |
+| -------------- | ---------:| --------:| ------------:| -------------:|
+| W7-64/MASM     | 51610     | 53448    | 131552       | 121114        |
+| W7-64/MASM (B) | 52204     | 55780    |              |               |
+| W7-64/MSC      | 129253    | 138645   | 339967       | 306505        |
+| W7-64/MSC (B)  | 134761    | 136167   |              |               |
+| W7-32/MSC      | 543234    | 555152   | 1422500      | 1300098       | 
+| W7-32/MSC (B)  | 550052    | 561096   |              |               | 
+| M64/GAS        | 49071     | 52749    | 126047       | 119145        |
+| M64/GAS (B)    | 49763     | 53309    |              |               |
+| C32/GCC        | 397763    | 408731   | 1043925      | 953553        | 
+| C32/GCC (B)    | 401889    | 414559   |              |               | 
 
-Timing for DH point multiplication:
-```
-    windows7-64: VS2010 + MS Assembler, Intel(R) Core(TM) i7-2670QM CPU
-        Donna: 779653 cycles = 229.310 usec @3.4GHz -- ratio: 18.035
-        Mehdi: 43229 cycles = 12.714 usec @3.4GHz -- delta: 94.46%      ** MSASM **
 
-    Mingw-x86_64: GNU assembler (GNU Binutils) 2.25
-        Donna: 851314 cycles = 250.386 usec @3.4GHz -- ratio: 19.590
-        Mehdi: 43456 cycles = 12.781 usec @3.4GHz -- delta: 94.90%      ** GNU ASM **
-    
-    windows7:  VS2010, Portable-C, 64-bit
-        Donna: 779753 cycles = 229.339 usec @3.4GHz -- ratio: 6.200
-        Mehdi: 125761 cycles = 36.989 usec @3.4GHz -- delta: 83.87%
-            
-    windows7:  VS2010, Portable-C, 32-bit, Intel(R) Core(TM) i7-2670QM CPU
-        Donna: 7289134 cycles = 2143.863 usec @3.4GHz -- ratio: 13.527
-        Mehdi: 538846 cycles = 158.484 usec @3.4GHz -- delta: 92.61%
+Cycle count for X25519 DH point multiplication:
+| Platform   | Ver. | Donna-C  | Mehdi   | Ratio  |
+| ---------- |:----:| --------:| -------:| ------:|
+| W7-64/MASM | V1.1 | 779653   | 43229   | 18.035 |
+| W7-64/MASM | CT   | 780584   | 48552   | 16.077 |
+| W7-64/MSC  | V1.1 | 779753   | 125761  |  6.200 |
+| W7-64/MSC  | CT   | 780969   | 127781  |  6.112 |
+| W7-32/MSC  | V1.1 | 7289134  | 538846  | 13.527 | 
+| W7-32/MSC  | CT   | 7400350  | 538356  | 13.746 | 
+| M64/GAS    | V1.1 | 851314   | 43456   | 19.590 |
+| M64/GAS    | CT   | 851933   | 47793   | 17.825 |
+| C32/GCC    | V1.1 | 2551492  | 386498  |  6.602 | 
+| C32/GCC    | CT   | 2589687  | 388741  |  6.662 | 
+CT = Constant-Time
+        
 
-    cygwin-32: gcc 4.5.3, Portable-C, 32-bit, Intel(R) Core(TM) i7-2670QM CPU
-        Donna: 2551492 cycles = 750.439 usec @3.4GHz -- ratio: 6.602
-        Mehdi: 386498 cycles = 113.676 usec @3.4GHz -- delta: 84.85%
-```
+Platforms:
+| ID         | Configuration
+|:----------:| --------------------------------------------------------------------
+| W7-64/MASM | windows7-64: VS2010 + MS Assembler, Intel(R) Core(TM) i7-2670QM CPU
+| W7-64/MSC  | windows7-64: VS2010, Portable-C, 64-bit, Intel(R) Core(TM) i7-2670QM CPU
+| W7-32/MSC  | windows7: VS2010, Portable-C, 32-bit, Intel(R) Core(TM) i7-2670QM CPU
+| M64/GAS    | x86_64-w64-mingw32: GNU assembler 2.25, Intel(R) Core(TM) i7-2670QM CPU
+| C32/GCC    | Cygwin-32: gcc 4.5.3, Portable-C, 32-bit, Intel(R) Core(TM) i7-2670QM CPU
 
 
 Side Channel Security:
 ----------------------
 This library uses multiple measures with the gaol of eliminating leakage of secret 
 keys during cryptographic operations. Constant-time is one of these measures and 
-is implemented for private keys when they are directly operated on (no conditional 
-operation based on key values). 
+is implemented for all the field operations (no conditional operation based on key values). 
 The second and more effective measure that this library uses is blinding. Blinding
-hides the private keys by combining them with a random value.
+hides the private keys by combining them with a random value. 
+It calculates (a-b)*P + B where b is random blinding scalar and B = b*P.
+The third measure is the randomization of the starting point. Instead of using (X,Y,Z), 
+we use (XR,YR,ZR) where R is a randomly generated number.
 
 This is a fact that constant-time implementation does not necessarily translate to
 constant-power-consumption, constant-electro-magnetic-radiation and so on. It also

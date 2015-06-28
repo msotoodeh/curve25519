@@ -40,168 +40,121 @@
         P1 = k1*P0 --> P2 = k2*P1 = k2*k1*P0 = P0
     See selftest code for some examples of BPO usage
 
-    This library is used for implementation of ECDSA sign/verify.
+    This library is used for implementation of EdDSA sign/verify.
 */
 
-const U32 _w_BPO[8] = { /* BPO as words */
-    0x5CF5D3ED,0x5812631A,0xA2F79CD6,0x14DEF9DE,
-    0x00000000,0x00000000,0x00000000,0x10000000 };
+const U_WORD _w_NxBPO[16][K_WORDS] = {  /* n*BPO */
+    W256(0,0,0,0,0,0,0,0),
+    W256(0x5CF5D3ED,0x5812631A,0xA2F79CD6,0x14DEF9DE,0,0,0,0x10000000),
+    W256(0xB9EBA7DA,0xB024C634,0x45EF39AC,0x29BDF3BD,0,0,0,0x20000000),
+    W256(0x16E17BC7,0x0837294F,0xE8E6D683,0x3E9CED9B,0,0,0,0x30000000),
+    W256(0x73D74FB4,0x60498C69,0x8BDE7359,0x537BE77A,0,0,0,0x40000000),
+    W256(0xD0CD23A1,0xB85BEF83,0x2ED6102F,0x685AE159,0,0,0,0x50000000),
+    W256(0x2DC2F78E,0x106E529E,0xD1CDAD06,0x7D39DB37,0,0,0,0x60000000),
+    W256(0x8AB8CB7B,0x6880B5B8,0x74C549DC,0x9218D516,0,0,0,0x70000000),
+    W256(0xE7AE9F68,0xC09318D2,0x17BCE6B2,0xA6F7CEF5,0,0,0,0x80000000),
+    W256(0x44A47355,0x18A57BED,0xBAB48389,0xBBD6C8D3,0,0,0,0x90000000),
+    W256(0xA19A4742,0x70B7DF07,0x5DAC205F,0xD0B5C2B2,0,0,0,0xA0000000),
+    W256(0xFE901B2F,0xC8CA4221,0x00A3BD35,0xE594BC91,0,0,0,0xB0000000),
+    W256(0x5B85EF1C,0x20DCA53C,0xA39B5A0C,0xFA73B66F,0,0,0,0xC0000000),
+    W256(0xB87BC309,0x78EF0856,0x4692F6E2,0x0F52B04E,1,0,0,0xD0000000),
+    W256(0x157196F6,0xD1016B71,0xE98A93B8,0x2431AA2C,1,0,0,0xE0000000),
+    W256(0x72676AE3,0x2913CE8B,0x8C82308F,0x3910A40B,1,0,0,0xF0000000)
+};
 
-static const U32 _w_maxBPO[8] = { /* 15*BPO fits into 8 words */
-    0x72676AE3,0x2913CE8B,0x8C82308F,0x3910A40B,
-    0x00000001,0x00000000,0x00000000,0xF0000000 };
+static const U32 _w_NxMinusR[2][8] = { /* n*(-R) mod BPO */
+    W256(0,0,0,0,0,0,0,0),
+    W256(0xCF5D3ED0,0x812631A5,0x2F79CD65,0x4DEF9DEA,1,0,0,0)
+};
 
-static const U8 _b_BPOm2[32] = {      /* BasePointOrder - 2 */
-    0xEB,0xD3,0xF5,0x5C,0x1A,0x63,0x12,0x58,0xD6,0x9C,0xF7,0xA2,0xDE,0xF9,0xDE,0x14,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x10 };
+#define minusR_0    0xCF5D3ED0
+#define minusR_1    0x812631A5
+#define minusR_2    0x2F79CD65
+#define minusR_3    0x4DEF9DEA
+#define minusR_4    1
+#define minusR_5    0
+#define minusR_6    0
+#define minusR_7    0
 
-/* R = 2**256 mod BPO */
-/* R = 0x0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEC6EF5BF4737DCF70D6EC31748D98951D */
- static const U32 _w_R[8] = {   /* R mod BPO */
-    0x8D98951D,0xD6EC3174,0x737DCF70,0xC6EF5BF4,
-    0xFFFFFFFE,0xFFFFFFFF,0xFFFFFFFF,0x0FFFFFFF };
-
-/* R2 = R**2 mod BPO */
-/* R2 = 0x0399411B7C309A3DCEEC73D217F5BE65D00E1BA768859347A40611E3449C0F01 */
-static const U32 _w_R2[8] = {   /* R**2 mod BPO */
-    0x449C0F01,0xA40611E3,0x68859347,0xD00E1BA7,
-    0x17F5BE65,0xCEEC73D2,0x7C309A3D,0x0399411B };
-
-static const U32 _w_One[8] = { 1,0,0,0,0,0,0 };
-
-#define BPO_MINV32  0x12547E1B  /* -1/BPO mod 2**32 */
-
-#define ECP_MULADD_W0(Z,Y,b,X) c.u64 = (U64)(b)*(X) + (Y); Z = c.u32.lo;
-#define ECP_MULADD_W1(Z,Y,b,X) c.u64 = (U64)(b)*(X) + (U64)(Y) + c.u32.hi; Z = c.u32.lo;
-
-/* Computes Z = Y + b*X and return carry */
-static U32 eco_WordMulAdd(U32 *Z, const U32* Y, U32 b, const U32* X) 
+/* Calculate: Y = [b:X] mod BPO 
+// For R = 2^256, we calculate Y = b*R + X mod BPO
+// Since -R mod BPO is only 129-bits, it reduces number of multiplications if
+// we calculate: Y = X - b*(-R) mod BPO instead
+// Note that b*(-R) is 161-bits at most and does not need reduction.
+*/
+void eco_ReduceHiWord(U32* Y, U32 b, const U32* X)
 {
     M64 c;
-    ECP_MULADD_W0(Z[0], Y[0], b, X[0]);
-    ECP_MULADD_W1(Z[1], Y[1], b, X[1]);
-    ECP_MULADD_W1(Z[2], Y[2], b, X[2]);
-    ECP_MULADD_W1(Z[3], Y[3], b, X[3]);
-    ECP_MULADD_W1(Z[4], Y[4], b, X[4]);
-    ECP_MULADD_W1(Z[5], Y[5], b, X[5]);
-    ECP_MULADD_W1(Z[6], Y[6], b, X[6]);
-    ECP_MULADD_W1(Z[7], Y[7], b, X[7]);
-    c.u64 = (U64)Y[8] + c.u32.hi;
-    Z[8] = c.u32.lo;
-    return c.u32.hi;    /* 0 or 1 as the carry out */
-}
+    U32 T[8];
 
-/* Z = (X*Y)/R mod BPO */
-void eco_MontMul(OUT U32 *Z, IN const U32 *X, IN const U32 *Y)
-{
-    int i;
-    U32 T[10] = {0};
-    for (i = 0; i < 8; i++)
-    {
-        T[9]  = eco_WordMulAdd(T, T+1, X[i], Y);     /* T = (T>>32) + X[i]*Y */
-        T[9] += eco_WordMulAdd(T, T, BPO_MINV32 * T[0], _w_BPO);
-        /* T + (-1/BPO)*T*BPO mod 2**32 = 0 --> T[0] = 0 */
-    }
-    /* T[9] could be 2 at most */
-    while (T[9] != 0) T[9] += ecp_Sub(T+1, T+1, _w_maxBPO);
-    ecp_Copy(Z, T+1);
-}
+    /* Set T = b*(-R) */
 
-/* Return Y = X*R mod BPO */
-void eco_ToMont(OUT U32 *Y, IN const U32 *X)
-{
-    eco_MontMul(Y, X, _w_R2);
-}
+    c.u64 = (U64)b*minusR_0;
+    T[0] = c.u32.lo;
+    c.u64 = (U64)b*minusR_1 + c.u32.hi;
+    T[1] = c.u32.lo;
+    c.u64 = (U64)b*minusR_2 + c.u32.hi;
+    T[2] = c.u32.lo;
+    c.u64 = (U64)b*minusR_3 + c.u32.hi;
+    T[3] = c.u32.lo;
+    c.u64 = (U64)b + c.u32.hi;
+    T[4] = c.u32.lo;
+    T[5] = c.u32.hi;
+    T[6] = 0;
+    T[7] = 0;
 
-/* Return Y = X/R mod BPO */
-void eco_FromMont(OUT U32 *Y, IN const U32 *X)
-{
-    eco_MontMul(Y, X, _w_One);
-    while(ecp_Cmp(Y, _w_BPO) >= 0) ecp_Sub(Y, Y, _w_BPO);
-}
+    /* Y = X - T */
+    c.s32.hi = ecp_Sub(Y, X, T);
 
-#define ECO_MONT(n) eco_MontMul(V,V,V); if(e & (1<<n)) eco_MontMul(V,V,U)
+    /* Subtract R if there is a borrow */
 
-/* Calculate Y = X**E mod BPO */
-void eco_ExpModBPO(OUT U32 *Y, IN const U32 *X, IN const U8 *E, IN int bytes)
-{
-    U8 e;
-    U32 U[8], V[8];
-
-    eco_ToMont(U, X);
-    ecp_Copy(V, _w_R);
-
-    while (bytes > 0)
-    {
-        e = E[--bytes];
-        ECO_MONT(7);
-        ECO_MONT(6);
-        ECO_MONT(5);
-        ECO_MONT(4);
-        ECO_MONT(3);
-        ECO_MONT(2);
-        ECO_MONT(1);
-        ECO_MONT(0);
-    }
-    eco_FromMont(Y, V);
-}
-
-/* Calculate Y = 1/X mod BPO */
-void eco_InvModBPO(OUT U32 *Y, IN const U32 *X)
-{
-    eco_ExpModBPO(Y, X, _b_BPOm2, 32);
+    ecp_Add(Y, Y, _w_NxMinusR[-c.s32.hi]);
 }
 
 /* Z = X*Y mod BPO */
 void eco_MulReduce(OUT U32 *Z, IN const U32 *X, IN const U32 *Y)
 {
     U32 T[16];
-    ecp_Mul(T, X, Y);               /* [T2:T1] = X*Y */
-    eco_MontMul(T+8, T+8, _w_R2);   /* T2*(R*R)/R == T2*R mod BPO */
-    eco_AddReduce(Z, T+8, T);       /* Z = T2*R + T1 = X*Y mod BPO */
-}
-
-/* Z = X*Y mod BPO */
-void eco_MulMod(OUT U32 *Z, IN const U32 *X, IN const U32 *Y)
-{
-    U32 T[16];
-    ecp_Mul(T, X, Y);               /* [T2:T1] = X*Y */
-    eco_MontMul(T+8, T+8, _w_R2);   /* T2*(R*R)/R == T2*R mod BPO */
-    eco_AddMod(Z, T+8, T);          /* Z = T2*R + T1 = X*Y mod BPO */
+    ecp_Mul(T, X, Y);                 /* T = X*Y */
+    eco_ReduceHiWord(T+7, T[15], T+7);
+    eco_ReduceHiWord(T+6, T[14], T+6);
+    eco_ReduceHiWord(T+5, T[13], T+5);
+    eco_ReduceHiWord(T+4, T[12], T+4);
+    eco_ReduceHiWord(T+3, T[11], T+3);
+    eco_ReduceHiWord(T+2, T[10], T+2);
+    eco_ReduceHiWord(T+1, T[9], T+1);
+    eco_ReduceHiWord(Z, T[8], T+0);
 }
 
 /* X mod BPO */
 void eco_Mod(U32 *X)
 {
-    while(ecp_Cmp(X, _w_BPO) >= 0) ecp_Sub(X, X, _w_BPO);
+    S32 c = ecp_Sub(X, X, _w_NxBPO[X[7] >> 28]);
+    ecp_Add(X, X, _w_NxBPO[-c]);
 }
 
 /* Z = X + Y mod BPO */
 void eco_AddReduce(OUT U32 *Z, IN const U32 *X, IN const U32 *Y)
 {
     U32 c = ecp_Add(Z, X, Y);
-    while(c != 0) c += ecp_Sub(Z, Z, _w_maxBPO);
-}
-
-/* Z = X + Y mod BPO */
-void eco_AddMod(OUT U32 *Z, IN const U32 *X, IN const U32 *Y)
-{
-    U32 c = ecp_Add(Z, X, Y);
-    while(c != 0) c += ecp_Sub(Z, Z, _w_maxBPO);
-    while(ecp_Cmp(Z, _w_BPO) >= 0) ecp_Sub(Z, Z, _w_BPO);
+    eco_ReduceHiWord(Z, c, Z);
 }
 
 /* Return Y = D mod BPO where D is 512-bit message digest (i.e SHA512 digest) */
 void eco_DigestToWords( OUT U32 *Y, IN const U8 *md)
 {
-    U32 H[8], L[8];
+    U32 T[16];
 
     /* We use digest value as little-endian byte array. */
-    ecp_BytesToWords(L, md);
-    ecp_BytesToWords(H, md+32);
+    ecp_BytesToWords(T, md);
+    ecp_BytesToWords(T+8, md+32);
 
-    /* Value of digest is equal to H*2^256 + L = H*R + L = mont(H,R**2) + L mod BPO */
-    /* This is way simpler and faster than Barrett reduction */
-    eco_MontMul(H, H, _w_R2);       /* H*(R*R)/R = H*R */
-    eco_AddReduce(Y, H, L);         /* Y = H*R + L  */
+    eco_ReduceHiWord(T+7, T[15], T+7);
+    eco_ReduceHiWord(T+6, T[14], T+6);
+    eco_ReduceHiWord(T+5, T[13], T+5);
+    eco_ReduceHiWord(T+4, T[12], T+4);
+    eco_ReduceHiWord(T+3, T[11], T+3);
+    eco_ReduceHiWord(T+2, T[10], T+2);
+    eco_ReduceHiWord(T+1, T[9], T+1);
+    eco_ReduceHiWord(Y, T[8], T+0);
 }

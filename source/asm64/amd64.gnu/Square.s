@@ -82,17 +82,13 @@
     MULADD_W1 A2,16(T),48(T),$38
     MULADD_W1 A3,24(T),56(T),$38
 
-    /* ZF set if ACH == 0 */
-    jz.s    sqr_2
     MULT    $38,ACH
     ADDA    $0,$0,ACH,ACL
-    jnc.s   sqr_2
     
-sqr_1:
-    ADDA    $0,$0,$0,$38
-    jc.s    sqr_1
-    
-sqr_2:
+    sbb     ACL,ACL
+    and     $38,ACL
+    ADDA    $0,$0,$0,ACL
+
     add     $64,%rsp
     pop     ACH
     /* return result */

@@ -58,8 +58,6 @@ const U32 _w_maxP[8] = {   /* 2*P < 2**256 */
 
 static const U32 _w_V38[8] = { 38,0,0,0,0,0,0,0 };
 
-#define ECP_MOD(X)  while (ecp_Cmp(X, _w_P) >= 0) ecp_Sub(X, X, _w_P)
-
 void ecp_SetValue(U32* X, U32 value)
 {
     X[0] = value;
@@ -70,6 +68,17 @@ void ecp_SetValue(U32* X, U32 value)
 void ecp_Copy(U32* Y, const U32* X)
 {
     memcpy(Y, X, 8*sizeof(U32));
+}
+
+int ecp_CmpNE(const U32* X, const U32* Y)
+{
+    return ((X[0] ^ Y[0]) | (X[1] ^ Y[1]) | (X[2] ^ Y[2]) | (X[3] ^ Y[3]));
+}
+
+int ecp_CmpLT(const U32* X, const U32* Y)
+{
+    U32 T[8];
+    return ecp_Sub(T, X, Y);
 }
 
 #define ECP_ADD32(Z,X,Y) c.u64 = (U64)(X) + (Y); Z = c.u32.lo;
@@ -123,16 +132,10 @@ void ecp_SubReduce(U32* Z, const U32* X, const U32* Y)
     while (b != 0) { b += ecp_Add(Z, Z, _w_maxP); }
 }
 
-/* Compares X-Y */
-int ecp_Cmp(const U32* X, const U32* Y) 
+void ecp_Mod(U32 *X)
 {
-    int words = 8;
-    while (words-- > 0)
-    {
-        if (X[words] != Y[words])
-            return (X[words] > Y[words]) ? +1 : -1;
-    }
-    return 0;
+    //S32 c = ecp_Sub(X, X, _w_P);
+    while (ecp_CmpLT(X, _w_P) == 0) ecp_Sub(X, X, _w_P);
 }
 
 #define ECP_MULSET_W0(Y,b,X) c.u64 = (U64)(b)*(X); Y = c.u32.lo;
@@ -259,7 +262,7 @@ void ecp_SqrReduce(U32* Y, const U32* X)
 void ecp_MulMod(U32* Z, const U32* X, const U32* Y) 
 {
     ecp_MulReduce(Z, X, Y);
-    ECP_MOD(Z);
+    ecp_Mod(Z);
 }
 
 /* Courtesy of DJB */

@@ -122,17 +122,13 @@ U   equ rsp+32
     MULADD_W1 A2,[T+16],[U+16],38
     MULADD_W1 A3,[T+24],[U+24],38
 
-    ; ZF set if ACH == 0
-    jz      mr_2
     MULT    38,ACH
     ADDA    0,0,ACH,ACL
-    jnc     mr_2
-    
-mr_1:
-    ADDA    0,0,0,38
-    jc      mr_1
-    
-mr_2:
+
+    sbb     ACL,ACL
+    and     ACL,38
+    ADDA    0,0,0,ACL
+
     add     rsp,64
     pop     Z
     ; return result

@@ -91,7 +91,7 @@ void ecp_PrintWords(IN const char *name, IN const U64 *data, IN U32 size)
 void ecp_PrintHexWords(IN const char *name, IN const U64 *data, IN U32 size)
 {
     printf("%s = 0x", name);
-    while (size > 0) printf("%16llX", data[--size]);
+    while (size > 0) printf("%016llX", data[--size]);
     printf("\n");
 }
 #else

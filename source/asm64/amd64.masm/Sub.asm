@@ -28,6 +28,7 @@ include defines.inc
 ;
 ;   Z = X - Y
 ;   U64 ecp_Sub(U64* Z, const U64* X, const U64* Y) 
+;   Constant-time
 ; _______________________________________________________________________
 PUBPROC ecp_Sub
     
@@ -55,12 +56,15 @@ PUBPROC ecp_SubReduce
     SaveArg3
     LOADA   X
     SUBA    [Y+24],[Y+16],[Y+8],[Y]
-    jnc     sr_2
-sr_1:
-    ; add maxP = 2*P
-    ADDA    -1,-1,-1,-38
-    jnc     sr_1
-sr_2:
+
+    sbb     ACL,ACL
+    and     ACL,38
+    SUBA    0,0,0,ACL
+
+    sbb     ACL,ACL
+    and     ACL,38
+    SUBA    0,0,0,ACL
+
     STOREA  Z
     RestoreArg3
     ret
@@ -69,31 +73,87 @@ ENDPROC ecp_SubReduce
 
 ; _______________________________________________________________________
 ;
-;   compare X and Y, return -1,0,+1
-;   int ecp_Cmp(const U64* X, const U64* Y) 
+;   void ecp_Mod(U64* X)
+;   Constant-time
 ; _______________________________________________________________________
-PUBPROC ecp_Cmp
+PUBPROC ecp_Mod
+X   equ ARG1
+
+    push    C1
+    or      C1,-1
+    LOADA   X
+    mov     ACH,C1
+    mov     ACL,-19
+    shr     ACH,1
+    SUBA    ACH,C1,C1,ACL
+
+    ; Undo SUB if CF=1
+
+    sbb     C1,C1               ; 0 or -1
+    and     ACH,C1              ; 0 or 07fffffffffffffffh
+    and     ACL,C1              ; 0 or -19
+    ADDA    ACH,C1,C1,ACL
+
+    ; There could be second P there 
+    or      C1,-1
+    mov     ACH,C1
+    mov     ACL,-19
+    shr     ACH,1
+    SUBA    ACH,C1,C1,ACL
+
+    ; Undo SUB if CF=1
+
+    sbb     C1,C1               ; 0 or -1
+    and     ACH,C1              ; 0 or 07fffffffffffffffh
+    and     ACL,C1              ; 0 or -19
+    ADDA    ACH,C1,C1,ACL
+
+    STOREA  X
+    pop     C1
+    ret
+
+ENDPROC ecp_Mod
+
+; _______________________________________________________________________
+;
+;   Return non-zero if X < Y
+;   U64 ecp_CmpLT(const U64* X, const U64* Y) 
+;   Constant-time
+; _______________________________________________________________________
+PUBPROC ecp_CmpLT
+    
+X   equ ARG1
+Y   equ ARG2
+
+    LOADA   X
+    SUBA    [Y+24],[Y+16],[Y+8],[Y]
+    SBB     ACL,ACL
+    ret
+
+ENDPROC ecp_CmpLT
+    
+; _______________________________________________________________________
+;
+;   compare X and Y, return 0 if equal, non-zero if different
+;   int ecp_CmpNE(const U64* X, const U64* Y) 
+; _______________________________________________________________________
+PUBPROC ecp_CmpNE
     
 X   equ ARG1
 Y   equ ARG2
 
     mov     ACL,[X+24]
-    sub     ACL,[Y+24]
-    jnz     cmp_1
-    mov     ACL,[X+16]
-    sub     ACL,[Y+16]
-    jnz     cmp_1
-    mov     ACL,[X+8]
-    sub     ACL,[Y+8]
-    jnz     cmp_1
-    mov     ACL,[X]
-    sub     ACL,[Y]
-    jz      cmp_2
-cmp_1:
-    sbb     ACL,ACL
-    lea     ACL,[ACL*2+1]
-cmp_2:
+    mov     A2,[X+16]
+    xor     ACL,[Y+24]
+    xor     A2,[Y+16]
+    mov     A1,[X+8]
+    or      ACL,A2
+    xor     A1,[Y+8]
+    mov     A0,[X]
+    or      ACL,A1
+    xor     A0,[Y]
+    or      ACL,A0
     ret
 
-ENDPROC ecp_Cmp
+ENDPROC ecp_CmpNE
 END    

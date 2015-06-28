@@ -28,6 +28,7 @@
 /*
 /*   Z(4) = Y(4) + b*X(4)    mod 2**255-19
 /*   void ecp_WordMulAddReduce(U64 *Z, const U64* Y, U64 b, const U64* X)
+/*   Constant-time
 /* _______________________________________________________________________ */
     PUBPROC ecp_WordMulAddReduce
 
@@ -45,17 +46,13 @@
     MULADD_W1 A2,16(Y),b,16(X)
     MULADD_W1 A3,24(Y),b,24(X)
 
-    /* ZF set if ACH == 0 */
-    jz.s    wma_2
     MULT    $38,ACH
     ADDA    $0,$0,ACH,ACL
-    jnc.s   wma_2
     
-wma_1:
-    ADDA    $0,$0,$0,$38
-    jc.s    wma_1
-    
-wma_2:
+    sbb     ACL,ACL
+    and     $38,ACL
+    ADDA    $0,$0,$0,ACL
+
     /* return result */
     STOREA  Z
 
@@ -118,5 +115,57 @@ wma_2:
     RestoreArg3
     RestoreArg2
     ret
-    
+
+# _______________________________________________________________________
+#
+#   Calculate: Y = [b:X] mod BPO
+#   void eco_ReduceHiWord(U64* Y, U64 b, const U64* X)
+#
+#   Return Y = X + b*R mod BPO, where R = 2^256 mod BPO
+#   Since -R is 129-bits, we can save some multiplication by
+#   calculating: Y = X - b*(-R) mod BPO
+#   -R mod BPO = { 0x812631A5CF5D3ED0,0x4DEF9DEA2F79CD65,1,0 }#
+# _______________________________________________________________________
+    PUBPROC eco_ReduceHiWord
+
+    PushB
+    SaveArg1
+
+.equ  Y,  ARG1M
+.equ  b,  ARG2
+.equ  X,  ARG3
+
+    mov     b,B2
+    LOADA   X
+
+
+    MULSET  B1,B0,$0x812631A5CF5D3ED0,B2
+    MULT    $0x4DEF9DEA2F79CD65,B2
+    xor     B3,B3
+    add     ACL,B1
+    adc     ACH,B2
+    adc     B3,B3
+
+    SUBA    B3,B2,B1,B0
+
+    # Add -R if there is a carry
+    sbb     B2,B2
+
+    # B = -R mod BPO
+    mov     $0x812631A5CF5D3ED0,B0
+    mov     $0x4DEF9DEA2F79CD65,B1
+    xor     B3,B3
+
+    and     B2,B0
+    and     B2,B1
+    and     $1,B2
+    ADDA    B3,B2,B1,B0
+
+    STOREA  Y
+
+    RestoreArg1
+    PopB
+    ret
+
+   
     

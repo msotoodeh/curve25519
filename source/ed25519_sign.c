@@ -43,7 +43,9 @@
  */
 
 extern const U_WORD _w_maxP[K_WORDS];
-extern const U_WORD _w_BPO[K_WORDS];
+extern const U_WORD _w_NxBPO[16][K_WORDS];
+
+#define _w_BPO _w_NxBPO[1]
 
 /*
 // -- custom blind --------------------------------------------------------- 
@@ -60,9 +62,9 @@ const U_WORD _w_2d[K_WORDS] = /* 2*d */
 const U_WORD _w_di[K_WORDS] = /* 1/d */
     W256(0xCDC9F843,0x25E0F276,0x4279542E,0x0B5DD698,0xCDB9CF66,0x2B162114,0x14D5CE43,0x40907ED2);
 
-#include "base_perm_p32.h"
+#include "base_folding8.h"
 
-const PA_POINT _w_basepoint_perm64[16] =
+const PA_POINT _w_base_folding4[16] =
 {
   { /* P{0} */
     W256(0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000),
@@ -156,10 +158,10 @@ void edp_AddBasePoint(Ext_POINT *p)
     U_WORD a[K_WORDS], b[K_WORDS], c[K_WORDS], d[K_WORDS], e[K_WORDS];
 
     ecp_SubReduce(a, p->y, p->x);           /* A = (Y1-X1)*(Y2-X2) */
-    ecp_MulReduce(a, a, _w_basepoint_perm64[1].YmX);
+    ecp_MulReduce(a, a, _w_base_folding4[1].YmX);
     ecp_AddReduce(b, p->y, p->x);           /* B = (Y1+X1)*(Y2+X2) */
-    ecp_MulReduce(b, b, _w_basepoint_perm64[1].YpX);
-    ecp_MulReduce(c, p->t, _w_basepoint_perm64[1].T2d); /* C = T1*2d*T2 */
+    ecp_MulReduce(b, b, _w_base_folding4[1].YpX);
+    ecp_MulReduce(c, p->t, _w_base_folding4[1].T2d); /* C = T1*2d*T2 */
     ecp_AddReduce(d, p->z, p->z);           /* D = 2*Z1 */
     ecp_SubReduce(e, b, a);                 /* E = B-A */
     ecp_AddReduce(b, b, a);                 /* H = B+A */
@@ -258,7 +260,7 @@ void edp_BasePointMult(OUT Ext_POINT *S, IN const U_WORD *sk, IN const U_WORD *R
 
     ecp_8Folds(cut, sk);
 
-    p0 = &_w_basepoint_perm32[cut[0]];
+    p0 = &_w_base_folding8[cut[0]];
 
     ecp_SubReduce(S->x, p0->YpX, p0->YmX);  /* 2x */
     ecp_AddReduce(S->y, p0->YpX, p0->YmX);  /* 2y */
@@ -274,7 +276,7 @@ void edp_BasePointMult(OUT Ext_POINT *S, IN const U_WORD *sk, IN const U_WORD *R
     do 
     {
         edp_DoublePoint(S);
-        edp_AddAffinePoint(S, &_w_basepoint_perm32[cut[i]]);
+        edp_AddAffinePoint(S, &_w_base_folding8[cut[i]]);
     } while (i++ < 31);
 }
 
@@ -444,7 +446,8 @@ void ed25519_SignMessage(
     eco_DigestToWords(t, md);
 
     eco_MulReduce(t, t, a);             /* h()*a */
-    eco_AddMod(t, t, r);
+    eco_AddReduce(t, t, r);
+    eco_Mod(t);
     ecp_WordsToBytes(signature+32, t);  /* S part of signature */
 
     /* Clear sensitive data */

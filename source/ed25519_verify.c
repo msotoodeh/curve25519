@@ -48,13 +48,12 @@ typedef struct {
 } EDP_SIGV_CTX;
 
 extern const U_WORD _w_P[K_WORDS];
-extern const U_WORD _w_BPO[K_WORDS];
 extern const U_WORD _w_2d[K_WORDS];
 
-extern const PA_POINT _w_basepoint_perm64[16];
+extern const PA_POINT _w_base_folding4[16];
 
-#define _w_Zero     _w_basepoint_perm64[0].T2d
-#define _w_One      _w_basepoint_perm64[0].YpX
+#define _w_Zero     _w_base_folding4[0].T2d
+#define _w_One      _w_base_folding4[0].YpX
 
 const U_WORD _w_I[K_WORDS] = /* sqrt(-1) */
     W256(0x4A0EA0B0,0xC4EE1B27,0xAD2FE478,0x2F431806,0x3DFBD7A7,0x2B4D0099,0x4FC1DF0B,0x2B832480);
@@ -88,10 +87,10 @@ void ed25519_CalculateX(OUT U_WORD *X, IN const U_WORD *Y, U_WORD parity)
     ecp_SqrReduce(b, X);
     ecp_MulReduce(b, b, v);
     ecp_SubReduce(b, b, u);
-    while (ecp_Cmp(b, _w_P) >= 0) ecp_Sub(b, b, _w_P);
-    if (ecp_Cmp(b, _w_Zero) != 0) ecp_MulReduce(X, X, _w_I);
+    ecp_Mod(b);
+    if (ecp_CmpNE(b, _w_Zero)) ecp_MulReduce(X, X, _w_I);
 
-    while (ecp_Cmp(X, _w_P) >= 0) ecp_Sub(X, X, _w_P);
+    while (ecp_CmpLT(X, _w_P) == 0) ecp_Sub(X, X, _w_P);
 
     /* match parity */
     if (((X[0] ^ parity) & 1) != 0)
@@ -274,7 +273,7 @@ void ed25519_Verify_Finish(void *ctx)
     MVBIT(x,b,0) | MVBIT(x,b+8,1) | MVBIT(x,b+16,2) | MVBIT(x,b+24,3)
 
 #define DBLADD_PQ(S,x,y,b) edp_DoublePoint(S); \
-    edp_AddAffinePoint(S, &_w_basepoint_perm64[BMASK(x,b)]); \
+    edp_AddAffinePoint(S, &_w_base_folding4[BMASK(x,b)]); \
     edp_AddPoint(S, S, &qtable[BMASK(y,b)])
 
 static void edp_dual_mul_byte(

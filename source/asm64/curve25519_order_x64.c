@@ -38,143 +38,62 @@
   This library is used for implementation of ECDSA sign/verify.
 */
 
-const U64 _w_BPO[4] = { /* BPO as words */
-    0x5812631A5CF5D3ED,0x14DEF9DEA2F79CD6,0x0000000000000000,0x1000000000000000 };
+const U_WORD _w_NxBPO[16][K_WORDS] = {  /* n*BPO */
+    W256(0,0,0,0,0,0,0,0),
+    W256(0x5CF5D3ED,0x5812631A,0xA2F79CD6,0x14DEF9DE,0,0,0,0x10000000),
+    W256(0xB9EBA7DA,0xB024C634,0x45EF39AC,0x29BDF3BD,0,0,0,0x20000000),
+    W256(0x16E17BC7,0x0837294F,0xE8E6D683,0x3E9CED9B,0,0,0,0x30000000),
+    W256(0x73D74FB4,0x60498C69,0x8BDE7359,0x537BE77A,0,0,0,0x40000000),
+    W256(0xD0CD23A1,0xB85BEF83,0x2ED6102F,0x685AE159,0,0,0,0x50000000),
+    W256(0x2DC2F78E,0x106E529E,0xD1CDAD06,0x7D39DB37,0,0,0,0x60000000),
+    W256(0x8AB8CB7B,0x6880B5B8,0x74C549DC,0x9218D516,0,0,0,0x70000000),
+    W256(0xE7AE9F68,0xC09318D2,0x17BCE6B2,0xA6F7CEF5,0,0,0,0x80000000),
+    W256(0x44A47355,0x18A57BED,0xBAB48389,0xBBD6C8D3,0,0,0,0x90000000),
+    W256(0xA19A4742,0x70B7DF07,0x5DAC205F,0xD0B5C2B2,0,0,0,0xA0000000),
+    W256(0xFE901B2F,0xC8CA4221,0x00A3BD35,0xE594BC91,0,0,0,0xB0000000),
+    W256(0x5B85EF1C,0x20DCA53C,0xA39B5A0C,0xFA73B66F,0,0,0,0xC0000000),
+    W256(0xB87BC309,0x78EF0856,0x4692F6E2,0x0F52B04E,1,0,0,0xD0000000),
+    W256(0x157196F6,0xD1016B71,0xE98A93B8,0x2431AA2C,1,0,0,0xE0000000),
+    W256(0x72676AE3,0x2913CE8B,0x8C82308F,0x3910A40B,1,0,0,0xF0000000)
+};
 
-static const U64 _w_maxBPO[4] = { /* 15*BPO fits into 8 words */
-    0x2913CE8B72676AE3,0x3910A40B8C82308F,0x0000000000000001,0xF000000000000000 };
-
-static const U8 _b_BPOm2[32] = {      /* BasePointOrder - 2 */
-    0xEB,0xD3,0xF5,0x5C,0x1A,0x63,0x12,0x58,0xD6,0x9C,0xF7,0xA2,0xDE,0xF9,0xDE,0x14,
-    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x10 };
-
-/* R = 2**256 mod BPO */
-/* R = 0x0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEC6EF5BF4737DCF70D6EC31748D98951D */
- static const U64 _w_R[4] = {   /* R mod BPO */
-    0xD6EC31748D98951D,0xC6EF5BF4737DCF70,0xFFFFFFFFFFFFFFFE,0x0FFFFFFFFFFFFFFF };
-
-/* R2 = R**2 mod BPO */
-/* R2 = 0x0399411B7C309A3DCEEC73D217F5BE65D00E1BA768859347A40611E3449C0F01 */
-static const U64 _w_R2[4] = {   /* R**2 mod BPO */
-    0xA40611E3449C0F01,0xD00E1BA768859347,0xCEEC73D217F5BE65,0x0399411B7C309A3D };
-
-static const U64 _w_One[4] = { 1,0,0,0 };
-
-#define BPO_MINV64  0xD2B51DA312547E1B /* -1/BPO mod 2**64 */
-
-/* Z = (X*Y)/R mod BPO */
-void eco_MontMul(OUT U64 *Z, IN const U64 *X, IN const U64 *Y)
+/* Z = X + Y mod BPO */
+void eco_AddReduce(OUT U64 *Z, IN const U64 *X, IN const U64 *Y)
 {
-    U64 T[6];
-    ecp_WordMulSet(T, X[0], Y);                 /* T = X[0]*Y */
-    T[5]  = ecp_WordMulAdd(T, T, BPO_MINV64 * T[0], _w_BPO);
-    T[5]  = ecp_WordMulAdd(T, T+1, X[1], Y);    /* T = (T>>64) + X[1]*Y */
-    T[5] += ecp_WordMulAdd(T, T, BPO_MINV64 * T[0], _w_BPO);
-    T[5]  = ecp_WordMulAdd(T, T+1, X[2], Y);    /* T = (T>>64) + X[2]*Y */
-    T[5] += ecp_WordMulAdd(T, T, BPO_MINV64 * T[0], _w_BPO);
-    T[5]  = ecp_WordMulAdd(T, T+1, X[3], Y);    /* T = (T>>64) + X[3]*Y */
-    T[5] += ecp_WordMulAdd(T, T, BPO_MINV64 * T[0], _w_BPO);
-    /* T + (-1/BPO)*T*BPO mod 2**64 = 0 --> T[0] = 0 */
-    /* T[9] could be 2 at most */
-    while (T[5] != 0) T[5] += ecp_Sub(T+1, T+1, _w_maxBPO);
-    ecp_Copy(Z, T+1);   /* return T>>64 */
-}
-
-/* Return Y = X*R mod BPO */
-void eco_ToMont(OUT U64 *Y, IN const U64 *X)
-{
-    eco_MontMul(Y, X, _w_R2);
-}
-
-/* Return Y = X/R mod BPO */
-void eco_FromMont(OUT U64 *Y, IN const U64 *X)
-{
-    eco_MontMul(Y, X, _w_One);
-    while(ecp_Cmp(Y, _w_BPO) >= 0) ecp_Sub(Y, Y, _w_BPO);
-}
-
-#define ECO_MONT(n) eco_MontMul(V,V,V); if(e & n) eco_MontMul(V,V,U)
-
-/* Calculate Y = X**E mod BPO */
-void eco_ExpModBPO(OUT U64 *Y, IN const U64 *X, IN const U8 *E, IN int bytes)
-{
-    U8 e;
-    U64 U[4], V[4];
-
-    eco_ToMont(U, X);
-    ecp_Copy(V, _w_R);
-
-    while (bytes > 0)
-    {
-        e = E[--bytes];
-        ECO_MONT(0x80);
-        ECO_MONT(0x40);
-        ECO_MONT(0x20);
-        ECO_MONT(0x10);
-        ECO_MONT(0x08);
-        ECO_MONT(0x04);
-        ECO_MONT(0x02);
-        ECO_MONT(0x01);
-    }
-    eco_FromMont(Y, V);
-}
-
-/* Calculate Y = 1/X mod BPO */
-void eco_InvModBPO(OUT U64 *Y, IN const U64 *X)
-{
-    eco_ExpModBPO(Y, X, _b_BPOm2, 32);
+    U64 c = ecp_Add(Z, X, Y);
+    eco_ReduceHiWord(Z, c, Z);
 }
 
 /* Z = X*Y mod BPO */
 void eco_MulReduce(OUT U64 *Z, IN const U64 *X, IN const U64 *Y)
 {
     U64 T[8];
-    ecp_Mul(T, X, Y);               /* [T2:T1] = X*Y */
-    eco_MontMul(T+4, T+4, _w_R2);   /* T2*(R*R)/R == T2*R mod BPO */
-    eco_AddReduce(Z, T+4, T);       /* Z = T2*R + T1 = X*Y mod BPO */
-}
-
-/* Z = X*Y mod BPO */
-void eco_MulMod(OUT U64 *Z, IN const U64 *X, IN const U64 *Y)
-{
-    U64 T[8];
-    ecp_Mul(T, X, Y);               /* [T2:T1] = X*Y */
-    eco_MontMul(T+4, T+4, _w_R2);   /* T2*(R*R)/R == T2*R mod BPO */
-    eco_AddMod(Z, T+4, T);          /* Z = T2*R + T1 = X*Y mod BPO */
+    ecp_Mul(T, X, Y);                 /* T = X*Y */
+    eco_ReduceHiWord(T+3, T[7], T+3);
+    eco_ReduceHiWord(T+2, T[6], T+2);
+    eco_ReduceHiWord(T+1, T[5], T+1);
+    eco_ReduceHiWord(Z, T[4], T+0);
 }
 
 /* X mod BPO */
 void eco_Mod(U64 *X)
 {
-    while(ecp_Cmp(X, _w_BPO) >= 0) ecp_Sub(X, X, _w_BPO);
-}
-
-/* Z = X + Y mod BPO */
-void eco_AddReduce(OUT U64 *Z, IN const U64 *X, IN const U64 *Y)
-{
-    U64 c = ecp_Add(Z, X, Y);
-    while(c != 0) c += ecp_Sub(Z, Z, _w_maxBPO);
-}
-
-/* Z = X + Y mod BPO */
-void eco_AddMod(OUT U64 *Z, IN const U64 *X, IN const U64 *Y)
-{
-    U64 c = ecp_Add(Z, X, Y);
-    while(c != 0) c += ecp_Sub(Z, Z, _w_maxBPO);
-    while(ecp_Cmp(Z, _w_BPO) >= 0) ecp_Sub(Z, Z, _w_BPO);
+    S64 c = ecp_Sub(X, X, _w_NxBPO[X[3] >> 60]);
+    ecp_Add(X, X, _w_NxBPO[-c]);
 }
 
 /* Return Y = D mod BPO where D is 512-bit message digest (i.e SHA512 digest) */
 void eco_DigestToWords( OUT U64 *Y, IN const U8 *md)
 {
-    U64 H[4], L[4];
+    U64 T[8];
 
     /* We use digest value as little-endian byte array. */
-    ecp_BytesToWords(L, md);
-    ecp_BytesToWords(H, md+32);
+    ecp_BytesToWords(T, md);
+    ecp_BytesToWords(T+4, md+32);
 
-    /* Value of digest is equal to H*2^256 + L = H*R + L = mont(H,R**2) + L mod BPO */
-    /* This is way simpler and faster than Barrett reduction */
-    eco_MontMul(H, H, _w_R2);       /* H*(R*R)/R = H*R */
-    eco_AddReduce(Y, H, L);         /* Y = H*R + L  */
+    /* Reduce T mod BPO */
+    eco_ReduceHiWord(T+3, T[7], T+3);
+    eco_ReduceHiWord(T+2, T[6], T+2);
+    eco_ReduceHiWord(T+1, T[5], T+1);
+    eco_ReduceHiWord(Y, T[4], T+0);
 }

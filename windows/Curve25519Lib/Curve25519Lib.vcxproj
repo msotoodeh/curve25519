@@ -129,7 +129,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\BaseTypes.h" />
-    <ClInclude Include="..\..\source\base_perm_p32.h" />
+    <ClInclude Include="..\..\source\base_folding8.h" />
     <ClInclude Include="..\..\source\curve25519_dh.h" />
     <ClInclude Include="..\..\source\curve25519_mehdi.h" />
     <ClInclude Include="..\..\source\ed25519_signature.h" />

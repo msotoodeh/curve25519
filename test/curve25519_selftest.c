@@ -58,17 +58,18 @@ extern const U_WORD _w_P[K_WORDS];
 extern const U_WORD _w_maxP[K_WORDS];
 extern const U_WORD _w_I[K_WORDS];
 extern const U_WORD _w_2d[K_WORDS];
-extern const U_WORD _w_BPO[K_WORDS];
-extern const PA_POINT _w_basepoint_perm64[16];
+extern const PA_POINT _w_base_folding4[16];
+extern const U_WORD _w_NxBPO[16][K_WORDS];
+
+#define _w_BPO      _w_NxBPO[1]
+#define _w_maxBPO   _w_NxBPO[15]
 
 static const U8 _b_Pp3d8[32] = {    /* (P+3)/8 */
     0xFE,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
     0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x0F };
 
-#define _w_Zero     _w_basepoint_perm64[0].T2d
-#define _w_One      _w_basepoint_perm64[0].YpX
-
-#define ECP_MOD(X)  while (ecp_Cmp(X, _w_P) >= 0) ecp_Sub(X, X, _w_P)
+#define _w_Zero     _w_base_folding4[0].T2d
+#define _w_One      _w_base_folding4[0].YpX
 
 static const U_WORD inv_5[K_WORDS] = /* 1/5 mod p */
     W256(0x99999996,0x99999999,0x99999999,0x99999999,0x99999999,0x99999999,0x99999999,0x19999999);
@@ -124,6 +125,9 @@ static const U_WORD _w_Gy[K_WORDS] =
 static const U_WORD _w_IxD[K_WORDS] =
     W256(0x9E451EDD,0x71C41B45,0x7FBCC19E,0x49800849,0xBBCB7C34,0xF4C5CE99,0xB32C1AB4,0x024AEE07);
 
+static const U_WORD _w_IxDmodBPO[K_WORDS] = /* I*D mod BPO */
+    W256(0xFDC0315D,0x598EF460,0xE11649F4,0x2DEBEE7C,0x0278EFB4,0x331877FE,0xFBE03ECE,0x00A63CC5);
+
 static const U8 sha512_abc[] = {    /* 'abc' */
     0xDD,0xAF,0x35,0xA1,0x93,0x61,0x7A,0xBA,0xCC,0x41,0x73,0x49,0xAE,0x20,0x41,0x31,
     0x12,0xE6,0xFA,0x4E,0x89,0xA9,0x7E,0xA2,0x0A,0x9E,0xEE,0xE6,0x4B,0x55,0xD3,0x9A,
@@ -136,6 +140,22 @@ static const U8 sha512_ax1m[] = {   /* 'a' repeated 1,000,000 times */
     0xDE,0x0F,0xF2,0x44,0x87,0x7E,0xA6,0x0A,0x4C,0xB0,0x43,0x2C,0xE5,0x77,0xC3,0x1B,
     0xEB,0x00,0x9C,0x5C,0x2C,0x49,0xAA,0x2E,0x4E,0xAD,0xB2,0x17,0xAD,0x8C,0xC0,0x9B };
 
+static const U8 _b_BPOm2[32] = {      /* BasePointOrder - 2 */
+    0xEB,0xD3,0xF5,0x5C,0x1A,0x63,0x12,0x58,0xD6,0x9C,0xF7,0xA2,0xDE,0xF9,0xDE,0x14,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x10 };
+
+/* R = 2**256 mod BPO */
+/* R = 0x0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEC6EF5BF4737DCF70D6EC31748D98951D */
+ static const U_WORD _w_R[K_WORDS] = /* R mod BPO */
+    W256(0x8D98951D,0xD6EC3174,0x737DCF70,0xC6EF5BF4,
+         0xFFFFFFFE,0xFFFFFFFF,0xFFFFFFFF,0x0FFFFFFF);
+
+/* R2 = R**2 mod BPO */
+/* R2 = 0x0399411B7C309A3DCEEC73D217F5BE65D00E1BA768859347A40611E3449C0F01 */
+static const U_WORD _w_R2[K_WORDS] = /* R**2 mod BPO */
+    W256(0x449C0F01,0xA40611E3,0x68859347,0xD00E1BA7,
+         0x17F5BE65,0xCEEC73D2,0x7C309A3D,0x0399411B);
+
 int ecp_IsZero(IN const U_WORD *X)
 {
     return (X[0] | X[1] | X[2] | X[3]
@@ -143,6 +163,121 @@ int ecp_IsZero(IN const U_WORD *X)
         | X[4] | X[5] | X[6] | X[7]
 #endif
         ) == 0;
+}
+
+/* Z = X + Y mod BPO */
+void eco_AddMod(OUT U_WORD *Z, IN const U_WORD *X, IN const U_WORD *Y)
+{
+    eco_AddReduce(Z, X, Y);
+    eco_Mod(Z);
+}
+
+/* Z = X*Y mod BPO */
+void eco_MulMod(OUT U_WORD *Z, IN const U_WORD *X, IN const U_WORD *Y)
+{
+    eco_MulReduce(Z, X, Y);
+    eco_Mod(Z);
+}
+
+#ifdef WORDSIZE_32
+#define BPO_MINV32  0x12547E1B  /* -1/BPO mod 2**32 */
+
+#define ECP_MULADD_W0(Z,Y,b,X) c.u64 = (U64)(b)*(X) + (Y); Z = c.u32.lo;
+#define ECP_MULADD_W1(Z,Y,b,X) c.u64 = (U64)(b)*(X) + (U64)(Y) + c.u32.hi; Z = c.u32.lo;
+
+/* Computes Z = Y + b*X and return carry */
+static U32 eco_WordMulAdd(U32 *Z, const U32* Y, U32 b, const U32* X) 
+{
+    M64 c;
+    ECP_MULADD_W0(Z[0], Y[0], b, X[0]);
+    ECP_MULADD_W1(Z[1], Y[1], b, X[1]);
+    ECP_MULADD_W1(Z[2], Y[2], b, X[2]);
+    ECP_MULADD_W1(Z[3], Y[3], b, X[3]);
+    ECP_MULADD_W1(Z[4], Y[4], b, X[4]);
+    ECP_MULADD_W1(Z[5], Y[5], b, X[5]);
+    ECP_MULADD_W1(Z[6], Y[6], b, X[6]);
+    ECP_MULADD_W1(Z[7], Y[7], b, X[7]);
+    c.u64 = (U64)Y[8] + c.u32.hi;
+    Z[8] = c.u32.lo;
+    return c.u32.hi;    /* 0 or 1 as the carry out */
+}
+
+/* Z = (X*Y)/R mod BPO */
+void eco_MontMul(OUT U32 *Z, IN const U32 *X, IN const U32 *Y)
+{
+    int i;
+    U32 T[10] = {0};
+    for (i = 0; i < 8; i++)
+    {
+        T[9]  = eco_WordMulAdd(T, T+1, X[i], Y);     /* T = (T>>32) + X[i]*Y */
+        T[9] += eco_WordMulAdd(T, T, BPO_MINV32 * T[0], _w_BPO);
+        /* T + (-1/BPO)*T*BPO mod 2**32 = 0 --> T[0] = 0 */
+    }
+    /* T[9] could be 2 at most */
+    while (T[9] != 0) T[9] += ecp_Sub(T+1, T+1, _w_maxBPO);
+    ecp_Copy(Z, T+1);
+}
+#else
+#define BPO_MINV64  0xD2B51DA312547E1B /* -1/BPO mod 2**64 */
+
+/* Z = (X*Y)/R mod BPO */
+void eco_MontMul(OUT U64 *Z, IN const U64 *X, IN const U64 *Y)
+{
+    U64 T[6];
+    ecp_WordMulSet(T, X[0], Y);                 /* T = X[0]*Y */
+    T[5]  = ecp_WordMulAdd(T, T, BPO_MINV64 * T[0], _w_BPO);
+    T[5]  = ecp_WordMulAdd(T, T+1, X[1], Y);    /* T = (T>>64) + X[1]*Y */
+    T[5] += ecp_WordMulAdd(T, T, BPO_MINV64 * T[0], _w_BPO);
+    T[5]  = ecp_WordMulAdd(T, T+1, X[2], Y);    /* T = (T>>64) + X[2]*Y */
+    T[5] += ecp_WordMulAdd(T, T, BPO_MINV64 * T[0], _w_BPO);
+    T[5]  = ecp_WordMulAdd(T, T+1, X[3], Y);    /* T = (T>>64) + X[3]*Y */
+    T[5] += ecp_WordMulAdd(T, T, BPO_MINV64 * T[0], _w_BPO);
+    /* T + (-1/BPO)*T*BPO mod 2**64 = 0 --> T[0] = 0 */
+    /* T[5] could be 2 at most */
+    while (T[5] != 0) T[5] += ecp_Sub(T+1, T+1, _w_maxBPO);
+    ecp_Copy(Z, T+1);   /* return T>>64 */
+    //eco_ReduceHiWord(Z, T[5], T+1);
+}
+#endif
+
+/* Return Y = X*R mod BPO */
+void eco_ToMont(OUT U_WORD *Y, IN const U_WORD *X)
+{
+    eco_MontMul(Y, X, _w_R2);
+}
+
+/* Return Y = X/R mod BPO */
+void eco_FromMont(OUT U_WORD *Y, IN const U_WORD *X)
+{
+    eco_MontMul(Y, X, _w_One);
+}
+
+#define ECO_SQRMUL(n) eco_MulReduce(Y,Y,Y); if(e & n) eco_MulReduce(Y,Y,X)
+
+/* Calculate Y = X**E mod BPO */
+void eco_ExpModBPO(OUT U_WORD *Y, IN const U_WORD *X, IN const U8 *E, IN int bytes)
+{
+    U8 e;
+    ecp_SetValue(Y, 1);
+
+    while (bytes > 0)
+    {
+        e = E[--bytes];
+        ECO_SQRMUL(0x80);
+        ECO_SQRMUL(0x40);
+        ECO_SQRMUL(0x20);
+        ECO_SQRMUL(0x10);
+        ECO_SQRMUL(0x08);
+        ECO_SQRMUL(0x04);
+        ECO_SQRMUL(0x02);
+        ECO_SQRMUL(0x01);
+    }
+}
+
+/* Calculate Y = 1/X mod BPO */
+void eco_InvModBPO(OUT U_WORD *Y, IN const U_WORD *X)
+{
+    eco_ExpModBPO(Y, X, _b_BPOm2, 32);
 }
 
 // check if y^2 == x^3 + 486662x^2 + x  mod 2^255 - 19
@@ -156,12 +291,12 @@ int x25519_IsOnCurve(IN const U_WORD *X, IN const U_WORD *Y)
     ecp_MulReduce(A, A, X);     /* x^3 + 486662x^2 */
     ecp_AddReduce(A, A, X);     /* x^3 + 486662x^2 + x */
     ecp_SqrReduce(B, Y);
-    ECP_MOD(A);
-    ECP_MOD(B);
-    if (ecp_Cmp(B, A) == 0) return 1;
+    ecp_Mod(A);
+    ecp_Mod(B);
+    if (ecp_CmpNE(B, A) == 0) return 1;
     // check if sqrt(-1) was applied incorrectly
     ecp_Sub(B, _w_P, B);
-    return (ecp_Cmp(B, A) == 0) ? 1 : 0;
+    return (ecp_CmpNE(B, A) == 0) ? 1 : 0;
 }
 
 int hash_test(int level)
@@ -268,8 +403,8 @@ void pre_compute_base_point()
     for (i = 0; i < 16; i++)
     {
         printf("  { /* %d*P */\n", i);
-        ecp_AddReduce(R.YpX, P.y, P.x); ECP_MOD(R.YpX);
-        ecp_SubReduce(R.YmX, P.y, P.x); ECP_MOD(R.YmX);
+        ecp_AddReduce(R.YpX, P.y, P.x); ecp_Mod(R.YpX);
+        ecp_SubReduce(R.YmX, P.y, P.x); ecp_Mod(R.YmX);
         ecp_MulMod(R.T2d, P.t, _w_2d);
 
         print_words("    W256(",R.YpX, K_WORDS);
@@ -307,12 +442,12 @@ void Ext2Affine(PA_POINT *r, Ext_POINT *p)
     ecp_MulMod(p->t, p->x, p->y);
     ecp_SetValue(p->z, 1);
 
-    ecp_AddReduce(r->YpX, p->y, p->x); ECP_MOD(r->YpX);
-    ecp_SubReduce(r->YmX, p->y, p->x); ECP_MOD(r->YmX);
+    ecp_AddReduce(r->YpX, p->y, p->x); ecp_Mod(r->YpX);
+    ecp_SubReduce(r->YmX, p->y, p->x); ecp_Mod(r->YmX);
     ecp_MulMod(r->T2d, p->t, _w_2d);
 }
 
-void pre_compute_base_powers_64()
+void pre_compute_base_folding4()
 {
     Ext_POINT S = _w_BasePoint;
     PA_POINT P0, P1, P2, P3;
@@ -328,7 +463,7 @@ void pre_compute_base_powers_64()
     for (j = 0; j < 64; j++) edp_DoublePoint(&S);
     Ext2Affine(&P3, &S);
 
-    printf("\nconst PA_POINT _w_basepoint_perm64[16] = \n{\n");
+    printf("\nconst PA_POINT _w_base_folding4[16] = \n{\n");
     for (i = 0; i < 16; i++)
     {
         ecp_SetValue(S.x, 0);
@@ -355,7 +490,7 @@ void pre_compute_base_powers_64()
     }
 }
 
-void pre_compute_base_powers_32()
+void pre_compute_base_folding8()
 {
     Ext_POINT S = _w_BasePoint;
     PA_POINT P0, P1, P2, P3, P4, P5, P6, P7;
@@ -379,7 +514,7 @@ void pre_compute_base_powers_32()
     for (j = 0; j < 32; j++) edp_DoublePoint(&S);
     Ext2Affine(&P7, &S);
 
-    printf("\nconst PA_POINT _w_basepoint_perm64[16] = \n{\n");
+    printf("\nconst PA_POINT _w_base_folding4[16] = \n{\n");
     for (i = 0; i < 256; i++)
     {
         ecp_SetValue(S.x, 0);
@@ -397,7 +532,7 @@ void pre_compute_base_powers_32()
         if (i & 128) edp_AddAffinePoint(&S, &P7);
         Ext2Affine(&R, &S);
 
-        printf("  { // P{%d}\n", i);
+        printf("  { /* P{%d} */\n", i);
         print_words("    W256(",R.YpX, K_WORDS);
         print_words("),\n    W256(",R.YmX, K_WORDS);
         print_words("),\n    W256(",R.T2d, K_WORDS);
@@ -428,7 +563,7 @@ void ecp_ExpMod(U_WORD* Y, const U_WORD* X, const U8* E, int bytes)
             e <<= 1;
         }
     }
-    ECP_MOD(Y);
+    ecp_Mod(Y);
 }
 
 
@@ -445,15 +580,15 @@ void ecp_CalculateY(OUT U8 *Y, IN const U8 *X)
     ecp_ExpMod(T, A, _b_Pp3d8, 32);
     /* if T*T != A: T *= sqrt(-1) */
     ecp_MulMod(B, T, T);
-    if (ecp_Cmp(B, A) != 0) ecp_MulMod(T, T, _w_I);
+    if (ecp_CmpNE(B, A)) ecp_MulMod(T, T, _w_I);
     ecp_WordsToBytes(Y, T);
 }
 
 int curve25519_SelfTest(int level)
 {
-    int rc = 0;
+    int i, rc = 0;
     M32 m;
-    U_WORD A[K_WORDS], B[K_WORDS], C[K_WORDS];
+    U_WORD A[K_WORDS], B[K_WORDS], C[K_WORDS], T[2*K_WORDS];
     U8 a[32], b[32], c[32], d[32];
 
     /* Make sure library is built with correct byte ordering */
@@ -472,53 +607,111 @@ int curve25519_SelfTest(int level)
     rc = hash_test(level);
 
     ecp_AddReduce(A, _w_I, _w_P);
-    ECP_MOD(A);
-    if (ecp_Cmp(A, _w_I) != 0)
+    ecp_Mod(A);
+    if (ecp_CmpNE(A, _w_I))
     {
         rc++;
         printf("assert I+p == I mod p FAILED!!\n");
-        ecp_PrintHexWords("A_1", A, 8);
+        ecp_PrintHexWords("A_1", A, K_WORDS);
     }
     ecp_MulReduce(B, _w_I, _w_D);
-    ECP_MOD(B);
-    if (ecp_Cmp(B, _w_IxD) != 0)
+    ecp_Mod(B);
+    if (ecp_CmpNE(B, _w_IxD))
     {
         rc++;
         printf("assert I*D FAILED!!\n");
-        ecp_PrintHexWords("A_2", B, 8);
+        ecp_PrintHexWords("A_2", B, K_WORDS);
     }
 
+    /* calculate I*D mod BPO using different interfaces */
+    eco_ToMont(A, _w_I);
+    eco_ToMont(B, _w_D);
+    eco_MontMul(C, A, B);
+    eco_FromMont(A, C);
+    eco_Mod(A);
+    if (ecp_CmpNE(A, _w_IxDmodBPO))
+    {
+        rc++;
+        printf("methods 1 of I*D mod BPO FAILED!!\n");
+        ecp_PrintHexWords("Calc", A, K_WORDS);
+        ecp_PrintHexWords("Expt", _w_IxDmodBPO, K_WORDS);
+    }
+
+    eco_MulMod(B, _w_I, _w_D);
+    if (ecp_CmpNE(B, _w_IxDmodBPO))
+    {
+        rc++;
+        printf("methods 2 of I*D mod BPO FAILED!!\n");
+        ecp_PrintHexWords("Calc", B, K_WORDS);
+        ecp_PrintHexWords("Expt", _w_IxDmodBPO, K_WORDS);
+    }
+
+    ecp_Mul(T, _w_I, _w_D);
+    eco_ReduceHiWord(T+3, T[7], T+3);
+    eco_ReduceHiWord(T+2, T[6], T+2);
+    eco_ReduceHiWord(T+1, T[5], T+1);
+    eco_ReduceHiWord(T+0, T[4], T+0);
+    eco_Mod(T);
+    if (ecp_CmpNE(B, _w_IxDmodBPO))
+    {
+        rc++;
+        printf("methods 3 of I*D mod BPO FAILED!!\n");
+        ecp_PrintHexWords("Calc", B, K_WORDS);
+        ecp_PrintHexWords("Expt", _w_IxDmodBPO, K_WORDS);
+    }
+
+    for (i = 0; i < 1000; i++)
+    {
+        ecp_SetValue(C, C[0]+i);
+        // method 1
+        eco_ToMont(A, C);
+        eco_ToMont(B, _w_D);
+        eco_MontMul(T, A, B);
+        eco_FromMont(A, T);
+        eco_Mod(A);
+        // method 2
+        ecp_Mul(T, C, _w_D);
+        eco_ReduceHiWord(B, T[K_WORDS], T);
+        eco_Mod(B);
+        if (ecp_CmpNE(A, B))
+        {
+            rc++;
+            printf("methods 2 MulMod BPO FAILED!!\n");
+            ecp_PrintHexWords("Calc", B, K_WORDS);
+            ecp_PrintHexWords("Expt", A, K_WORDS);
+        }
+    }
     ecp_SetValue(A, 50153);
     ecp_Inverse(B, A);
     ecp_MulMod(A, A, B);
-    if (ecp_Cmp(A, _w_One) != 0)
+    if (ecp_CmpNE(A, _w_One))
     {
         rc++;
         printf("invmod FAILED!!\n");
-        ecp_PrintHexWords("inv_50153", B, 8);
-        ecp_PrintHexWords("expected_1", A, 8);
+        ecp_PrintHexWords("inv_50153", B, K_WORDS);
+        ecp_PrintHexWords("expected_1", A, K_WORDS);
     }
 
     /* assert expmod(d,(p-1)/2,p) == p-1 */
     ecp_ExpMod(A, _w_D, _b_Pm1d2, 32);
-    if (ecp_Cmp(A, _w_Pm1) != 0)
+    if (ecp_CmpNE(A, _w_Pm1))
     {
         rc++;
         printf("assert expmod(d,(p-1)/2,p) == p-1 FAILED!!\n");
-        ecp_PrintHexWords("A_3", A, 8);
+        ecp_PrintHexWords("A_3", A, K_WORDS);
     }
     /* assert I**2 == p-1 */
     ecp_MulMod(A, _w_I, _w_I);
-    if (ecp_Cmp(A, _w_Pm1) != 0)
+    if (ecp_CmpNE(A, _w_Pm1))
     {
         rc++;
         printf("assert expmod(I,2,p) == p-1 FAILED!!\n");
-        ecp_PrintHexWords("A_4", A, 8);
+        ecp_PrintHexWords("A_4", A, K_WORDS);
     }
 
     ecp_CalculateY(a, ecp_BasePoint);
     ecp_BytesToWords(A, a);
-    if (ecp_Cmp(A, _w_Gy) != 0)
+    if (ecp_CmpNE(A, _w_Gy))
     {
         rc++;
         printf("assert clacY(Base) == Base.y FAILED!!\n");
@@ -567,43 +760,44 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         printf("assert k1.k2.D == D FAILED!!\n");
-        ecp_PrintHexBytes("D", d, 8);
-        ecp_PrintHexBytes("C", c, 8);
-        ecp_PrintHexBytes("A", a, 8);
+        ecp_PrintHexBytes("D", d, K_WORDS);
+        ecp_PrintHexBytes("C", c, K_WORDS);
+        ecp_PrintHexBytes("A", a, K_WORDS);
     }
 
     ecp_BytesToWords(A, _b_k1);
     ecp_BytesToWords(B, _b_k2);
     eco_InvModBPO(C, A);
-    if (ecp_Cmp(C, B) != 0)
+    eco_Mod(C);
+    if (ecp_CmpNE(C, B))
     {
         rc++;
         printf("assert 1/k1 == k2 mod BPO FAILED!!\n");
-        ecp_PrintHexWords("Calc", C, 8);
-        ecp_PrintHexWords("Expt", B, 8);
+        ecp_PrintHexWords("Calc", C, K_WORDS);
+        ecp_PrintHexWords("Expt", B, K_WORDS);
     }
 
     eco_MulMod(C, A, B);
-    if (ecp_Cmp(C, _w_One) != 0)
+    if (ecp_CmpNE(C, _w_One))
     {
         rc++;
         printf("assert k1*k2 == 1 mod BPO FAILED!!\n");
-        ecp_PrintHexWords("Calc", C, 8);
+        ecp_PrintHexWords("Calc", C, K_WORDS);
     }
 
 #if 0
     /* expriment:
         pick x and find its associated y
             - check if P=(x,y) is on the curve
-            - check order of P is same as BPO
+            - check order of P is same as BPO (same sub-group as base point)
         interestingly:
-        OnCurve=True  Order=WRONG
+        OnCurve=True  Order=DIFFERENT
         x = 0x000000000000000000000000000000000000000000000000000000000000000A
         y = 0x7FA11E2C10248F175E1C49E162A38AF68B311C6719C9B2F6A042B8742E891F65
-        OnCurve=FALSE  Order=WRONG
+        OnCurve=FALSE  Order=DIFFERENT
         x = 0x000000000000000000000000000000000000000000000000000000000000000C
         y = 0x79F72F9D93C775B921FB784C4B441492F5DCBECBAA69F549FA7CB8CEB80FD0DE
-        OnCurve=True  Order=Correct
+        OnCurve=True  Order=BPO
         x = 0x0000000000000000000000000000000000000000000000000000000000000010
         y = 0x36B20194B9EE7885E888642D2006D60CDCC836D17F615E8416989556B3941598
     */
@@ -662,7 +856,7 @@ int ed25519_selftest()
 
     ed25519_PackPoint(pp, ed25519_BasePoint.y, ed25519_BasePoint.x[0] & 1);
     ed25519_UnpackPoint(&a, pp);
-    if (ecp_Cmp(a.x, ed25519_BasePoint.x) != 0)
+    if (ecp_CmpNE(a.x, ed25519_BasePoint.x))
     {
         rc++;
         printf("-- Unpack error.");
@@ -682,7 +876,7 @@ int ed25519_selftest()
     edp_BasePointMultiply(&d, m_127, 0);
 
     /* check c == d */
-    if (ecp_Cmp(c.y, d.y) != 0 || ecp_Cmp(c.x, d.x) != 0)
+    if (ecp_CmpNE(c.y, d.y) || ecp_CmpNE(c.x, d.x))
     {
         rc++;
         printf("-- edp_DualPointMultiply(1) FAILED!!");
@@ -695,7 +889,7 @@ int ed25519_selftest()
     /* c = 11*b + 6*B = 127*B */
     edp_DualPointMultiply(&c, m_6, m_11, &b);
     /* check c == d */
-    if (ecp_Cmp(c.y, d.y) != 0 || ecp_Cmp(c.x, d.x) != 0)
+    if (ecp_CmpNE(c.y, d.y) || ecp_CmpNE(c.x, d.x))
     {
         rc++;
         printf("-- edp_DualPointMultiply(2) FAILED!!");
@@ -713,7 +907,7 @@ int ed25519_selftest()
     ecp_WordsToBytes(m2, v);
     edp_DualPointMultiply(&a, m2, m1, &a);  /* v*B + u*A = (-u^2 + u*u)*B */
     /* assert a == infinty */
-    if (ecp_Cmp(a.x, _w_Zero) != 0 || ecp_Cmp(a.y, _w_One) != 0)
+    if (ecp_CmpNE(a.x, _w_Zero) || ecp_CmpNE(a.y, _w_One))
     {
         rc++;
         printf("-- edp_DualPointMultiply(3) FAILED!!");

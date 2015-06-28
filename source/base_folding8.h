@@ -3,7 +3,7 @@
     where P_i = 2^(32i)*BasePoint
 */
 
-const PA_POINT _w_basepoint_perm32[256] =
+const PA_POINT _w_base_folding8[256] =
 {
   { /* P{0} */
     W256(0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000),

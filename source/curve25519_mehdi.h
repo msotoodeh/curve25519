@@ -120,14 +120,10 @@ void eco_ExpModBPO(OUT U_WORD *Y, IN const U_WORD *X, IN const U8 *E, IN int byt
 void eco_InvModBPO(OUT U_WORD *Y, IN const U_WORD *X);
 /* Z = X*Y mod BPO */
 void eco_MulReduce(OUT U_WORD *Z, IN const U_WORD *X, IN const U_WORD *Y);
-/* Z = X*Y mod BPO */
-void eco_MulMod(OUT U_WORD *Z, IN const U_WORD *X, IN const U_WORD *Y);
 /* Return Y = D mod BPO where D is 512-bit big-endian byte array (i.e SHA512 digest) */
 void eco_DigestToWords( OUT U_WORD *Y, IN const U8 *D);
 /* Z = X + Y mod BPO */
 void eco_AddReduce(OUT U_WORD *Z, IN const U_WORD *X, IN const U_WORD *Y);
-/* Z = X + Y mod BPO */
-void eco_AddMod(OUT U_WORD *Z, IN const U_WORD *X, IN const U_WORD *Y);
 /* X mod BPO */
 void eco_Mod(U_WORD *X);
 
@@ -142,7 +138,6 @@ void ecp_AddReduce(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
 void ecp_SubReduce(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
 void ecp_MulReduce(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
 void ecp_SqrReduce(U_WORD* Y, const U_WORD* X);
-int  ecp_Cmp(const U_WORD* X, const U_WORD* Y);
 void ecp_ModExp2523(U_WORD *Y, const U_WORD *X);
 void ecp_Inverse(U_WORD *out, const U_WORD *z);
 void ecp_MulMod(U_WORD* Z, const U_WORD* X, const U_WORD* Y);
@@ -153,6 +148,11 @@ void ecp_WordMulSet(U_WORD *Y, U_WORD b, const U_WORD* X);
 U_WORD ecp_WordMulAdd(U_WORD *Z, const U_WORD* Y, U_WORD b, const U_WORD* X);
 /* Computes Z = Y + b*X */
 void ecp_WordMulAddReduce(U_WORD *Z, const U_WORD* Y, U_WORD b, const U_WORD* X);
+void ecp_Mod(U_WORD* X);
+int ecp_CmpNE(const U_WORD* X, const U_WORD* Y);
+int ecp_CmpLT(const U_WORD* X, const U_WORD* Y);
+/* Calculate: Y = [b:X] mod BPO */
+void eco_ReduceHiWord(U_WORD* Y, U_WORD b, const U_WORD* X);
 
 /* -- ed25519 --------------------------------------------------------------- */
 void ed25519_UnpackPoint(Affine_POINT *r, const unsigned char *p);

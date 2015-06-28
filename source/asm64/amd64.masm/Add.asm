@@ -28,6 +28,7 @@ include defines.inc
 ;
 ;   Z = X + Y
 ;   U64 ecp_Add(U64* Z, const U64* X, const U64* Y) 
+;   Constant-time
 ; _______________________________________________________________________
 Z   equ ARG1
 X   equ ARG2
@@ -46,17 +47,23 @@ ENDPROC ecp_Add
 ;
 ;   Z = X + Y
 ;   void ecp_AddReduce(U64* Z, const U64* X, const U64* Y) 
+;   Constant-time
 ; _______________________________________________________________________
 
 PUBPROC ecp_AddReduce
     LOADA   Y
     ADDA    [X+24],[X+16],[X+8],[X]
-    jnc     short ar_2
-ar_1:
-    ADDA    0,0,0,38
-    jc      short ar_1
-ar_2:
+
+    sbb     ACL,ACL
+    and     ACL,38
+    ADDA    0,0,0,ACL
+
+    sbb     ACL,ACL
+    and     ACL,38
+    ADDA    0,0,0,ACL
+
     STOREA  Z
     ret
 ENDPROC ecp_AddReduce
+
 END

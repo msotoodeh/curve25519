@@ -45,17 +45,13 @@ X   equ ARG4M
     MULADD_W1 A2,[Y+16],b,[X+16]
     MULADD_W1 A3,[Y+24],b,[X+24]
 
-    ; ZF set if ACH == 0
-    jz      wma_2
     MULT    38,ACH
     ADDA    0,0,ACH,ACL
-    jnc     wma_2
+
+    sbb     ACL,ACL
+    and     ACL,38
+    ADDA    0,0,0,ACL
     
-wma_1:
-    ADDA    0,0,0,38
-    jc      wma_1
-    
-wma_2:
     ; return result
     STOREA  Z
 
@@ -121,4 +117,58 @@ X   equ ARG3M
     RestoreArg2
     ret
 ENDPROC ecp_WordMulSet
+
+; _______________________________________________________________________
+;
+;   Calculate: Y = [b:X] mod BPO
+;   void eco_ReduceHiWord(U64* Y, U64 b, const U64* X)
+;
+;   Return Y = X + b*R mod BPO, where R = 2^256 mod BPO
+;   Since -R is 129-bits, we can save some multiplication by
+;   calculating: Y = X - b*(-R) mod BPO
+;   -R mod BPO = { 0x812631A5CF5D3ED0,0x4DEF9DEA2F79CD65,1,0 };
+; _______________________________________________________________________
+PUBPROC eco_ReduceHiWord
+
+    PushB
+    SaveArg1
+
+Y   equ ARG1M
+b   equ ARG2
+X   equ ARG3
+
+    mov     B2,b
+    LOADA   X
+
+
+    MULSET  B1,B0,812631A5CF5D3ED0h,B2
+    MULT    4DEF9DEA2F79CD65h,B2
+    xor     B3,B3
+    add     B1,ACL
+    adc     B2,ACH
+    adc     B3,B3
+
+    SUBA    B3,B2,B1,B0
+
+    ; Add -R if there is a carry
+    sbb     B2,B2
+
+    ; B = -R mod BPO
+    mov     B0,812631A5CF5D3ED0h
+    mov     B1,4DEF9DEA2F79CD65h
+    xor     B3,B3
+
+    and     B0,B2
+    and     B1,B2
+    and     B2,1
+    ADDA    B3,B2,B1,B0
+
+    STOREA  Y
+
+    RestoreArg1
+    PopB
+    ret
+
+ENDPROC eco_ReduceHiWord
+
 END

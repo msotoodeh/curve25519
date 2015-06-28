@@ -56,7 +56,7 @@
     <ClInclude Include="..\..\custom\random.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\base_perm_p32.h">
+    <ClInclude Include="..\..\source\base_folding8.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

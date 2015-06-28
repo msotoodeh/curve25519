@@ -27,6 +27,7 @@ include defines.inc
 ; _______________________________________________________________________
 ;
 ;   void ecp_SqrReduce(U64* Y, const U64* X)
+;   Constant-time
 ; _______________________________________________________________________
 PUBPROC ecp_SqrReduce
 
@@ -83,17 +84,13 @@ U   equ rsp+32
     MULADD_W1 A2,[T+16],[U+16],38
     MULADD_W1 A3,[T+24],[U+24],38
 
-    ; ZF set if ACH == 0
-    jz      sqr_2
     MULT    38,ACH
     ADDA    0,0,ACH,ACL
-    jnc     sqr_2
-    
-sqr_1:
-    ADDA    0,0,0,38
-    jc      sqr_1
-    
-sqr_2:
+
+    sbb     ACL,ACL
+    and     ACL,38
+    ADDA    0,0,0,ACL
+
     add     rsp,64
     pop     ACH
     ; return result
