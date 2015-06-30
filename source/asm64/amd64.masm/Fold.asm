@@ -25,8 +25,57 @@
 include defines.inc
 
 ; _______________________________________________________________________
+; RL_MSBS(AA,XX)
+; Out: AA <<== upper bits of XX.hi, XX.lo
+;      XX <<= 1
+; _______________________________________________________________________
+RL_MSBS macro AA,XX
+    shl     XX,1
+    rcl     AA,1
+    bt      XX,32
+    rcl     AA,1
+    endm
+
+; _______________________________________________________________________
+; RL_MSB(AA,XX)
+; Out: AA <<== upper bits of XX.hi, XX.lo
+;      XX <<= 1
+; _______________________________________________________________________
+RL_MSB  macro AA,XX
+    shl     XX,1
+    rcl     AA,1
+    endm
+
+; _______________________________________________________________________
+;
+;   void ecp_4Folds(U8* Y, const U64* X)
+;   Y is 64-bytes long
+; _______________________________________________________________________
+
+PUBPROC ecp_4Folds
+
+Y   equ ARG1
+X   equ ARG2
+
+    LOADA   X
+    mov     ah,64
+f4t_1:
+    mov     al,0
+    RL_MSB  al,A3
+    RL_MSB  al,A2
+    RL_MSB  al,A1
+    RL_MSB  al,A0
+    mov     [Y],al
+    inc     Y
+    dec     ah
+    jnz     short f4t_1
+    ret
+ENDPROC ecp_4Folds
+
+; _______________________________________________________________________
 ;
 ;   void ecp_8Folds(U8* Y, const U64* X) 
+;   Y is 32-bytes long
 ; _______________________________________________________________________
 
 PUBPROC ecp_8Folds

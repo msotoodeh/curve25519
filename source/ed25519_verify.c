@@ -158,41 +158,6 @@ void edp_AddPoint(Ext_POINT *r, const Ext_POINT *p, const PE_POINT *q)
     ecp_MulReduce(r->z, d, a);              /* G*F */
 }
 
-#if 0   /* Use this version if optimizing for memory usage */
-int ed25519_VerifySignature(
-    const unsigned char *signature,             /* IN: signature (R,S) */
-    const unsigned char *publicKey,             /* IN: public key */
-    const unsigned char *msg, size_t msg_size)  /* IN: message to sign */
-{
-    SHA512_CTX H;
-    Affine_POINT Q, T;
-    U_WORD h[K_WORDS];
-    U8 md[SHA512_DIGEST_LENGTH];
-
-    md[0] = ecp_DecodeInt(Q.y, publicKey);
-    ed25519_CalculateX(Q.x, Q.y, ~md[0]);       /* Invert parity for -Q */
-
-    /* TODO: Validate Q is a point on the curve */
-
-    /* h = H(enc(R) + pk + m)  mod BPO */
-    SHA512_Init(&H);
-    SHA512_Update(&H, signature, 32);
-    SHA512_Update(&H, publicKey, 32);
-    SHA512_Update(&H, msg, msg_size);
-    SHA512_Final(md, &H);
-    eco_DigestToWords(h, md);
-    eco_Mod(h);
-
-    /* T = s*P + h*(-Q) = (s - h*a)*P = r*P = R */
-
-    ecp_WordsToBytes(md, h);
-    edp_DualPointMultiply(&T, signature+32, md, &Q);
-    ed25519_PackPoint(md, T.y, T.x[0]);
-
-    return (memcmp(md, signature, 32) == 0);
-}
-#endif
-
 int ed25519_VerifySignature(
     const unsigned char *signature,             /* IN: signature (R,S) */
     const unsigned char *publicKey,             /* IN: public key */
@@ -267,47 +232,22 @@ void ed25519_Verify_Finish(void *ctx)
     free(ctx);
 }
 
-#define MVBIT(x,from,to) (((x >> (from)) << to) & (1<<to))
-
-#define BMASK(x,b) \
-    MVBIT(x,b,0) | MVBIT(x,b+8,1) | MVBIT(x,b+16,2) | MVBIT(x,b+24,3)
-
-#define DBLADD_PQ(S,x,y,b) edp_DoublePoint(S); \
-    edp_AddAffinePoint(S, &_w_base_folding4[BMASK(x,b)]); \
-    edp_AddPoint(S, S, &qtable[BMASK(y,b)])
-
-static void edp_dual_mul_byte(
-    IN OUT Ext_POINT *S, 
-    U32 x, U32 y,
-    const PE_POINT *qtable)
-{
-    DBLADD_PQ(S,x,y,7);
-    DBLADD_PQ(S,x,y,6);
-    DBLADD_PQ(S,x,y,5);
-    DBLADD_PQ(S,x,y,4);
-    DBLADD_PQ(S,x,y,3);
-    DBLADD_PQ(S,x,y,2);
-    DBLADD_PQ(S,x,y,1);
-    DBLADD_PQ(S,x,y,0);
-}
-
-#define DPMUL_B4(n) \
-    x.u8.b0=a[n]; x.u8.b1=a[n+8]; x.u8.b2=a[n+16]; x.u8.b3=a[n+24]; \
-    y.u8.b0=b[n]; y.u8.b1=b[n+8]; y.u8.b2=b[n+16]; y.u8.b3=b[n+24]; \
-    edp_dual_mul_byte(&S, x.u32, y.u32, qtable)
-
 /*
     Assumptions: qtable = pre-computed Q
     Calculate: point R = a*P + b*Q  where P is base point
 */
 static void edp_PolyPointMultiply(
     Affine_POINT *r, 
-    const U8 *a, 
-    const U8 *b, 
+    const U_WORD *a, 
+    const U_WORD *b, 
     const PE_POINT *qtable)
 {
-    M32 x, y;
+    int i;
     Ext_POINT S;
+    U8 u[64], v[64];
+
+    ecp_4Folds(u, a);
+    ecp_4Folds(v, b);
 
     /* Set S = (0,1) */
     ecp_SetValue(S.x, 0);
@@ -315,14 +255,12 @@ static void edp_PolyPointMultiply(
     ecp_SetValue(S.z, 1);
     ecp_SetValue(S.t, 0);
 
-    DPMUL_B4(7);
-    DPMUL_B4(6);
-    DPMUL_B4(5);
-    DPMUL_B4(4);
-    DPMUL_B4(3);
-    DPMUL_B4(2);
-    DPMUL_B4(1);
-    DPMUL_B4(0);
+    for (i = 0; i < 64; i++)
+    {
+        edp_DoublePoint(&S);
+        edp_AddAffinePoint(&S, &_w_base_folding4[u[i]]);
+        edp_AddPoint(&S, &S, &qtable[v[i]]);
+    }
 
     ecp_Inverse(S.z, S.z);
     ecp_MulMod(r->x, S.x, S.z);
@@ -341,7 +279,7 @@ int ed25519_Verify_Check(
 {
     SHA512_CTX H;
     Affine_POINT T;
-    U_WORD h[K_WORDS];
+    U_WORD h[K_WORDS], s[K_WORDS];
     U8 md[SHA512_DIGEST_LENGTH];
 
     /* h = H(enc(R) + pk + m)  mod BPO */
@@ -355,8 +293,8 @@ int ed25519_Verify_Check(
 
     /* T = s*P + h*(-Q) = (s - h*a)*P = r*P = R */
 
-    ecp_WordsToBytes(md, h);
-    edp_PolyPointMultiply(&T, signature+32, md, ((EDP_SIGV_CTX*)context)->q_table);
+    ecp_BytesToWords(s, signature+32);
+    edp_PolyPointMultiply(&T, s, h, ((EDP_SIGV_CTX*)context)->q_table);
     ed25519_PackPoint(md, T.y, T.x[0]);
 
     return (memcmp(md, signature, 32) == 0) ? 1 : 0;

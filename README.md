@@ -62,6 +62,7 @@ Cycle count for ed25519 sign/verify (short messages):
 ```
 
 New version with **Constant-Time:** 
+
 Cycle count for ed25519 sign/verify (short messages):
 ```
 | Platform       | KeyGen    | Sign     | Verify(init) | Verify(check) |
@@ -93,6 +94,7 @@ Cycle count for X25519 DH base point multiplication:
 | C32/GCC    | V1.1 | 2551492  | 386498  |  6.602 | 
 | C32/GCC    | CT   | 2549964  | 436616  |  5.840 | 
 CT = Constant-Time
+Fastest time = 43229 cycles = 12.74 micro-seconds @3.4GHz
 ```
 
 Platforms:

@@ -305,15 +305,3 @@ MULSET_W1 macro YY,BB,XX
     adc     ACH,0
     endm
 
-; _______________________________________________________________________
-; RL_MSBS(AA,XX)
-; Out: AA <<== upper bits of XX.hi, XX.lo
-;      XX <<= 1
-; _______________________________________________________________________
-RL_MSBS macro AA,XX
-    shl     XX,1
-    rcl     AA,1
-    bt      XX,32
-    rcl     AA,1
-    endm
-

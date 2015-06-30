@@ -847,6 +847,40 @@ void edp_DualPointMultiply(
     Affine_POINT *r,
     const U8 *a, const U8 *b, const Affine_POINT *q);
 
+/* Use this version if optimizing for memory usage */
+int alt_ed25519_VerifySignature(
+    const unsigned char *signature,             /* IN: signature (R,S) */
+    const unsigned char *publicKey,             /* IN: public key */
+    const unsigned char *msg, size_t msg_size)  /* IN: message to sign */
+{
+    SHA512_CTX H;
+    Affine_POINT Q, T;
+    U_WORD h[K_WORDS];
+    U8 md[SHA512_DIGEST_LENGTH];
+
+    md[0] = ecp_DecodeInt(Q.y, publicKey);
+    ed25519_CalculateX(Q.x, Q.y, ~md[0]);       /* Invert parity for -Q */
+
+    /* TODO: Validate Q is a point on the curve */
+
+    /* h = H(enc(R) + pk + m)  mod BPO */
+    SHA512_Init(&H);
+    SHA512_Update(&H, signature, 32);
+    SHA512_Update(&H, publicKey, 32);
+    SHA512_Update(&H, msg, msg_size);
+    SHA512_Final(md, &H);
+    eco_DigestToWords(h, md);
+    eco_Mod(h);
+
+    /* T = s*P + h*(-Q) = (s - h*a)*P = r*P = R */
+
+    ecp_WordsToBytes(md, h);
+    edp_DualPointMultiply(&T, signature+32, md, &Q);
+    ed25519_PackPoint(md, T.y, T.x[0]);
+
+    return (memcmp(md, signature, 32) == 0);
+}
+
 int ed25519_selftest()
 {
     int rc = 0;

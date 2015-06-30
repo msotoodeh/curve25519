@@ -122,6 +122,25 @@ U8 ecp_DecodeInt(OUT U32 *Y, IN const U8 *X)
     return (U8)((*X >> 7) & 1);
 }
 
+void ecp_4Folds(U8* Y, const U32* X)
+{
+    int i, j;
+    U8 a, b;
+    for (i = 32; i-- > 0; Y++)
+    {
+        a = 0;
+        b = 0;
+        for (j = 8; j > 1;)
+        {
+            j -= 2;
+            a = (a << 1) + ((X[j+1] >> i) & 1);
+            b = (b << 1) + ((X[j] >> i) & 1);
+        }
+        Y[0] = a;
+        Y[32] = b;
+    }
+}
+
 void ecp_8Folds(U8* Y, const U32* X)
 {
     int i, j;
