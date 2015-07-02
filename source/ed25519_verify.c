@@ -49,6 +49,7 @@ typedef struct {
 
 extern const U_WORD _w_P[K_WORDS];
 extern const U_WORD _w_2d[K_WORDS];
+extern const U_WORD _w_di[K_WORDS];
 
 extern const PA_POINT _w_base_folding8[256];
 
@@ -242,27 +243,29 @@ static void edp_PolyPointMultiply(
     const U_WORD *b, 
     const PE_POINT *qtable)
 {
-    int i = 0;
+    int i = 1;
     Ext_POINT S;
+    const PE_POINT *q0;
     U8 u[32], v[64];
 
     ecp_8Folds(u, a);
     ecp_4Folds(v, b);
 
-    /* Set S = (0,1) */
-    ecp_SetValue(S.x, 0);
-    ecp_SetValue(S.y, 1);
-    ecp_SetValue(S.z, 1);
-    ecp_SetValue(S.t, 0);
+    /* Set initial value of S */
+    q0 = &qtable[v[0]];
+    ecp_SubReduce(S.x, q0->YpX, q0->YmX);   /* 2x */
+    ecp_AddReduce(S.y, q0->YpX, q0->YmX);   /* 2y */
+    ecp_MulReduce(S.t, q0->T2d, _w_di);     /* 2xy */
+    ecp_Copy(S.z, q0->Z2);                  /* 2z */
 
     do
-    {
+    {   /* 31D + 31A */
         edp_DoublePoint(&S);
         edp_AddPoint(&S, &S, &qtable[v[i]]);
     } while (++i < 32);
 
     do
-    {
+    {   /* 32D + 64A */
         edp_DoublePoint(&S);
         edp_AddAffinePoint(&S, &_w_base_folding8[u[i-32]]);
         edp_AddPoint(&S, &S, &qtable[v[i]]);
