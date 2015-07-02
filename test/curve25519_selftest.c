@@ -58,7 +58,6 @@ extern const U_WORD _w_P[K_WORDS];
 extern const U_WORD _w_maxP[K_WORDS];
 extern const U_WORD _w_I[K_WORDS];
 extern const U_WORD _w_2d[K_WORDS];
-extern const PA_POINT _w_base_folding4[16];
 extern const U_WORD _w_NxBPO[16][K_WORDS];
 
 #define _w_BPO      _w_NxBPO[1]
@@ -68,8 +67,8 @@ static const U8 _b_Pp3d8[32] = {    /* (P+3)/8 */
     0xFE,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,
     0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x0F };
 
-#define _w_Zero     _w_base_folding4[0].T2d
-#define _w_One      _w_base_folding4[0].YpX
+#define _w_Zero     _w_base_folding8[0].T2d
+#define _w_One      _w_base_folding8[0].YpX
 
 static const U_WORD inv_5[K_WORDS] = /* 1/5 mod p */
     W256(0x99999996,0x99999999,0x99999999,0x99999999,0x99999999,0x99999999,0x99999999,0x19999999);
@@ -514,7 +513,7 @@ void pre_compute_base_folding8()
     for (j = 0; j < 32; j++) edp_DoublePoint(&S);
     Ext2Affine(&P7, &S);
 
-    printf("\nconst PA_POINT _w_base_folding4[16] = \n{\n");
+    printf("\nconst PA_POINT _w_base_folding8[16] = \n{\n");
     for (i = 0; i < 256; i++)
     {
         ecp_SetValue(S.x, 0);

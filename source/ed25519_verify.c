@@ -50,10 +50,10 @@ typedef struct {
 extern const U_WORD _w_P[K_WORDS];
 extern const U_WORD _w_2d[K_WORDS];
 
-extern const PA_POINT _w_base_folding4[16];
+extern const PA_POINT _w_base_folding8[256];
 
-#define _w_Zero     _w_base_folding4[0].T2d
-#define _w_One      _w_base_folding4[0].YpX
+#define _w_Zero     _w_base_folding8[0].T2d
+#define _w_One      _w_base_folding8[0].YpX
 
 const U_WORD _w_I[K_WORDS] = /* sqrt(-1) */
     W256(0x4A0EA0B0,0xC4EE1B27,0xAD2FE478,0x2F431806,0x3DFBD7A7,0x2B4D0099,0x4FC1DF0B,0x2B832480);
@@ -242,11 +242,11 @@ static void edp_PolyPointMultiply(
     const U_WORD *b, 
     const PE_POINT *qtable)
 {
-    int i;
+    int i = 0;
     Ext_POINT S;
-    U8 u[64], v[64];
+    U8 u[32], v[64];
 
-    ecp_4Folds(u, a);
+    ecp_8Folds(u, a);
     ecp_4Folds(v, b);
 
     /* Set S = (0,1) */
@@ -255,12 +255,18 @@ static void edp_PolyPointMultiply(
     ecp_SetValue(S.z, 1);
     ecp_SetValue(S.t, 0);
 
-    for (i = 0; i < 64; i++)
+    do
     {
         edp_DoublePoint(&S);
-        edp_AddAffinePoint(&S, &_w_base_folding4[u[i]]);
         edp_AddPoint(&S, &S, &qtable[v[i]]);
-    }
+    } while (++i < 32);
+
+    do
+    {
+        edp_DoublePoint(&S);
+        edp_AddAffinePoint(&S, &_w_base_folding8[u[i-32]]);
+        edp_AddPoint(&S, &S, &qtable[v[i]]);
+    } while (++i < 64);
 
     ecp_Inverse(S.z, S.z);
     ecp_MulMod(r->x, S.x, S.z);
