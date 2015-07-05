@@ -38,7 +38,7 @@ RL_MSBS macro AA,XX
 
 ; _______________________________________________________________________
 ; RL_MSB(AA,XX)
-; Out: AA <<== upper bits of XX.hi, XX.lo
+; Out: Shift in hi-bit of XX 
 ;      XX <<= 1
 ; _______________________________________________________________________
 RL_MSB  macro AA,XX

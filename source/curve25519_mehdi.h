@@ -31,7 +31,7 @@ extern "C" {
 
 #include "BaseTypes.h"
 
-#define ECP_VERSION_STR     "1.0.0"
+#define ECP_VERSION_STR     "1.2.0"
 
 #ifdef USE_ASM_LIB
 #define U_WORD          U64

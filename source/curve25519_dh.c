@@ -179,14 +179,22 @@ void x25519_BasePointMultiply(OUT U8 *r, IN const U8 *sk)
 }
 
 /* Return public key associated with sk */
-void curve25519_dh_CalculatePublicKey(
+void curve25519_dh_CalculatePublicKey_fast(
     unsigned char *pk,          /* [32-bytes] OUT: Public key */
     unsigned char *sk)          /* [32-bytes] IN/OUT: Your secret key */
 {
     ecp_TrimSecretKey(sk);
     /* Use faster method */
     x25519_BasePointMultiply(pk, sk);
-    /*ecp_PointMultiply(pk, ecp_BasePoint, sk, 32); */
+}
+
+/* Return public key associated with sk */
+void curve25519_dh_CalculatePublicKey(
+    unsigned char *pk,          /* [32-bytes] OUT: Public key */
+    unsigned char *sk)          /* [32-bytes] IN/OUT: Your secret key */
+{
+    ecp_TrimSecretKey(sk);
+    ecp_PointMultiply(pk, ecp_BasePoint, sk, 32);
 }
 
 /* Create a shared secret */

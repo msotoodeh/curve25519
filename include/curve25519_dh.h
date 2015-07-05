@@ -35,6 +35,12 @@ void curve25519_dh_CalculatePublicKey(
     unsigned char *pk,          /* [32-bytes] OUT: Public key */
     unsigned char *sk);         /* [32-bytes] IN/OUT: Your secret key */
 
+/* Faster alternative for curve25519_dh_CalculatePublicKey */
+/* sk will be trimmed on return */
+void curve25519_dh_CalculatePublicKey_fast(
+    unsigned char *pk,          /* [32-bytes] OUT: Public key */
+    unsigned char *sk);         /* [32-bytes] IN/OUT: Your secret key */
+
 /* sk will be trimmed on return */
 void curve25519_dh_CreateSharedKey(
     unsigned char *shared,      /* [32-bytes] OUT: Created shared key */

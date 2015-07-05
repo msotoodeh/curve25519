@@ -108,7 +108,7 @@ void eco_ReduceHiWord(U32* Y, U32 b, const U32* X)
 
     /* Subtract R if there is a borrow */
 
-    ecp_Add(Y, Y, _w_NxMinusR[-c.s32.hi]);
+    ecp_Add(Y, Y, _w_NxMinusR[c.s32.hi & 1]);
 }
 
 /* Z = X*Y mod BPO */
@@ -130,7 +130,7 @@ void eco_MulReduce(OUT U32 *Z, IN const U32 *X, IN const U32 *Y)
 void eco_Mod(U32 *X)
 {
     S32 c = ecp_Sub(X, X, _w_NxBPO[X[7] >> 28]);
-    ecp_Add(X, X, _w_NxBPO[-c]);
+    ecp_Add(X, X, _w_NxBPO[c & 1]);
 }
 
 /* Z = X + Y mod BPO */

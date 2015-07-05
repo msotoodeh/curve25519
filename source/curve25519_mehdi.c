@@ -72,7 +72,8 @@ void ecp_Copy(U32* Y, const U32* X)
 
 int ecp_CmpNE(const U32* X, const U32* Y)
 {
-    return ((X[0] ^ Y[0]) | (X[1] ^ Y[1]) | (X[2] ^ Y[2]) | (X[3] ^ Y[3]));
+    return ((X[0] ^ Y[0]) | (X[1] ^ Y[1]) | (X[2] ^ Y[2]) | (X[3] ^ Y[3]) |
+            (X[4] ^ Y[4]) | (X[5] ^ Y[5]) | (X[6] ^ Y[6]) | (X[7] ^ Y[7]));
 }
 
 int ecp_CmpLT(const U32* X, const U32* Y)
@@ -184,25 +185,25 @@ void ecp_SubReduce(U32* Z, const U32* X, const U32* Y)
 void ecp_Mod(U32 *X)
 {
     U32 T[8];
-    U32 c = ecp_Sub(X, X, _w_P);
+    U32 c = (U32)ecp_Sub(X, X, _w_P);
 
     /* set T = 0 if c=0, else T = P */
 
     T[0] = c & 0xFFFFFFED;
     T[1] = T[2] = T[3] = T[4] = T[5] = T[6] = c;
-    T[7] = c & 0x7FFFFFFF;
+    T[7] = c >> 1;
 
     ecp_Add(X, X, T);   /* X += 0 or P */
 
     /* In case there is another P there */
 
-    c = ecp_Sub(X, X, _w_P);
+    c = (U32)ecp_Sub(X, X, _w_P);
 
     /* set T = 0 if c=0, else T = P */
 
     T[0] = c & 0xFFFFFFED;
     T[1] = T[2] = T[3] = T[4] = T[5] = T[6] = c;
-    T[7] = c & 0x7FFFFFFF;
+    T[7] = c >> 1;
 
     ecp_Add(X, X, T);   /* X += 0 or P */
 }

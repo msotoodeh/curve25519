@@ -140,7 +140,6 @@ X   equ ARG3
     mov     B2,b
     LOADA   X
 
-
     MULSET  B1,B0,812631A5CF5D3ED0h,B2
     MULT    4DEF9DEA2F79CD65h,B2
     xor     B3,B3

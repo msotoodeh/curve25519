@@ -196,6 +196,24 @@ int speed_test(int loops)
         tm, (double)tm/3400.0, (100.0*(td-tm))/(double)td);
 
     /* --------------------------------------------------------------------- */
+    /* Faster implementation using folding of 8 */
+    /* --------------------------------------------------------------------- */
+    for (i = 0; i < loops; i++)
+    {
+        t1 = readTSC();
+        curve25519_dh_CalculatePublicKey_fast(mehdi_publickey, secret_key);
+        t2 = readTSC() - t1;
+        if (t2 < tm) tm = t2;
+    }
+    tm -= tovr;
+
+    printf ("\n-- curve25519-DH (w/folding) --\n"
+            "    Donna: %lld cycles = %.3f usec @3.4GHz -- ratio: %.3f\n", 
+        td, (double)td/3400.0, (double)td/(double)tm);
+    printf ("    Mehdi: %lld cycles = %.3f usec @3.4GHz -- delta: %.2f%%\n", 
+        tm, (double)tm/3400.0, (100.0*(td-tm))/(double)td);
+
+    /* --------------------------------------------------------------------- */
     /* Speed measurement for ed25519 keygen, sign and verify */
     /* --------------------------------------------------------------------- */
     tm = (U64)(-1);
