@@ -898,16 +898,19 @@ int ed25519_selftest()
     }
 
     /* a = 7*B */
-    edp_BasePointMultiply(&a, m_7, 0);
+    ecp_SetValue(u, 7);
+    edp_BasePointMultiply(&a, u, 0);
 
     /* b = 11*B */
-    edp_BasePointMultiply(&b, m_11, 0);
+    ecp_SetValue(u, 11);
+    edp_BasePointMultiply(&b, u, 0);
 
     /* c = 50*B + 7*b = 127*B */
     edp_DualPointMultiply(&c, m_50, m_7, &b);
 
     /* d = 127*B */
-    edp_BasePointMultiply(&d, m_127, 0);
+    ecp_SetValue(u, 127);
+    edp_BasePointMultiply(&d, u, 0);
 
     /* check c == d */
     if (ecp_CmpNE(c.y, d.y) || ecp_CmpNE(c.x, d.x))
@@ -934,8 +937,7 @@ int ed25519_selftest()
     }
 
     ecp_SetValue(u, 0x11223344);
-    ecp_WordsToBytes(m1, u);
-    edp_BasePointMultiply(&a, m1, 0);   /* a = u*B */
+    edp_BasePointMultiply(&a, u, 0);   /* a = u*B */
     eco_MulMod(v, u, u);
     ecp_Sub(v, _w_BPO, v);          /* v = -u^2 */
     ecp_WordsToBytes(m2, v);

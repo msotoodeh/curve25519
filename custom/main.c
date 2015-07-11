@@ -153,7 +153,9 @@ int main(int argc, char**argv)
     if (argc == 4 && argv[1][0] == 't') 
         return CreateSignTestVector(argv[2], argv[3]);
 
-    fprintf(stderr, "Command line error.\n"
+    fprintf(stderr, 
+        "Custom tool version " ECP_VERSION_STR ".\n"
+        "\nCommand line error.\n"
         "\nCommand line arguments are:"
         "\n  b <name>            Create a random blinding context"
         "\n  r <name> [<size>]   Create random bytes"

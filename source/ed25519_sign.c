@@ -155,20 +155,68 @@ void edp_DoublePoint(Ext_POINT *p)
 //        a*P = SUM(a_i*P_i)
 //
 //        where P_i = (2^(i*w))*P
-//              n = number of limbs
-//              w = bit-length of limbs
+//              n = number of folds
+//              w = bit-length of a_i
 //
-//    For 64-bit limbs, n will be 4 for 256-bit multipliers. P_0 - P_3 can be 
-//    pre-calculated and their 16-different permutations can be cached or 
-//    hard-coded (in case of P=base point) directly into the code.
+//    For folding of 8, 256-bit multiplier 'a' is chopped into 8 limbs of 
+//    32-bits each (a_0, a_1,...a_7). P_0 - P_7 can be pre-calculated and 
+//    their 256-different permutations can be cached or hard-coded 
+//    directly into the code.
 //    This arrangement combined with double-and-add approach reduces the 
-//    number of EC point calculations by a factor of 4. We only need 64
+//    number of EC point calculations by a factor of 8. We only need 31
 //    double & add operations.
 //
+//       +---+---+---+---+---+---+- .... -+---+---+---+---+---+---+
+//  a = (|255|254|253|252|251|250|        | 5 | 4 | 3 | 2 | 1 | 0 |)
+//       +---+---+---+---+---+---+- .... -+---+---+---+---+---+---+
+//
+//                     a_i                       P_i
+//       +---+---+---+ .... -+---+---+---+    ----------
+// a7 = (|255|254|253|       |226|225|226|) * (2**224)*P
+//       +---+---+---+ .... -+---+---+---+
+// a6 = (|225|224|223|       |194|193|192|) * (2**192)*P
+//       +---+---+---+ .... -+---+---+---+
+// a5 = (|191|190|189|       |162|161|160|) * (2**160)*P
+//       +---+---+---+ .... -+---+---+---+
+// a4 = (|159|158|157|       |130|129|128|) * (2**128)*P
+//       +---+---+---+ .... -+---+---+---+
+// a3 = (|127|126|125|       | 98| 97| 96|) * (2**96)*P
+//       +---+---+---+ .... -+---+---+---+
+// a2 = (| 95| 94| 93|       | 66| 65| 64|) * (2**64)*P
+//       +---+---+---+ .... -+---+---+---+
+// a1 = (| 63| 62| 61|       | 34| 33| 32|) * (2**32)*P
+//       +---+---+---+ .... -+---+---+---+
+// a0 = (| 31| 30| 29|       | 2 | 1 | 0 |) * (2**0)*P
+//       +---+---+---+ .... -+---+---+---+
+//         |   |                   |   |
+//         |   +--+                |   +--+
+//         |      |                |      |
+//         V      V     slices     V      V
+//       +---+  +---+    ....    +---+  +---+
+//       |255|  |254|            |225|  |226|   P7
+//       +---+  +---+    ....    +---+  +---+
+//       |225|  |224|            |193|  |192|   P6
+//       +---+  +---+    ....    +---+  +---+
+//       |191|  |190|            |161|  |160|   P5
+//       +---+  +---+    ....    +---+  +---+
+//       |159|  |158|            |129|  |128|   P4
+//       +---+  +---+    ....    +---+  +---+
+//       |127|  |126|            | 97|  | 96|   P3
+//       +---+  +---+    ....    +---+  +---+
+//       | 95|  | 94|            | 65|  | 64|   P2
+//       +---+  +---+    ....    +---+  +---+
+//       | 63|  | 62|            | 33|  | 32|   P1
+//       +---+  +---+    ....    +---+  +---+
+//       | 31|  | 30|            | 1 |  | 0 |   P0
+//       +---+  +---+    ....    +---+  +---+
+// cut[]:  0      1      ....      30     31
 // --------------------------------------------------------------------------
 // Return S = a*P where P is ed25519 base point and R is random
 */
-void edp_BasePointMult(OUT Ext_POINT *S, IN const U_WORD *sk, IN const U_WORD *R)
+void edp_BasePointMult(
+    OUT Ext_POINT *S, 
+    IN const U_WORD *sk, 
+    IN const U_WORD *R)
 {
     int i = 1;
     U8 cut[32];
@@ -198,23 +246,21 @@ void edp_BasePointMult(OUT Ext_POINT *S, IN const U_WORD *sk, IN const U_WORD *R
 
 void edp_BasePointMultiply(
     OUT Affine_POINT *R, 
-    IN const U8 *sk, 
+    IN const U_WORD *sk, 
     IN const void *blinding)
 {
     Ext_POINT S;
     U_WORD t[K_WORDS];
 
-    ecp_BytesToWords(t, sk);
-
     if (blinding)
     {
-        eco_AddReduce(t, t, ((EDP_BLINDING_CTX*)blinding)->bl);
+        eco_AddReduce(t, sk, ((EDP_BLINDING_CTX*)blinding)->bl);
         edp_BasePointMult(&S, t, ((EDP_BLINDING_CTX*)blinding)->zr);
         edp_AddPoint(&S, &S, &((EDP_BLINDING_CTX*)blinding)->BP);
     }
     else
     {
-        edp_BasePointMult(&S, t, edp_custom_blinding.zr);
+        edp_BasePointMult(&S, sk, edp_custom_blinding.zr);
     }
 
     ecp_Inverse(S.z, S.z);
@@ -233,12 +279,11 @@ void edp_ExtPoint2PE(PE_POINT *r, const Ext_POINT *p)
 /* -- Blinding -------------------------------------------------------------
 //
 //  Blinding is a measure to protect against side channel attacks. 
-//  Blinding andomizes the scalar multiplier.
+//  Blinding randomizes the scalar multiplier.
 //
-//  Instead of calculating a*P, calculate (a-b mod BPO)*P followed by adding
-//  point B.
+//  Instead of calculating a*P, calculate (a+b mod BPO)*P + B
 //
-//  Where b = random blinding and B = b*P
+//  Where b = random blinding and B = -b*P
 //
 // -------------------------------------------------------------------------
 */
@@ -256,30 +301,32 @@ void *ed25519_Blinding_Init(
 
     EDP_BLINDING_CTX *ctx = (EDP_BLINDING_CTX*)context;
 
-    if (ctx == 0) ctx = (EDP_BLINDING_CTX*)malloc(sizeof(EDP_BLINDING_CTX));
-    if (ctx)
+    if (ctx == 0)
     {
-        /* Use edp_custom_blinding to protect generation of the new blinder */
-
-        SHA512_Init(&d.H);
-        SHA512_Update(&d.H, edp_custom_blinding.zr, 32);
-        SHA512_Update(&d.H, seed, size);
-        SHA512_Final(d.digest, &d.H);
-
-        ecp_BytesToWords(ctx->zr, d.digest+32);
-        ecp_BytesToWords(d.t, d.digest);
-        eco_Mod(d.t);
-        ecp_Sub(ctx->bl, _w_BPO, d.t);
-
-        eco_AddReduce(d.t, d.t, edp_custom_blinding.bl);
-        edp_BasePointMult(&d.T, d.t, edp_custom_blinding.zr);
-        edp_AddPoint(&d.T, &d.T, &edp_custom_blinding.BP);
-
-        edp_ExtPoint2PE(&ctx->BP, &d.T);
-
-        /* clear potentially sensitive data */
-        memset (&d, 0, sizeof(d));
+        ctx = (EDP_BLINDING_CTX*)malloc(sizeof(EDP_BLINDING_CTX));
+        if (ctx == 0) return 0;
     }
+
+    /* Use edp_custom_blinding to protect generation of the new blinder */
+
+    SHA512_Init(&d.H);
+    SHA512_Update(&d.H, edp_custom_blinding.zr, 32);
+    SHA512_Update(&d.H, seed, size);
+    SHA512_Final(d.digest, &d.H);
+
+    ecp_BytesToWords(ctx->zr, d.digest+32);
+    ecp_BytesToWords(d.t, d.digest);
+    eco_Mod(d.t);
+    ecp_Sub(ctx->bl, _w_BPO, d.t);
+
+    eco_AddReduce(d.t, d.t, edp_custom_blinding.bl);
+    edp_BasePointMult(&d.T, d.t, edp_custom_blinding.zr);
+    edp_AddPoint(&d.T, &d.T, &edp_custom_blinding.BP);
+
+    edp_ExtPoint2PE(&ctx->BP, &d.T);
+
+    /* clear potentially sensitive data */
+    memset (&d, 0, sizeof(d));
 
     return ctx;
 }
@@ -302,6 +349,7 @@ void ed25519_CreateKeyPair(
     const unsigned char *sk)            /* IN: secret key (32 bytes) */
 {
     U8 md[SHA512_DIGEST_LENGTH];
+    U_WORD t[K_WORDS];
     SHA512_CTX H;
     Affine_POINT Q;
 
@@ -311,7 +359,8 @@ void ed25519_CreateKeyPair(
     SHA512_Final(md, &H);
     ecp_TrimSecretKey(md);
 
-    edp_BasePointMultiply(&Q, md, blinding);
+    ecp_BytesToWords(t, md);
+    edp_BasePointMultiply(&Q, t, blinding);
     ed25519_PackPoint(pubKey, Q.y, Q.x[0]);
 
     memcpy(privKey, sk, 32);
@@ -349,8 +398,7 @@ void ed25519_SignMessage(
     eco_Mod(r);                         /* r mod BPO */
 
     /* R = r*P */
-    ecp_WordsToBytes(md, r);
-    edp_BasePointMultiply(&R, md, blinding);
+    edp_BasePointMultiply(&R, r, blinding);
     ed25519_PackPoint(signature, R.y, R.x[0]); /* R part of signature */
 
     /* S = r + H(encoded(R) + pk + m) * a  mod BPO */

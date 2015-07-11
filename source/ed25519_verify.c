@@ -185,46 +185,48 @@ void * ed25519_Verify_Init(
 
     if (ctx == 0) ctx = (EDP_SIGV_CTX*)malloc(sizeof(EDP_SIGV_CTX));
 
-    memcpy(ctx->pk, publicKey, 32);
-    i = ecp_DecodeInt(Q.y, publicKey);
-    ed25519_CalculateX(Q.x, Q.y, ~i);       /* Invert parity for -Q */
-    ecp_MulMod(Q.t, Q.x, Q.y);
-    ecp_SetValue(Q.z, 1);
+    if (ctx)
+    {
+        memcpy(ctx->pk, publicKey, 32);
+        i = ecp_DecodeInt(Q.y, publicKey);
+        ed25519_CalculateX(Q.x, Q.y, ~i);       /* Invert parity for -Q */
+        ecp_MulMod(Q.t, Q.x, Q.y);
+        ecp_SetValue(Q.z, 1);
 
-    /* pre-compute q-table */
+        /* pre-compute q-table */
 
-    /* Calculate: Q0=Q, Q1=(2^64)*Q, Q2=(2^128)*Q, Q3=(2^192)*Q */
+        /* Calculate: Q0=Q, Q1=(2^64)*Q, Q2=(2^128)*Q, Q3=(2^192)*Q */
 
-    ecp_SetValue(ctx->q_table[0].YpX, 1);           /* -- -- -- -- */
-    ecp_SetValue(ctx->q_table[0].YmX, 1);
-    ecp_SetValue(ctx->q_table[0].T2d, 0);
-    ecp_SetValue(ctx->q_table[0].Z2, 2);
+        ecp_SetValue(ctx->q_table[0].YpX, 1);           /* -- -- -- -- */
+        ecp_SetValue(ctx->q_table[0].YmX, 1);
+        ecp_SetValue(ctx->q_table[0].T2d, 0);
+        ecp_SetValue(ctx->q_table[0].Z2, 2);
 
-    edp_ExtPoint2PE(&ctx->q_table[1], &Q);          /* -- -- -- q0 */
+        edp_ExtPoint2PE(&ctx->q_table[1], &Q);          /* -- -- -- q0 */
 
-    for (i = 0; i < 64; i++) edp_DoublePoint(&Q);
+        for (i = 0; i < 64; i++) edp_DoublePoint(&Q);
 
-    edp_ExtPoint2PE(&ctx->q_table[2], &Q);          /* -- -- q1 -- */
-    QTABLE_SET(3,1);                                /* -- -- q1 q0 */
+        edp_ExtPoint2PE(&ctx->q_table[2], &Q);          /* -- -- q1 -- */
+        QTABLE_SET(3,1);                                /* -- -- q1 q0 */
 
-    do edp_DoublePoint(&Q); while (++i < 128);
+        do edp_DoublePoint(&Q); while (++i < 128);
 
-    edp_ExtPoint2PE(&ctx->q_table[4], &Q);          /* -- q2 -- -- */
-    QTABLE_SET(5, 1);                               /* -- q2 -- q0 */
-    QTABLE_SET(6, 2);                               /* -- q2 q1 -- */
-    QTABLE_SET(7, 3);                               /* -- q2 q1 q0 */
+        edp_ExtPoint2PE(&ctx->q_table[4], &Q);          /* -- q2 -- -- */
+        QTABLE_SET(5, 1);                               /* -- q2 -- q0 */
+        QTABLE_SET(6, 2);                               /* -- q2 q1 -- */
+        QTABLE_SET(7, 3);                               /* -- q2 q1 q0 */
 
-    do edp_DoublePoint(&Q); while (++i < 192);
+        do edp_DoublePoint(&Q); while (++i < 192);
 
-    edp_ExtPoint2PE(&ctx->q_table[8], &Q);          /* q3 -- -- -- */
-    QTABLE_SET(9, 1);                               /* q3 -- -- q0 */
-    QTABLE_SET(10, 2);                              /* q3 -- q1 -- */
-    QTABLE_SET(11, 3);                              /* q3 -- q1 q0 */
-    QTABLE_SET(12, 4);                              /* q3 q2 -- -- */
-    QTABLE_SET(13, 5);                              /* q3 q2 -- q0 */
-    QTABLE_SET(14, 6);                              /* q3 q2 q1 -- */
-    QTABLE_SET(15, 7);                              /* q3 q2 q1 q0 */
-
+        edp_ExtPoint2PE(&ctx->q_table[8], &Q);          /* q3 -- -- -- */
+        QTABLE_SET(9, 1);                               /* q3 -- -- q0 */
+        QTABLE_SET(10, 2);                              /* q3 -- q1 -- */
+        QTABLE_SET(11, 3);                              /* q3 -- q1 q0 */
+        QTABLE_SET(12, 4);                              /* q3 q2 -- -- */
+        QTABLE_SET(13, 5);                              /* q3 q2 -- q0 */
+        QTABLE_SET(14, 6);                              /* q3 q2 q1 -- */
+        QTABLE_SET(15, 7);                              /* q3 q2 q1 q0 */
+    }
     return ctx;
 }
 

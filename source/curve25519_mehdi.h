@@ -164,7 +164,7 @@ void edp_DoublePoint(Ext_POINT *p);
 void edp_ComputePermTable(PE_POINT *qtable, Ext_POINT *Q);
 void edp_ExtPoint2PE(PE_POINT *r, const Ext_POINT *p);
 void edp_BasePointMult(OUT Ext_POINT *S, IN const U_WORD *sk, IN const U_WORD *R);
-void edp_BasePointMultiply(OUT Affine_POINT *Q, IN const U8 *sk, 
+void edp_BasePointMultiply(OUT Affine_POINT *Q, IN const U_WORD *sk, 
     IN const void *blinding);
 void ecp_4Folds(U8* Y, const U_WORD* X);
 void ecp_8Folds(U8* Y, const U_WORD* X);
