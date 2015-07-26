@@ -38,6 +38,13 @@
     <MASM Include="..\..\source\asm64\amd64.masm\WordMulAdd.asm" />
   </ItemGroup>
   <ItemGroup>
+    <CustomBuild Include="..\..\custom\custom_code.bat">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"%(FullPath)" $(OutDir) $(Platform) $(Configuration)</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">custom_blind.c</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"%(FullPath)" $(OutDir) $(Platform) $(Configuration)</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">custom_blind.c</Outputs>
+    </CustomBuild>
     <None Include="..\..\source\asm64\amd64.masm\defines.inc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

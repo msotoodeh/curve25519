@@ -21,7 +21,7 @@
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <memory.h>
+#include "../include/external_calls.h"
 #include "curve25519_mehdi.h"
 
 typedef struct
@@ -153,7 +153,7 @@ void ecp_PointMultiply(
         }
     }
     /* K is 0 */
-    memset(PublicKey, 0, 32);
+    mem_fill(PublicKey, 0, 32);
 }
 
 /* -- DH key exchange interfaces ----------------------------------------- */

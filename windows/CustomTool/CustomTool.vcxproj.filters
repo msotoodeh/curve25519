@@ -59,5 +59,8 @@
     <ClInclude Include="..\..\source\base_folding8.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\external_calls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

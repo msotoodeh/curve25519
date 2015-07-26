@@ -166,6 +166,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\custom\random.h" />
+    <ClInclude Include="..\..\include\external_calls.h" />
     <ClInclude Include="..\..\source\BaseTypes.h" />
     <ClInclude Include="..\..\source\base_folding8.h" />
     <ClInclude Include="..\..\source\curve25519_mehdi.h" />

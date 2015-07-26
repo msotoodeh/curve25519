@@ -44,10 +44,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
-#include "curve25519_mehdi.h"
+#include "../include/external_calls.h"
+#include "../source/curve25519_mehdi.h"
 #include "curve25519_donna.h"
-#include "sha512.h"
+#include "../source/sha512.h"
 
 void ecp_PrintHexBytes(IN const char *name, IN const U8 *data, IN U32 size);
 void ecp_PrintHexWords(IN const char *name, IN const U_WORD *data, IN U32 size);
@@ -317,7 +317,7 @@ int hash_test(int level)
     }
 
     SHA512_Init(&H);
-    memset (buff, 'a', 100);
+    mem_fill (buff, 'a', 100);
     for (i = 0; i < 10000; i++) SHA512_Update(&H, buff, 100);
     SHA512_Final(md, &H);
     if (memcmp(md, sha512_ax1m, SHA512_DIGEST_LENGTH) != 0)
@@ -752,7 +752,7 @@ int curve25519_SelfTest(int level)
         ecp_PrintHexBytes("SharedKey2", d, 32);
     }
 
-    memset(a, 0x44, 32);        /* our secret key */
+    mem_fill(a, 0x44, 32);        /* our secret key */
     ecp_PointMultiply(b, ecp_BasePoint, a, 32); /* public key */
     ecp_PointMultiply(c, b, _b_k1, 32);
     ecp_PointMultiply(d, c, _b_k2, 32);
@@ -801,7 +801,7 @@ int curve25519_SelfTest(int level)
         x = 0x0000000000000000000000000000000000000000000000000000000000000010
         y = 0x36B20194B9EE7885E888642D2006D60CDCC836D17F615E8416989556B3941598
     */
-    memset(b, 0, 32);
+    mem_fill(b, 0, 32);
     for (i = 0; i < 100; i++)
     {
         int order_test, on_curve;

@@ -131,6 +131,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\include\curve25519_dh.h" />
     <ClInclude Include="..\..\include\ed25519_signature.h" />
+    <ClInclude Include="..\..\include\external_calls.h" />
     <ClInclude Include="..\..\source\BaseTypes.h" />
     <ClInclude Include="..\..\source\base_folding8.h" />
     <ClInclude Include="..\..\source\curve25519_mehdi.h" />
@@ -145,6 +146,23 @@
     <ClCompile Include="..\..\source\ed25519_sign.c" />
     <ClCompile Include="..\..\source\ed25519_verify.c" />
     <ClCompile Include="..\..\source\sha512.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\custom\custom_code.bat">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">"%(FullPath)" $(OutDir) $(Platform) $(Configuration)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Generating new blinds</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">custom_blind.c</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">"%(FullPath)" $(OutDir) $(Platform) $(Configuration)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Generating new blinds</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">custom_blind.c</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"%(FullPath)" $(OutDir) $(Platform) $(Configuration)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generating custom blind</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">custom_blind.c</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"%(FullPath)" $(OutDir) $(Platform) $(Configuration)</Command>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generating custom blind</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">custom_blind.c</Outputs>
+    </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

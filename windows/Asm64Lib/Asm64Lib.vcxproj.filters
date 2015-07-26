@@ -89,4 +89,7 @@
   <ItemGroup>
     <None Include="..\..\source\asm64\amd64.masm\defines.inc" />
   </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\custom\custom_code.bat" />
+  </ItemGroup>
 </Project>

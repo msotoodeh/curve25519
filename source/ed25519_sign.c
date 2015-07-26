@@ -22,10 +22,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <memory.h>
-#include <malloc.h>
+#include "../include/external_calls.h"
 #include "curve25519_mehdi.h"
-#include "ed25519_signature.h"
+#include "../include/ed25519_signature.h"
 #include "sha512.h"
 
 /*
@@ -303,7 +302,7 @@ void *ed25519_Blinding_Init(
 
     if (ctx == 0)
     {
-        ctx = (EDP_BLINDING_CTX*)malloc(sizeof(EDP_BLINDING_CTX));
+        ctx = (EDP_BLINDING_CTX*)mem_alloc(sizeof(EDP_BLINDING_CTX));
         if (ctx == 0) return 0;
     }
 
@@ -326,7 +325,7 @@ void *ed25519_Blinding_Init(
     edp_ExtPoint2PE(&ctx->BP, &d.T);
 
     /* clear potentially sensitive data */
-    memset (&d, 0, sizeof(d));
+    mem_clear (&d, sizeof(d));
 
     return ctx;
 }
@@ -336,8 +335,8 @@ void ed25519_Blinding_Finish(
 {
     if (context)
     {
-        memset(context, 0, sizeof(EDP_BLINDING_CTX));
-        free (context);
+        mem_clear (context, sizeof(EDP_BLINDING_CTX));
+        mem_free (context);
     }
 }
 

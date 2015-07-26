@@ -24,11 +24,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <memory.h>
-#include "curve25519_mehdi.h"
+#include "../include/external_calls.h"
+#include "../source/curve25519_mehdi.h"
 #include "curve25519_donna.h"
-#include "curve25519_dh.h"
-#include "ed25519_signature.h"
+#include "../include/curve25519_dh.h"
+#include "../include/ed25519_signature.h"
 
 #ifdef USE_ASM_LIB
 
@@ -137,7 +137,7 @@ int speed_test(int loops)
     int i;
 
     /* generate key */
-    memset(secret_key, 0x42, 32);
+    mem_fill(secret_key, 0x42, 32);
     ecp_TrimSecretKey(secret_key);
 
     /* Make sure both generate identical public key */

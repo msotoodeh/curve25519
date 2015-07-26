@@ -33,6 +33,9 @@
     <ClInclude Include="..\..\include\ed25519_signature.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\external_calls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\curve25519_mehdi.c">
@@ -59,5 +62,8 @@
     <ClCompile Include="..\..\source\curve25519_dh.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\custom\custom_code.bat" />
   </ItemGroup>
 </Project>

@@ -22,10 +22,9 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <memory.h>
-#include <malloc.h>
+#include "../include/external_calls.h"
 #include "curve25519_mehdi.h"
-#include "ed25519_signature.h"
+#include "../include/ed25519_signature.h"
 #include "sha512.h"
 
 /*
@@ -183,7 +182,7 @@ void * ed25519_Verify_Init(
     Ext_POINT Q, T;
     EDP_SIGV_CTX *ctx = (EDP_SIGV_CTX*)context;
 
-    if (ctx == 0) ctx = (EDP_SIGV_CTX*)malloc(sizeof(EDP_SIGV_CTX));
+    if (ctx == 0) ctx = (EDP_SIGV_CTX*)mem_alloc(sizeof(EDP_SIGV_CTX));
 
     if (ctx)
     {
@@ -232,7 +231,7 @@ void * ed25519_Verify_Init(
 
 void ed25519_Verify_Finish(void *ctx)
 {
-    free(ctx);
+    mem_free(ctx);
 }
 
 /*

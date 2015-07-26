@@ -27,9 +27,9 @@
 #include <string.h>
 #include <malloc.h>
 #include "random.h"
-#include "curve25519_mehdi.h"
-#include "ed25519_signature.h"
-#include "sha512.h"
+#include "../source/curve25519_mehdi.h"
+#include "../include/ed25519_signature.h"
+#include "../source/sha512.h"
 
 /* Linker expects this */
 EDP_BLINDING_CTX edp_custom_blinding =

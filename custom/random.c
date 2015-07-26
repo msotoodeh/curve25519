@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #endif
 #include <memory.h>
-#include "sha512.h"
+#include "../source/sha512.h"
 
 /* Customize this with your own random key */
 static const unsigned char my_secret_key[] =

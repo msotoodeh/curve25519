@@ -40,6 +40,7 @@
  *                  <appro@fy.chalmers.se>
  */
 #include <string.h>
+#include "../include/external_calls.h"
 #include "sha512.h"
 
 #define UINT64(X)   X##ULL
@@ -71,10 +72,10 @@ void SHA512_Final (unsigned char *md, SHA512_CTX *c)
     p[n]=0x80;  /* There always is a room for one */
     n++;
     if (n > (SHA512_CBLOCK-16))
-        memset (p+n,0,SHA512_CBLOCK-n), n=0,
+        mem_fill (p+n,0,SHA512_CBLOCK-n), n=0,
         SHA512_Transform (c,p);
 
-    memset (p+n,0,SHA512_CBLOCK-16-n);
+    mem_fill (p+n,0,SHA512_CBLOCK-16-n);
 #ifdef  ECP_CONFIG_BIG_ENDIAN
     c->u.d[SHA_LBLOCK-2] = c->Nh;
     c->u.d[SHA_LBLOCK-1] = c->Nl;
