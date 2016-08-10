@@ -47,10 +47,12 @@ typedef struct {
 } EDP_SIGV_CTX;
 
 extern const U_WORD _w_P[K_WORDS];
-extern const U_WORD _w_2d[K_WORDS];
 extern const U_WORD _w_di[K_WORDS];
 
 extern const PA_POINT _w_base_folding8[256];
+extern const U_WORD _w_NxBPO[16][K_WORDS];
+
+#define _w_BPO _w_NxBPO[1]
 
 #define _w_Zero     _w_base_folding8[0].T2d
 #define _w_One      _w_base_folding8[0].YpX

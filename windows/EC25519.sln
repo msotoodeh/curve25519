@@ -17,6 +17,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Curve25519Lib", "Curve25519
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CustomTool", "CustomTool\CustomTool.vcxproj", "{F887AE67-67F9-46B6-9003-643B74168808}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CppLib", "CppLib\CppLib.vcxproj", "{D0AB5386-7250-46E0-AF5D-50B41A916146}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -75,13 +77,25 @@ Global
 		{F887AE67-67F9-46B6-9003-643B74168808}.Debug|Mixed Platforms.Build.0 = Debug|Win32
 		{F887AE67-67F9-46B6-9003-643B74168808}.Debug|Win32.ActiveCfg = Debug|Win32
 		{F887AE67-67F9-46B6-9003-643B74168808}.Debug|Win32.Build.0 = Debug|Win32
-		{F887AE67-67F9-46B6-9003-643B74168808}.Debug|x64.ActiveCfg = Debug|Win32
+		{F887AE67-67F9-46B6-9003-643B74168808}.Debug|x64.ActiveCfg = Debug|x64
+		{F887AE67-67F9-46B6-9003-643B74168808}.Debug|x64.Build.0 = Debug|x64
 		{F887AE67-67F9-46B6-9003-643B74168808}.Release|Mixed Platforms.ActiveCfg = Release|Win32
 		{F887AE67-67F9-46B6-9003-643B74168808}.Release|Mixed Platforms.Build.0 = Release|Win32
 		{F887AE67-67F9-46B6-9003-643B74168808}.Release|Win32.ActiveCfg = Release|Win32
 		{F887AE67-67F9-46B6-9003-643B74168808}.Release|Win32.Build.0 = Release|Win32
 		{F887AE67-67F9-46B6-9003-643B74168808}.Release|x64.ActiveCfg = Release|x64
 		{F887AE67-67F9-46B6-9003-643B74168808}.Release|x64.Build.0 = Release|x64
+		{D0AB5386-7250-46E0-AF5D-50B41A916146}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{D0AB5386-7250-46E0-AF5D-50B41A916146}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{D0AB5386-7250-46E0-AF5D-50B41A916146}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D0AB5386-7250-46E0-AF5D-50B41A916146}.Debug|Win32.Build.0 = Debug|Win32
+		{D0AB5386-7250-46E0-AF5D-50B41A916146}.Debug|x64.ActiveCfg = Debug|x64
+		{D0AB5386-7250-46E0-AF5D-50B41A916146}.Debug|x64.Build.0 = Debug|x64
+		{D0AB5386-7250-46E0-AF5D-50B41A916146}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{D0AB5386-7250-46E0-AF5D-50B41A916146}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{D0AB5386-7250-46E0-AF5D-50B41A916146}.Release|Win32.ActiveCfg = Release|Win32
+		{D0AB5386-7250-46E0-AF5D-50B41A916146}.Release|Win32.Build.0 = Release|Win32
+		{D0AB5386-7250-46E0-AF5D-50B41A916146}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

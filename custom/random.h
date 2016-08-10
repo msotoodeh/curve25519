@@ -18,5 +18,17 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef __random_h__
+#define __random_h__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+    
 void GetRandomBytes(unsigned char *buffer, int size);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // __random_h__

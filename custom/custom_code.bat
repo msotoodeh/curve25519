@@ -12,5 +12,9 @@ set TOPDIR=%~dp0..
 pushd %TOPDIR%
 
 echo Generating custom blinding
-"%BINPATH%\CustomTool.exe" b edp_custom_blinding 1> source\custom_blind.c
+"%BINPATH%CustomTool.exe" b edp_custom_blinding 1> source\custom_blind.c
+
+"%BINPATH%CustomTool.exe" b edp_genkey_blinding    1>  C++\custom_blinds.h
+"%BINPATH%CustomTool.exe" b edp_signature_blinding 1>> C++\custom_blinds.h
+"%BINPATH%CustomTool.exe" b edp_custom_blinding    1>> C++\custom_blinds.h
 popd
