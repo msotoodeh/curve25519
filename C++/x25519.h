@@ -24,8 +24,6 @@
 #ifndef __x25519_h__
 #define __x25519_h__
 
-#include "source/BaseTypes.h"
-
 class X25519Private
 {
 public:

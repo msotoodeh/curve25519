@@ -47,6 +47,11 @@
     </CustomBuild>
     <None Include="..\..\source\asm64\amd64.masm\defines.inc" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CustomTool\CustomTool.vcxproj">
+      <Project>{f887ae67-67f9-46b6-9003-643b74168808}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{68D97103-2D9B-435D-B7C4-99CE37748906}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>

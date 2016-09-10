@@ -57,12 +57,12 @@ const unsigned char* ED25519Public::GetKeyBytes(
     return &m_Key[0];
 }
 
-int ED25519Public::VeifySignature(
+bool ED25519Public::VeifySignature(
     const unsigned char* msg,           /* IN: [msg_size bytes] message to sign */
     unsigned int msg_size,              /* IN: size of message */
     const unsigned char* signature)     /* IN: [64 bytes] signature (R,S) */
 {
-    return ed25519_VerifySignature (signature, m_Key, msg, msg_size);
+    return ed25519_VerifySignature (signature, m_Key, msg, msg_size) == 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

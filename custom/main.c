@@ -76,7 +76,7 @@ int CreateBlindingContext(IN const char *name)
     ed25519_Blinding_Init((void *)&B, seed, sizeof(seed));
     
     printf(
-        "#include \"curve25519_mehdi.h\"\n\n"
+        //"#include \"curve25519_mehdi.h\"\n\n"
         "EDP_BLINDING_CTX %s = \n", name);
     PrintWords("{\n  W256(",B.bl, K_WORDS);
     PrintWords("),\n  W256(",B.zr, K_WORDS);

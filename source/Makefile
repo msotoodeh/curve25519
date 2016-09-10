@@ -28,9 +28,7 @@ all: $(TARGET)
 
 init:
 	@[ -d $(BUILD_DIR) ] || mkdir $(BUILD_DIR)
-
-custom_blind.c:
-	$(CUSTOM_TOOL) b edp_custom_blinding > custom_blind.c
+	$(CUSTOM_TOOL) b edp_custom_blinding > custom_blind.h
 
 $(BUILD_DIR)/%.o: %.c
 	$(CC) -o $@ -c $(CFLAGS) $<
@@ -39,7 +37,7 @@ $(TARGET): init $(OBJS)
 	$(MAKE_STATIC_LIB) $(TARGET) $(OBJS) $(LDFLAGS)
 
 clean: 
-	@rm -rf $(BUILD_DIR)/* custom_blind.c
+	@rm -rf $(BUILD_DIR)/*
 
 distclean: clean
 	@rm -rf build32/ build64/

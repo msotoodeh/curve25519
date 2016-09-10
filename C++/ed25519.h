@@ -24,8 +24,6 @@
 #ifndef __ed25519_h__
 #define __ed25519_h__
 
-#include "source/BaseTypes.h"
-
 class ED25519Public
 {
 public:
@@ -36,7 +34,7 @@ public:
 
     const unsigned char* GetKeyBytes(unsigned char* publicKey) const;
 
-    int VeifySignature(
+    bool VeifySignature(
         const unsigned char* msg,           /* IN: [msg_size bytes] message to sign */
         unsigned int msg_size,              /* IN: size of message */
         const unsigned char* signature);    /* IN: [64 bytes] signature (R,S) */
@@ -48,9 +46,20 @@ private:
 class ED25519Private
 {
 public:
-    // Constructor/Destructor
-    // Load existing private key or generate randomly 
-    ED25519Private(const unsigned char* PrivateKeySize, unsigned int size);
+    /* Constructor/Destructor */
+
+    /*
+     *   Load existing key or generate a random key. 
+     *       key     Secret or private key blob
+     *       size    Size (in bytes) of the key argument
+     *               Expected values:
+     *                   32      key is the 'secret key'. 
+     *                           Public and private keys are claculated from secret key.
+     *                   64      key is 'private key'.
+     *                           Load an existing key.
+     *                   0       Generate key pair randomly
+     */
+    ED25519Private(const unsigned char* key, unsigned int size);
     ~ED25519Private();
     
     enum { SecretBytes = 32, PrivateKeySize = 64, SignatureBytes = 64 };

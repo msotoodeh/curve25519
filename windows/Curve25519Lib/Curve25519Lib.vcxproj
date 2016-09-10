@@ -164,6 +164,11 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">custom_blind.c</Outputs>
     </CustomBuild>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CustomTool\CustomTool.vcxproj">
+      <Project>{f887ae67-67f9-46b6-9003-643b74168808}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
