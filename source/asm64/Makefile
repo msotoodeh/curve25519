@@ -42,9 +42,7 @@ all: $(TARGET)
 
 init:
 	@[ -d $(BUILD_DIR) ] || mkdir $(BUILD_DIR)
-
-custom_blind.c:
-	$(CUSTOM_TOOL) b edp_custom_blinding > custom_blind.c
+	$(CUSTOM_TOOL) b edp_custom_blinding > custom_blind.h
 
 $(BUILD_DIR)/s_%.o: amd64.gnu/%.s
 	$(ASM) -o $@ $<
@@ -59,8 +57,8 @@ $(TARGET): init $(OBJS)
 	ar cr $@ $(OBJS)
 
 clean: 
-	@rm -rf $(BUILD_DIR)/* custom_blind.c
+	@rm -rf $(BUILD_DIR)/* custom_blind.h
 
 distclean:
-	@rm -rf $(BUILD_DIR)/ custom_blind.c
+	@rm -rf $(BUILD_DIR)/ custom_blind.h
 
