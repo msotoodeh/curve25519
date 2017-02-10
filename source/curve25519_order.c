@@ -62,11 +62,6 @@ const U_WORD _w_NxBPO[16][K_WORDS] = {  /* n*BPO */
     W256(0x72676AE3,0x2913CE8B,0x8C82308F,0x3910A40B,1,0,0,0xF0000000)
 };
 
-static const U32 _w_NxMinusR[2][8] = { /* n*(-R) mod BPO */
-    W256(0,0,0,0,0,0,0,0),
-    W256(0xCF5D3ED0,0x812631A5,0x2F79CD65,0x4DEF9DEA,1,0,0,0)
-};
-
 #define minusR_0    0xCF5D3ED0
 #define minusR_1    0x812631A5
 #define minusR_2    0x2F79CD65
@@ -106,9 +101,9 @@ void eco_ReduceHiWord(U32* Y, U32 b, const U32* X)
     /* Y = X - T */
     c.s32.hi = ecp_Sub(Y, X, T);
 
-    /* Subtract R if there is a borrow */
+    /* Add BPO if there is a borrow */
 
-    ecp_Add(Y, Y, _w_NxMinusR[c.s32.hi & 1]);
+    ecp_Add(Y, Y, _w_NxBPO[c.s32.hi & 1]);
 }
 
 /* Z = X*Y mod BPO */

@@ -149,17 +149,18 @@ X   equ ARG3
 
     SUBA    B3,B2,B1,B0
 
-    ; Add -R if there is a carry
-    sbb     B2,B2
+    ; Add BPO if there is a carry
+    sbb     ACL,ACL
 
-    ; B = -R mod BPO
-    mov     B0,812631A5CF5D3ED0h
-    mov     B1,4DEF9DEA2F79CD65h
-    xor     B3,B3
+    ; B = BPO & carry
+    mov     B0,5812631A5CF5D3EDh
+    mov     B1,14DEF9DEA2F79CD6h
+    xor     B2,B2
+    mov     B3,1000000000000000h
 
-    and     B0,B2
-    and     B1,B2
-    and     B2,1
+    and     B0,ACL
+    and     B1,ACL
+    and     B3,ACL
     ADDA    B3,B2,B1,B0
 
     STOREA  Y

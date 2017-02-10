@@ -138,7 +138,6 @@
     mov     b,B2
     LOADA   X
 
-
     MULSET  B1,B0,$0x812631A5CF5D3ED0,B2
     MULT    $0x4DEF9DEA2F79CD65,B2
     xor     B3,B3
@@ -148,17 +147,18 @@
 
     SUBA    B3,B2,B1,B0
 
-    # Add -R if there is a carry
-    sbb     B2,B2
+    # Add BPO if there is a carry
+    sbb     ACL,ACL
 
-    # B = -R mod BPO
-    mov     $0x812631A5CF5D3ED0,B0
-    mov     $0x4DEF9DEA2F79CD65,B1
-    xor     B3,B3
+    # B = BPO & carry
+    mov     $0x5812631A5CF5D3ED,B0
+    mov     $0x14DEF9DEA2F79CD6,B1
+    xor     B2,B2
+    mov     $0x1000000000000000,B3
 
-    and     B2,B0
-    and     B2,B1
-    and     $1,B2
+    and     ACL,B0
+    and     ACL,B1
+    and     ACL,B3
     ADDA    B3,B2,B1,B0
 
     STOREA  Y
@@ -166,6 +166,4 @@
     RestoreArg1
     PopB
     ret
-
-   
-    
+  

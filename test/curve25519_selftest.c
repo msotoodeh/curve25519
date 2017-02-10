@@ -584,6 +584,17 @@ void ecp_CalculateY(OUT U8 *Y, IN const U8 *X)
     ecp_WordsToBytes(Y, T);
 }
 
+static const U_WORD _w_NxRmodBPO[8][K_WORDS] = { /* n*R+1 mod BPO */
+    W256(1,0,0,0,0,0,0,0),
+    W256(0x8D98951E,0xD6EC3174,0x737DCF70,0xC6EF5BF4,0xFFFFFFFE,0xFFFFFFFF,0xFFFFFFFF,0x0FFFFFFF),
+    W256(0xBE3B564E,0x55C5FFCE,0x4404020B,0x78FFBE0A,0xFFFFFFFD,0xFFFFFFFF,0xFFFFFFFF,0x0FFFFFFF),
+    W256(0xEEDE177E,0xD49FCE28,0x148A34A5,0x2B102020,0xFFFFFFFC,0xFFFFFFFF,0xFFFFFFFF,0x0FFFFFFF),
+    W256(0x1F80D8AE,0x53799C83,0xE5106740,0xDD208235,0xFFFFFFFA,0xFFFFFFFF,0xFFFFFFFF,0x0FFFFFFF),
+    W256(0x502399DE,0xD2536ADD,0xB59699DA,0x8F30E44B,0xFFFFFFF9,0xFFFFFFFF,0xFFFFFFFF,0x0FFFFFFF),
+    W256(0x80C65B0E,0x512D3937,0x861CCC75,0x41414661,0xFFFFFFF8,0xFFFFFFFF,0xFFFFFFFF,0x0FFFFFFF),
+    W256(0xB1691C3E,0xD0070791,0x56A2FF0F,0xF351A877,0xFFFFFFF6,0xFFFFFFFF,0xFFFFFFFF,0x0FFFFFFF)
+};
+
 int curve25519_SelfTest(int level)
 {
     int i, rc = 0;
@@ -604,6 +615,21 @@ int curve25519_SelfTest(int level)
         return rc;
     }
 
+    /* Make sure we handle overflow conditions correctly */
+    for (i = 0; i < 8; i++)
+    {
+        ecp_SetValue(A, 1);    
+        eco_ReduceHiWord(B, (U32)i, A);
+        eco_Mod(B);
+        if (ecp_CmpNE(B, _w_NxRmodBPO[i]))
+        {
+            rc++;
+            printf("eco_ReduceHiWord(%d) FAILED!!\n", i);
+            ecp_PrintHexWords("Calc", B, K_WORDS);
+            ecp_PrintHexWords("Expt", _w_NxRmodBPO[i], K_WORDS);
+        }
+    }
+    
     rc = hash_test(level);
 
     ecp_AddReduce(A, _w_I, _w_P);
@@ -833,7 +859,6 @@ static U8 m_6[32] = {6};
 static U8 m_7[32] = {7};
 static U8 m_11[32] = {11};
 static U8 m_50[32] = {50};
-static U8 m_127[32] = {127};
 
 /* Pre-calculate base point values */
 static const Affine_POINT ed25519_BasePoint = {   /* y = 4/5 mod P */
@@ -940,6 +965,7 @@ int ed25519_selftest()
     edp_BasePointMultiply(&a, u, 0);   /* a = u*B */
     eco_MulMod(v, u, u);
     ecp_Sub(v, _w_BPO, v);          /* v = -u^2 */
+    ecp_WordsToBytes(m1, u);
     ecp_WordsToBytes(m2, v);
     edp_DualPointMultiply(&a, m2, m1, &a);  /* v*B + u*A = (-u^2 + u*u)*B */
     /* assert a == infinty */
