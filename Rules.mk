@@ -21,7 +21,7 @@ endif
 
 ifneq ($(findstring cygwin,$(TARGET_SYS)),)
 TARGET_OS = Cygwin
-TARGET_ABI = GCC
+TARGET_ABI = MSVC
 else ifneq ($(findstring linux,$(TARGET_SYS)),)
 TARGET_OS = Linux
 TARGET_ABI = GCC
