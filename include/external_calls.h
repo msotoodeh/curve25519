@@ -26,7 +26,7 @@
 #define __external_calls_h__
 
 #include <memory.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 #define	mem_alloc(size)				malloc(size)
 #define	mem_free(addr)				free(addr)
