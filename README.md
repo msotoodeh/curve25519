@@ -108,6 +108,27 @@ Platforms:
 | C32/GCC    | Cygwin-32: gcc 4.5.3, Portable-C, 32-bit, Intel(R) Core(TM) i7-2670QM CPU
 ```
 
+OpenSSL comparison(**make openssl**):
+```
+HP EliteBook 755 G5/X64, Ubuntu 18.04.2, OpenSSL 1.1.1
+
+-- CreateKeyPair --
+  OpenSSL: 210738 cycles = 61.982 usec @3.4GHz -- ratio: 2.817
+    Mehdi:  74822 cycles = 22.006 usec @3.4GHz -- delta: 64.50%
+
+-- CalculatePublicKey --
+  OpenSSL: 208714 cycles = 61.386 usec @3.4GHz -- ratio: 0.660
+    Mehdi: 316096 cycles = 92.969 usec @3.4GHz -- delta: -51.45%
+
+-- CreateSharedKey --
+  OpenSSL: 442750 cycles = 130.221 usec @3.4GHz -- ratio: 1.634
+    Mehdi: 270930 cycles =  79.685 usec @3.4GHz -- delta: 38.81%
+
+-- SignMessage --
+  OpenSSL: 425656 cycles = 125.193 usec @3.4GHz -- ratio: 5.414
+    Mehdi:  78628 cycles =  23.126 usec @3.4GHz -- delta: 81.53%
+```
+
 Side Channel Security:
 ----------------------
 This library uses multiple measures with the gaol of eliminating leakage of secret 
@@ -147,6 +168,8 @@ supported: Microsoft Assembler (Windows) and GNU Assembler (Windows/Linux).
   You also have the option of using Mingw and GNU assembler on windows.
 - For Linux platforms, Debian and Ubuntu have been tested so far. For X86_64 
   assembly run: 'make clean asm' from project root. 
+- For building test code for OpenSSL comparison use 'make openssl'. You need
+  OpenSSL version 1.1.0+ for curve 25519 support.
 
 A custom tool creates a random blinder on every new build. This blinder is static
 and will be part of the library. This blinder is only used for blinding the point 

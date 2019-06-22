@@ -17,16 +17,32 @@ ASMLIB_DIR = $(ROOT)/source/asm64/$(BUILD_DIR)
 C_LIB   = $(CLIB_DIR)/libcurve25519.a
 ASM_LIB = $(ASMLIB_DIR)/libcurve25519x64.a
 
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+    LDFLAGS += -lcrypto -ldl -lpthread -static-libgcc
+endif
+ifeq ($(findstring CYGWIN,$(UNAME_S)),CYGWIN)
+    LDFLAGS += -lcrypto -ldl -lpthread -lc
+endif
+ifeq ($(findstring MINGW,$(UNAME_S)),MINGW)
+    LDFLAGS += -Wl,-Bstatic -lcrypto -lpthread -static-libgcc -Wl,-Bdynamic -luser32 -lgdi32 -lws2_32 -lwsock32 -lshlwapi
+endif
+
 SRCS = \
     curve25519_donna.c \
     curve25519_selftest.c \
     curve25519_test.c
-    
+
+L_SRCS = \
+    openssl_test.c
+
 C_OBJS = $(SRCS:%.c=$(BUILD_DIR)/c_%.o)
 A_OBJS = $(SRCS:%.c=$(BUILD_DIR)/a_%.o)
+L_OBJS = $(L_SRCS:%.c=$(BUILD_DIR)/l_%.o)
 
 C_TARGET = $(BUILD_DIR)/curve25519_test
 ASM_TARGET = $(BUILD_DIR)/curve25519_test_x64
+OPENSSL_TARGET = $(BUILD_DIR)/openssl_test_x64
 
 ifeq ($(PLATFORM),X86_64)
 all: $(C_TARGET) $(ASM_TARGET)
@@ -47,6 +63,9 @@ $(BUILD_DIR)/c_%.o: %.c
 $(BUILD_DIR)/a_%.o: %.c
 	$(CC) -o $@ -O2 -c $(CFLAGS) -DUSE_ASM_LIB $<
 
+$(BUILD_DIR)/l_%.o: %.c
+	$(CC) -o $@ -O2 -c -I.. $(CFLAGS) $<
+
 $(C_TARGET): init $(C_OBJS)
 	$(MAKE_STATIC_COMMAND) $@ $(C_OBJS) $(LDFLAGS) $(C_LIB)
 
@@ -58,6 +77,12 @@ test: $(C_TARGET)
 
 test_asm: $(ASM_TARGET)
 	./$(ASM_TARGET) || exit 1
+
+$(OPENSSL_TARGET): init $(L_OBJS)
+	$(MAKE_DYNAMIC_COMMAND) $@ $(L_OBJS) $(LDFLAGS) $(ASM_LIB) $(SSL_LIB)
+
+openssl: init $(OPENSSL_TARGET)
+	./$(OPENSSL_TARGET) || exit 1
 
 clean: 
 	@rm -rf $(BUILD_DIR)/*

@@ -30,6 +30,9 @@ asm:
 	$(MAKE) -C source/asm64
 	$(MAKE) -C test test_asm
 
+openssl: asm
+	$(MAKE) -C test openssl
+
 clean: 
 	$(MAKE) -C custom clean
 	$(MAKE) -C source clean
