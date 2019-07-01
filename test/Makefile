@@ -19,13 +19,13 @@ ASM_LIB = $(ASMLIB_DIR)/libcurve25519x64.a
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
-    LDFLAGS += -lcrypto -ldl -lpthread -static-libgcc
+    OSSL_FLAGS = -lcrypto -ldl -lpthread -static-libgcc
 endif
 ifeq ($(findstring CYGWIN,$(UNAME_S)),CYGWIN)
-    LDFLAGS += -lcrypto -ldl -lpthread -lc
+    OSSL_FLAGS = -lcrypto -ldl -lpthread -lc
 endif
 ifeq ($(findstring MINGW,$(UNAME_S)),MINGW)
-    LDFLAGS += -Wl,-Bstatic -lcrypto -lpthread -static-libgcc -Wl,-Bdynamic -luser32 -lgdi32 -lws2_32 -lwsock32 -lshlwapi
+    OSSL_FLAGS = -Wl,-Bstatic -lcrypto -lpthread -static-libgcc -Wl,-Bdynamic -luser32 -lgdi32 -lws2_32 -lwsock32 -lshlwapi
 endif
 
 SRCS = \
@@ -79,7 +79,7 @@ test_asm: $(ASM_TARGET)
 	./$(ASM_TARGET) || exit 1
 
 $(OPENSSL_TARGET): init $(L_OBJS)
-	$(MAKE_DYNAMIC_COMMAND) $@ $(L_OBJS) $(LDFLAGS) $(ASM_LIB) $(SSL_LIB)
+	$(MAKE_DYNAMIC_COMMAND) $@ $(L_OBJS) $(OSSL_FLAGS) $(ASM_LIB) $(SSL_LIB)
 
 openssl: init $(OPENSSL_TARGET)
 	./$(OPENSSL_TARGET) || exit 1
