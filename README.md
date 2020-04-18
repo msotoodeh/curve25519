@@ -131,7 +131,7 @@ HP EliteBook 755 G5/X64, Ubuntu 18.04.2, OpenSSL 1.1.1
 
 Side Channel Security:
 ----------------------
-This library uses multiple measures with the gaol of eliminating leakage of secret 
+This library uses multiple measures with the goal of eliminating leakage of secret 
 keys during cryptographic operations. Constant-time is one of these measures and 
 is implemented for all the field operations (no conditional operation based on key values). 
 The second and more effective measure that this library uses is blinding. Blinding
