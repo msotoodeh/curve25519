@@ -392,7 +392,7 @@ void print_words(IN const char *txt, IN const U_WORD *data, IN U32 size)
     U32 i;
 #ifdef WORDSIZE_64
     printf("%s0x%016llX", txt, *data++);
-    for (i = 1; i < size; i++) printf(",0x%08llX", *data++);
+    for (i = 1; i < size; i++) printf(",0x%016llX", *data++);
 #else
     printf("%s0x%08X", txt, *data++);
     for (i = 1; i < size; i++) printf(",0x%08X", *data++);
