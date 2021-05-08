@@ -57,7 +57,7 @@ const unsigned char* ED25519Public::GetKeyBytes(
     return &m_Key[0];
 }
 
-bool ED25519Public::VeifySignature(
+bool ED25519Public::VerifySignature(
     const unsigned char* msg,           /* IN: [msg_size bytes] message to sign */
     unsigned int msg_size,              /* IN: size of message */
     const unsigned char* signature)     /* IN: [64 bytes] signature (R,S) */
