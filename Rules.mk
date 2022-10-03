@@ -62,7 +62,7 @@ endif
 
 # programs we use
 CC    = gcc
-GPP   = g++
+CXX   = g++
 CPP   = cpp
 LD    = ld
 AR    = ar
@@ -75,10 +75,10 @@ INSTALL = install
 NM      = nm
 
 MAKE_STATIC_LIB         = $(AR) cr
-MAKE_SHARED_LIB         = $(GPP) -shared -o
+MAKE_SHARED_LIB         = $(CXX) -shared -o
 MAKE_DEBUG_LIB          = $(MAKE_STATIC_LIB)
-MAKE_STATIC_COMMAND     = $(GPP) -static -o
-MAKE_DYNAMIC_COMMAND    = $(GPP) -o
+MAKE_STATIC_COMMAND     = $(CXX) -static -o
+MAKE_DYNAMIC_COMMAND    = $(CXX) -o
 
 INSTALL_HEADER      = $(INSTALL) -m 644
 INSTALL_COMMAND     = $(INSTALL) -m 755 $(STRIP_ARG)

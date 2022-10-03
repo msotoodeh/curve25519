@@ -33,8 +33,8 @@ for cc in ${compilers[@]}
 do
 	IFS=- read -r platform host dummy <<< $cc
 
-	export CFLAGS=${cflags[$cc]}
-	make clean && make CC=$cc GPP=${cc/gcc/g++} RELEASE=on
+	export CPPFLAGS=${cflags[$cc]}
+	make clean && make CC=$cc CXX=${cc/gcc/g++} RELEASE=on
 		
 	mkdir -p targets/$host/$platform
 	cp source/build64//lib*.a $_
