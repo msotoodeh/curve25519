@@ -6,7 +6,7 @@ include $(ROOT)/Rules.mk
 override CC = cc
 override GPP = g++
 
-CFLAGS += -I. -I$(ROOT)/include -I$(ROOT)/source -static-libgcc -Wall -O2
+override CFLAGS = -I. -I$(ROOT)/include -I$(ROOT)/source -static-libgcc -Wall -O2
 
 SRCS = \
     curve25519_mehdi.c \

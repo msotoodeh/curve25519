@@ -5,7 +5,6 @@ Debug/
 Release/
 x64/
 ipch/
-*.a
 *.o
 *.sdf
 *.suo
@@ -13,5 +12,6 @@ ipch/
 *.opensdf
 *.bak
 .vs/
+custom_blind.h
 
 

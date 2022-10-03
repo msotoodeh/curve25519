@@ -41,13 +41,13 @@ endif
 ifeq ($(RELEASE),)
 export DEBUG=true
 CONF = Debug
-CFLAGS = -g -D_DEBUG
+CFLAGS += -g -D_DEBUG
 STRIP_ARG =
 else
 export RELEASE=true
 export NDEBUG=true
 CONF = Release
-CFLAGS = -DNDEBUG
+CFLAGS += -DNDEBUG
 STRIP_ARG = -s
 endif
 

@@ -1,7 +1,8 @@
 #!/bin/bash
 
-list="x86_64-linux-gnu-gcc i686-linux-gnu-gcc arm-linux-gnueabi-gcc aarch64-linux-gnu-gcc sparc64-linux-gnu-gcc mips-linux-gnu-gcc powerpc-linux-gnu-gcc"
-declare -A alias=( [i686-linux-gnu-gcc]=x86-linux-gnu-gcc )
+list="x86_64-linux-gnu-gcc x86-linux-gnu-gcc arm-linux-gnueabi-gcc aarch64-linux-gnu-gcc sparc64-linux-gnu-gcc mips-linux-gnu-gcc powerpc-linux-gnu-gcc"
+declare -A alias=( [x86-linux-gnu-gcc]=i686-linux-gnu-gcc )
+declare -A cflags=( [mips-linux-gnu-gcc]="-march=mips32" [powerpc-linux-gnu-gcc]="-m32")
 declare -a compilers
 
 IFS= read -ra candidates <<< "$list"
@@ -10,7 +11,7 @@ IFS= read -ra candidates <<< "$list"
 for cc in ${candidates[@]}
 do
 	# check compiler first
-	if ! command -v $cc &> /dev/null; then
+	if ! command -v ${alias[$cc]:-$cc} &> /dev/null; then
 		continue
 	fi
 	
@@ -21,7 +22,7 @@ do
 
 	for arg in $@
 	do
-		if [[ ${alias[$cc]:-$cc} =~ $arg ]]; then 
+		if [[ $cc =~ $arg ]]; then 
 			compilers+=($cc)
 		fi
 	done
@@ -30,9 +31,10 @@ done
 # then iterate selected platforms/compilers
 for cc in ${compilers[@]}
 do
-	IFS=- read -r platform host dummy <<< ${alias[$cc]:-$cc}
+	IFS=- read -r platform host dummy <<< $cc
 
-	make clean && make CC=$cc GPP=${cc/gcc/g++}
+	export CFLAGS=${cflags[$cc]}
+	make clean && make CC=$cc GPP=${cc/gcc/g++} RELEASE=on
 		
 	mkdir -p targets/$host/$platform
 	cp source/build64//lib*.a $_
