@@ -11,4 +11,7 @@ ipch/
 *.suo
 *.user
 *.opensdf
+*.bak
+.vs/
+
 

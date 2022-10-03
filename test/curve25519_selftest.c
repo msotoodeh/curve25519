@@ -614,9 +614,9 @@ int curve25519_SelfTest(int level)
     {
         rc++;
         if (m.bytes[0] == 0x12) /* big-endian  */
-            printf("Incorrect byte order configuration used (define ECP_BIG_ENDIAN).\n");
+            printf("Incorrect byte order configuration used (define __BYTE_ORDER__ to __ORDER_BIG_ENDIAN).\n");
         if (m.bytes[0] == 0x78) /* little-endian  */
-            printf("Incorrect byte order configuration used (define ECP_LITTLE_ENDIAN).\n");
+            printf("Incorrect byte order configuration used (define __BYTE_ORDER__ to __ORDER_LITTLE_ENDIAN).\n");
         return rc;
     }
 

@@ -66,6 +66,7 @@ extern "C" {
 #endif
 
 #define SHA512_DIGEST_LENGTH    64
+#define SHA512_LBLOCK			(sizeof(SHA_LONG64))
 #define SHA512_CBLOCK           128     /* SHA-512 treats input data as a
                                          * contiguous array of 64 bit
                                          * wide big-endian values. */

@@ -1,5 +1,4 @@
 # 
-
 ROOT = ..
 include $(ROOT)/Rules.mk
 
@@ -44,6 +43,8 @@ C_TARGET = $(BUILD_DIR)/curve25519_test
 ASM_TARGET = $(BUILD_DIR)/curve25519_test_x64
 OPENSSL_TARGET = $(BUILD_DIR)/openssl_test_x64
 
+ifdef ($(BUILD_CROSS))
+
 ifeq ($(PLATFORM),X86_64)
 all: $(C_TARGET) $(ASM_TARGET)
 else
@@ -84,8 +85,16 @@ $(OPENSSL_TARGET): init $(L_OBJS)
 openssl: init $(OPENSSL_TARGET)
 	./$(OPENSSL_TARGET) || exit 1
 
+else
+
+all:
+test:
+	@echo No test done due to cross-compiling
+	
 clean: 
 	@rm -rf $(BUILD_DIR)/*
 
 distclean: clean
-	@rm -rf Debug/ Release/ ipch/ x64/ *.sdf *.suo build32/ build64/
+	@rm -rf Debug/ Release/ ipch/ x64/ *.sdf *.suo build32/ build64/	
+	
+endif

@@ -28,8 +28,12 @@
 #include <stdint.h>
 
 /* Little-endian as default */
-#ifndef ECP_CONFIG_BIG_ENDIAN
-#define ECP_CONFIG_LITTLE_ENDIAN
+#ifndef __BYTE_ORDER__
+#if defined(_MSC_VER)
+#define __BYTE_ORDER__  __ORDER_LITTLE_ENDIAN__
+#else
+#error Compiler needs to define __BYTE_ORDER__
+#endif
 #endif
 
 typedef unsigned char       U8;
@@ -53,7 +57,7 @@ typedef int64_t             S64;
 
 typedef unsigned int        SZ;
 
-#ifdef ECP_CONFIG_BIG_ENDIAN
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 typedef union
 {
     U16 u16;
