@@ -44,3 +44,4 @@ done
 cp -ur include/ targets/
 rm  targets/include/external_calls.h
 cp -ur source/sha512.h targets/include
+cp -ur source/BaseTypes.h targets/include
