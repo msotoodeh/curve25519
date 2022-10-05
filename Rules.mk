@@ -8,6 +8,12 @@ TARGET_SYS  = $(shell gcc -dumpmachine)
 TAG_NAME    = $(shell git log -1 --pretty=%H)
 BRANCH_NAME = $(shell git name-rev --name-only HEAD)
 REPO_NAME   = $(shell git remote -v | grep origin | grep fetch | awk '{print $$2}')
+REAL_GCC    = $(lastword $(subst /, ,$(shell readlink -f `which gcc`)))
+REAL_CC     = $(lastword $(subst /, ,$(shell readlink -f `which $(CC)`)))
+
+ifneq ($(REAL_CC),$(REAL_GCC))
+BUILD_CROSS = 1
+endif
 
 ifneq ($(findstring x86_64,$(TARGET_SYS)),)
 TARGET_ARCH = 64
@@ -35,29 +41,28 @@ endif
 ifeq ($(RELEASE),)
 export DEBUG=true
 CONF = Debug
-CFLAGS = -g -D_DEBUG
+CFLAGS += -g -D_DEBUG
 STRIP_ARG =
 else
 export RELEASE=true
 export NDEBUG=true
 CONF = Release
-CFLAGS = -DNDEBUG
+CFLAGS += -DNDEBUG
 STRIP_ARG = -s
 endif
 
+ifdef ($(BUILD_CROSS))
 ifeq ($(PLATFORM),X86_32)
 CFLAGS += -m32 -march=i386 -D__i386__ -D_LINUX_
 endif
 ifeq ($(PLATFORM),X86_64)
 CFLAGS += -m64 -Wno-format -D_LINUX_
 endif
-
-# Uncomment next line for big-endian target CPUs
-#CFLAGS += -DECP_CONFIG_BIG_ENDIAN
+endif
 
 # programs we use
 CC    = gcc
-GPP   = g++
+CXX   = g++
 CPP   = cpp
 LD    = ld
 AR    = ar
@@ -70,10 +75,10 @@ INSTALL = install
 NM      = nm
 
 MAKE_STATIC_LIB         = $(AR) cr
-MAKE_SHARED_LIB         = $(GPP) -shared -o
+MAKE_SHARED_LIB         = $(CXX) -shared -o
 MAKE_DEBUG_LIB          = $(MAKE_STATIC_LIB)
-MAKE_STATIC_COMMAND     = $(GPP) -static -o
-MAKE_DYNAMIC_COMMAND    = $(GPP) -o
+MAKE_STATIC_COMMAND     = $(CXX) -static -o
+MAKE_DYNAMIC_COMMAND    = $(CXX) -o
 
 INSTALL_HEADER      = $(INSTALL) -m 644
 INSTALL_COMMAND     = $(INSTALL) -m 755 $(STRIP_ARG)

@@ -76,9 +76,9 @@ void SHA512_Final (unsigned char *md, SHA512_CTX *c)
         SHA512_Transform (c,p);
 
     mem_fill (p+n,0,SHA512_CBLOCK-16-n);
-#ifdef  ECP_CONFIG_BIG_ENDIAN
-    c->u.d[SHA_LBLOCK-2] = c->Nh;
-    c->u.d[SHA_LBLOCK-1] = c->Nl;
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    c->u.d[SHA512_LBLOCK-2] = c->Nh;
+    c->u.d[SHA512_LBLOCK-1] = c->Nl;
 #else
     p[SHA512_CBLOCK-1]  = (unsigned char)(c->Nl);
     p[SHA512_CBLOCK-2]  = (unsigned char)(c->Nl>>8);
@@ -233,7 +233,7 @@ void SHA512_Transform (SHA512_CTX *ctx, const void *in)
     a = ctx->h[0];  b = ctx->h[1];  c = ctx->h[2];  d = ctx->h[3];
     e = ctx->h[4];  f = ctx->h[5];  g = ctx->h[6];  h = ctx->h[7];
 
-#ifdef ECP_CONFIG_BIG_ENDIAN
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
     T1 = X[0] = W[0];   ROUND_00_15(0,a,b,c,d,e,f,g,h);
     T1 = X[1] = W[1];   ROUND_00_15(1,h,a,b,c,d,e,f,g);
     T1 = X[2] = W[2];   ROUND_00_15(2,g,h,a,b,c,d,e,f);

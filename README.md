@@ -153,10 +153,9 @@ Constant-time alone, pushes attackers to dig deeper for clues.
 
 Building:
 ---------
-The design uses a configurable switch that defines the byte order of the
-target CPU. In default mode it uses Little-endian byte order. You need to
-change this configuration for Big-endian targets by setting ECP_BIG_ENDIAN
-switch (see Rules.mk file on project root).
+The design detect endianness using the compiler which must define __BYTE_ORDER__ 
+to either __ORDER_LITTLE_ENDIAN__ or __ORDER_BIG_ENDIAN__. This is usual GNU
+naming but you can add a pre-processor directive if it is missing
 
 Define USE_ASM_LIB configuration when building to utilize ASM version of the library.
 

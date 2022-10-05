@@ -3,7 +3,10 @@
 ROOT = ..
 include $(ROOT)/Rules.mk
 
-CFLAGS += -I. -I$(ROOT)/include -I$(ROOT)/source -static-libgcc -Wall -O2
+override CC = cc
+override CXX = g++
+
+override CFLAGS = -I. -I$(ROOT)/include -I$(ROOT)/source -static-libgcc -Wall -O2
 
 SRCS = \
     curve25519_mehdi.c \

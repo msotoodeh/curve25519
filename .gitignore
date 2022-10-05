@@ -5,10 +5,13 @@ Debug/
 Release/
 x64/
 ipch/
-*.a
 *.o
 *.sdf
 *.suo
 *.user
 *.opensdf
+*.bak
+.vs/
+custom_blind.h
+
 
